@@ -32,16 +32,55 @@ class LoadResult(Enum):
     """
 
     NO_DB_HOME = "failed to get the Neo4j instance home folder"
-    LOAD_SUCCESS = "successfully loaded the data"
+    LOAD_SUCCESS = "successfully to load the data"
+    LOAD_FAILED = "failed to load the data"
     STOP_FAILED = "failed to stop the instance to import the data"
     START_FAILED = "failed to restart the database after the import"
     RECOVERY_SUCCESS = "successfully recovery the database after the failed import"
     RECOVERY_FAILED = "failed to recovery the database"
 
 
-def load_from_dump():
-    # TODO ! Implement a function to load `.dumps` files format
-    pass
+def load_from_dump(
+    session: Neo4jSession,
+    dump_file_path: Path,
+    rename: Optional[str] = None,
+    overwrite_destination: bool = True,
+    verbose: bool = True,
+) -> LoadResult:
+    dump_folder = dump_file_path.parent
+    new_db_name: str
+
+    if some(rename):
+        os.rename(dump_file_path, os.path.join(dump_folder, f"{rename}.dump"))
+        new_db_name = rename
+    else:
+        new_db_name = dump_file_path.name.removesuffix(".dump")
+
+    _create_database(session, new_db_name)
+
+    db_folder: Optional[Path] = _get_db_home(session)
+
+    if some(db_folder):
+        os.chdir(db_folder)
+
+        command: list[str] = [
+            "./bin/neo4j-admin",
+            "database",
+            "load",
+            f"--from-path={dump_folder}",
+            new_db_name,
+        ]
+
+        if overwrite_destination:
+            command.append("--overwrite-destination")
+
+        if verbose:
+            command.append("--verbose")
+
+        session.close()
+        return _load_with_admin(command, db_folder, new_db_name, recovery=False)
+    else:
+        return LoadResult.NO_DB_HOME
 
 
 def load_from_csv(
@@ -82,10 +121,7 @@ def load_from_csv(
     :rtype: LoadResult
     """
 
-    try:
-        session.run_query("CREATE DATABASE $name", {"name": new_db_name})
-    except Exception as _:
-        pass
+    _create_database(session, new_db_name)
 
     db_folder: Optional[Path] = _get_db_home(session)
 
@@ -115,27 +151,42 @@ def load_from_csv(
             command.append("--verbose")
 
         session.close()
-        del session
 
-        if _alter_instance(db_folder, _InstanceAction.STOP):
-            if safe_exec(command):
-                return (
-                    LoadResult.LOAD_SUCCESS
-                    if _alter_instance(db_folder, _InstanceAction.START)
-                    else LoadResult.START_FAILED
-                )
-            else:
-                logger.error(f"Failed to execute the command : {' '.join(command)}")
+        return _load_with_admin(command, db_folder, new_db_name, recovery=True)
+    else:
+        return LoadResult.NO_DB_HOME
+
+
+def _load_with_admin(
+    command: list[str], db_folder: Path, new_db_name: str, recovery: bool = True
+) -> LoadResult:
+    if _alter_instance(db_folder, _InstanceAction.STOP):
+        if safe_exec(command):
+            return (
+                LoadResult.LOAD_SUCCESS
+                if _alter_instance(db_folder, _InstanceAction.START)
+                else LoadResult.START_FAILED
+            )
+        else:
+            logger.error(f"Failed to execute the command : {' '.join(command)}")
+            if recovery:
                 return (
                     LoadResult.RECOVERY_SUCCESS
                     if _recovery_database(db_folder, new_db_name)
                     else LoadResult.RECOVERY_FAILED
                 )
-        else:
-            logger.error("Failed to stop the Neo4j instance.")
-            return LoadResult.STOP_FAILED
+            else:
+                return LoadResult.RECOVERY_SUCCESS
     else:
-        return LoadResult.NO_DB_HOME
+        logger.error("Failed to stop the Neo4j instance.")
+        return LoadResult.STOP_FAILED
+
+
+def _create_database(session: Neo4jSession, new_db_name: str) -> None:
+    try:
+        session.run_query("CREATE DATABASE $name", {"name": new_db_name})
+    except Exception as _:
+        pass
 
 
 def _get_db_home(session: Neo4jSession) -> Optional[Path]:
