@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from neo4j import Result
@@ -60,12 +60,12 @@ def load_from_csv(
     except Exception as error:
         logger.error(error)
 
-    db_folder = _get_db_home(session)
+    db_folder: Optional[Path] = _get_db_home(session)
 
     if some(db_folder):
         os.chdir(db_folder)
 
-        command = [
+        command: list[str] = [
             "../bin/neo4j-admin",
             "database",
             "import",
@@ -73,11 +73,13 @@ def load_from_csv(
             new_db_name,
             f"--delimiter={delimiter}",
             f"--array-delimiter={array_delimiter}",
-            "--nodes",
-            ",".join(nodes),
-            "--relationships",
-            ",".join(relationships),
         ]
+
+        if len(nodes) > 0:
+            command.extend(["--nodes", ",".join(nodes)])
+
+        if len(relationships) > 0:
+            command.extend(["--relationships", ",".join(relationships)])
 
         if overwrite_destination:
             command.append("--overwrite-destination")
@@ -122,7 +124,9 @@ def _get_db_home(session: Neo4jSession) -> Optional[Path]:
         result: Result = session.run_query(_CONFIG_QUERY)
         df: DataFrame = result.to_df()
 
-        path = df.loc[df["name"].str.endswith(".neo4j_home", na=False), "value"].iloc[0]
+        path: Any = df.loc[
+            df["name"].str.endswith(".neo4j_home", na=False), "value"
+        ].iloc[0]
 
         return Path(path)
     except Exception as error:
@@ -141,7 +145,7 @@ def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
     :return: If the bash command success.
     :rtype: bool
     """
-    neo4j_exec = os.path.join(db_home_folder, "bin", "neo4j")
+    neo4j_exec: str = os.path.join(db_home_folder, "bin", "neo4j")
     command: list[str] = [neo4j_exec]
 
     match action:
@@ -153,12 +157,38 @@ def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
             logger.error(f"Incosistant _InstanceAction : {action}")
             return False
 
-    return safe_exec(command)
+    result: bool = safe_exec(command)
+    if not result:
+        logger.error(f"Failed to execute the command : {' '.join(command)}")
+
+    return result
 
 
 def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
-    # TODO! Implement a way to use `neo4j-admin to import empty nodes to recovery the database.`
-    return False
+    os.chdir(db_home_folder)
+    path: str = os.path.join(db_home_folder, "import", "RECOVERY.csv")
+
+    command: list[str] = [
+        "../bin/neo4j-admin",
+        "database",
+        "import",
+        "full",
+        db_name,
+        "--delimiter=;",
+        "--nodes",
+        path,
+    ]
+
+    with open(path, "w") as fd:
+        fd.write(":ID;:LABEL")
+
+    result: bool = safe_exec(command)
+    if not result:
+        logger.error(f"Failed to execute the command : {' '.join(command)}")
+
+    os.remove(path)
+
+    return result
 
 
 if __name__ == "__main__":
