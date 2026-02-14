@@ -54,6 +54,34 @@ def load_from_csv(
     overwrite_destination: bool = True,
     verbose: bool = True,
 ) -> LoadResult:
+    """
+    Load CSV files into a Neo4j database.
+
+    !!! CAUTION: The Neo4j instance is stopped and restarted during the process.
+    The provided `session` will therefore no longer be valid after this function completes.
+
+    :param session: An active Neo4j session with sufficient privileges to create a new database
+                    and execute the `dbms.listConfig()` procedure.
+    :type session: Neo4jSession
+    :param nodes: A list of absolute paths to CSV files containing node data.
+    :type nodes: list[str]
+    :param relationships: A list of absolute paths to CSV files containing relationship data.
+    :type relationships: list[str]
+    :param new_db_name: The target database used to perform the import.
+                        It may or may not already exist.
+    :type new_db_name: str
+    :param delimiter: The delimiter used to separate header fields and values in the CSV files.
+    :type delimiter: str
+    :param array_delimiter: The delimiter used for array values within CSV fields.
+    :type array_delimiter: str
+    :param overwrite_destination: If `True` (default), overwrite the target database if it already exists.
+    :type overwrite_destination: bool
+    :param verbose: If `True` (default), enable detailed output when running the `neo4j-admin` command.
+    :type verbose: bool
+    :return: The result of the load operation.
+    :rtype: LoadResult
+    """
+
     try:
         session.run_query("CREATE DATABASE $name", {"name": new_db_name})
     except Exception as _:
@@ -164,6 +192,17 @@ def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
 
 
 def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
+    """
+    Process an empty import to the database to recovery it.\n
+    Note : Use it to recovery your database after a failed import and assert the *Neo4j* instance is stopped before call this function.
+
+    :param db_home_folder: Absolute path of the Neo4j instance's home folder.
+    :type db_home_folder: Path
+    :param db_name: The name of the database who need to be recoveried.
+    :type db_name: str
+    :return: If the database was successfully recovery.
+    :rtype: bool
+    """
     os.chdir(db_home_folder)
     path: str = os.path.join(db_home_folder, "import", "RECOVERY.csv")
 
