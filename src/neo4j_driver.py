@@ -51,7 +51,7 @@ class Neo4jSession:
     def __del__(self):
         """
         Automatically close the connection when the object is deleted.\n
-        /!\ Attention : Sometimes it isn't called by python, so i hardly recommand to use the ***with*** clause.
+        [! Attention !] : Sometimes it isn't called by python, so i hardly recommand to use the ***with*** clause.
 
         :param self: Description
         """

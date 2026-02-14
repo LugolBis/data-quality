@@ -3,7 +3,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from dotenv import load_dotenv
 from neo4j import Result
 from pandas import DataFrame
 
@@ -11,10 +10,10 @@ from neo4j_driver import Neo4jSession
 from utils import logger, safe_exec, some
 
 _CONFIG_QUERY = (
-    "CALL dbms.listConfig()"
-    "YIELD name, value, description"
-    "WHERE name = 'server.directories.neo4j_home'"
-    "RETURN name, value, description;"
+    "CALL dbms.listConfig() "
+    "YIELD name, value, description "
+    "WHERE name = 'server.directories.neo4j_home' "
+    "RETURN name, value, description; "
 )
 
 
@@ -50,15 +49,15 @@ def load_from_csv(
     nodes: list[str],
     relationships: list[str],
     new_db_name: str,
-    delimiter: str = ";",
-    array_delimiter: str = ",",
-    overwrite_destination: bool = False,
+    delimiter: str = ",",
+    array_delimiter: str = ";",
+    overwrite_destination: bool = True,
     verbose: bool = True,
 ) -> LoadResult:
     try:
         session.run_query("CREATE DATABASE $name", {"name": new_db_name})
-    except Exception as error:
-        logger.error(error)
+    except Exception as _:
+        pass
 
     db_folder: Optional[Path] = _get_db_home(session)
 
@@ -66,7 +65,7 @@ def load_from_csv(
         os.chdir(db_folder)
 
         command: list[str] = [
-            "../bin/neo4j-admin",
+            "./bin/neo4j-admin",
             "database",
             "import",
             "full",
@@ -76,10 +75,10 @@ def load_from_csv(
         ]
 
         if len(nodes) > 0:
-            command.extend(["--nodes", ",".join(nodes)])
+            command.append(f"--nodes={','.join(nodes)}")
 
         if len(relationships) > 0:
-            command.extend(["--relationships", ",".join(relationships)])
+            command.append(f"--relationships={','.join(relationships)}")
 
         if overwrite_destination:
             command.append("--overwrite-destination")
@@ -169,14 +168,15 @@ def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
     path: str = os.path.join(db_home_folder, "import", "RECOVERY.csv")
 
     command: list[str] = [
-        "../bin/neo4j-admin",
+        "./bin/neo4j-admin",
         "database",
         "import",
         "full",
         db_name,
         "--delimiter=;",
-        "--nodes",
-        path,
+        "--array-delimiter=,",
+        f"--nodes={path}",
+        "--overwrite-destination",
     ]
 
     with open(path, "w") as fd:
@@ -189,15 +189,3 @@ def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
     os.remove(path)
 
     return result
-
-
-if __name__ == "__main__":
-    load_dotenv()
-
-    uri: Optional[str] = os.environ.get("URI")
-    db_user: Optional[str] = os.environ.get("DB_USER")
-    db_password: Optional[str] = os.environ.get("DB_PW")
-
-    if some(uri) and some(db_user) and some(db_password):
-        with Neo4jSession(uri, db_user, db_password, "neo4j") as session:
-            print(_get_db_home(session))

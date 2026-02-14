@@ -39,11 +39,11 @@ def safe_exec(command: list[str]) -> bool:
     """
 
     try:
-        result: subprocess.CompletedProcess[bytes] = subprocess.run(
-            command, capture_output=True
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            command, capture_output=True, text=True
         )
 
-        if result != 0:
+        if result.returncode != 0:
             logger.error(result.stderr)
         else:
             return True
