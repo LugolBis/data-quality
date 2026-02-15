@@ -46,6 +46,32 @@ class Neo4jSession:
         self._closed: bool = False
         self._home_folder: Optional[Path] = None
 
+    @classmethod
+    def clone(
+        cls, session: Neo4jSession, database: Optional[str] = None
+    ) -> Neo4jSession:
+        """
+        Clone the `Neo4jSession` took in argument and change the database if `database` is not 'None'.
+
+        :param cls: The class name.
+        :param session: The session who's need to be clone.
+        :type session: Neo4jSession
+        :param database: If you want to change the database of the `session`.
+        :type database: Optional[str]
+        :return: The exact same `Neo4jSession` as `session` or a session connected to the `database` took in argument.
+        :rtype: Neo4jSession
+        """
+        cloned_database: str
+
+        if some(database):
+            cloned_database = database
+        else:
+            cloned_database = session._database
+
+        return Neo4jSession(
+            session._uri, session._user, session._password, cloned_database
+        )
+
     def get_home_folder(self) -> Optional[Path]:
         """
         Use it to retrieve the absolute file path of the home database folder of the current session.
@@ -139,6 +165,35 @@ class Neo4jSession:
 
         return self._session.run(**kwargs)
 
+    def get_cypher_shell_command(self, script_path: Optional[Path]) -> list[str]:
+        """
+        Generate the `cypher-shell` command to query the database of the session.\n
+        Note : you can use it to execute Cypher scripts.
+
+        :param self: A `Neo4jSession` object.
+        :param script_path: Path of a Cypher script
+        :type script_path: Optional[Path]
+        :return: The `cypher-shell` command.
+        :rtype: list[str]
+        """
+
+        command: list[str] = [
+            "./bin/cypher-shell",
+            "--address",
+            self._uri,
+            "--username",
+            self._user,
+            "--password",
+            self._password,
+            "--database",
+            self._database,
+        ]
+
+        if some(script_path):
+            command.extend(["--file", str(script_path)])
+
+        return command
+
 
 def _prepare_query(
     query: LiteralString,
@@ -194,9 +249,10 @@ if __name__ == "__main__":
     uri: Optional[str] = os.environ.get("URI")
     db_user: Optional[str] = os.environ.get("DB_USER")
     db_password: Optional[str] = os.environ.get("DB_PW")
+    db_name: Optional[str] = os.environ.get("DB_NAME")
 
-    if some(uri) and some(db_user) and some(db_password):
-        with Neo4jSession(uri, db_user, db_password, "movies") as session:
+    if some(uri) and some(db_user) and some(db_password) and some(db_name):
+        with Neo4jSession(uri, db_user, db_password, db_name) as session:
             result: Result = session.run_query(
                 "CREATE (p:Person { born: $born, name: $name }) RETURN p",
                 {"name": "Julius Trevam", "born": 1990},

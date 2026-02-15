@@ -1,4 +1,5 @@
 import os
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -28,6 +29,57 @@ class LoadResult(Enum):
     START_FAILED = "failed to restart the database after the import"
     RECOVERY_SUCCESS = "successfully recovery the database after the failed import"
     RECOVERY_FAILED = "failed to recovery the database"
+
+
+def load_from_script(
+    session: Neo4jSession,
+    script_path: Path,
+    new_db_name: Optional[str] = None,
+    overwrite_destination: bool = True,
+) -> LoadResult:
+    """
+    Load a database from a **Cypher script** using `cypher-shell`.\n
+
+    :param session: An active Neo4j session with sufficient privileges to create a new database
+                    and execute the `dbms.listConfig()` procedure.
+    :type session: Neo4jSession
+    :param script_path: The absolute path of a cypher script.
+    :type script_path: Path
+    :param new_db_name: The optional name of the database if it's different from the `session` database.
+    :type new_db_name: Optional[str]
+    :param overwrite_destination: Remove all the **nodes** and **relationships**, but don't remove APOC procedures/functions/constraints.
+    :type overwrite_destination: bool
+    :return: The result of the load operation.
+    :rtype: LoadResult
+    """
+
+    DELETE_QUERY = "MATCH (n) DETACH DELETE n;"
+    command: list[str]
+
+    if some(new_db_name):
+        _create_database(session, new_db_name)
+
+        with Neo4jSession.clone(session, new_db_name) as session_t:
+            if overwrite_destination:
+                session_t.run_query(DELETE_QUERY)
+            command = session_t.get_cypher_shell_command(script_path)
+    else:
+        if overwrite_destination:
+            session.run_query(DELETE_QUERY)
+        command = session.get_cypher_shell_command(script_path)
+
+    db_folder: Optional[Path] = session.get_home_folder()
+
+    if some(db_folder):
+        os.chdir(db_folder)
+
+        if safe_exec(command):
+            return LoadResult.LOAD_SUCCESS
+        else:
+            logger.error(f"Failed to execute the command : {' '.join(command)}")
+            return LoadResult.LOAD_FAILED
+    else:
+        return LoadResult.NO_DB_HOME
 
 
 def load_from_dump(
@@ -68,8 +120,6 @@ def load_from_dump(
     db_folder: Optional[Path] = session.get_home_folder()
 
     if some(db_folder):
-        os.chdir(db_folder)
-
         command: list[str] = [
             "./bin/neo4j-admin",
             "database",
@@ -134,8 +184,6 @@ def load_from_csv(
     db_folder: Optional[Path] = session.get_home_folder()
 
     if some(db_folder):
-        os.chdir(db_folder)
-
         command: list[str] = [
             "./bin/neo4j-admin",
             "database",
@@ -184,6 +232,8 @@ def _load_with_admin(
     :return: The result of the load operation.
     :rtype: LoadResult
     """
+    os.chdir(db_folder)
+
     if _alter_instance(db_folder, _InstanceAction.STOP):
         if safe_exec(command):
             return (
@@ -206,7 +256,9 @@ def _load_with_admin(
         return LoadResult.STOP_FAILED
 
 
-def _create_database(session: Neo4jSession, new_db_name: str) -> None:
+def _create_database(
+    session: Neo4jSession, new_db_name: str, timeout: int = 60
+) -> None:
     """
     Create a new database called `new_db_name`.\n
     Note : Your user's session needs to have the rights to create a new database.
@@ -215,9 +267,23 @@ def _create_database(session: Neo4jSession, new_db_name: str) -> None:
     :type session: Neo4jSession
     :param new_db_name: Name of the database to create.
     :type new_db_name: str
+    :param timeout: Timeout before end to try to check if the database is online.
+    :type timeout: int
     """
     try:
         session.run_query("CREATE DATABASE $name", {"name": new_db_name})
+
+        while timeout > 0:
+            result = session.run_query(
+                "SHOW DATABASE $db_name", {"db_name": new_db_name}
+            )
+            record = result.single()
+
+            if record and record["currentStatus"] == "online":
+                break
+
+            time.sleep(1)
+            timeout -= 1
     except Exception as _:
         pass
 
