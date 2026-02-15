@@ -47,6 +47,23 @@ def load_from_dump(
     overwrite_destination: bool = True,
     verbose: bool = True,
 ) -> LoadResult:
+    """
+    Load a **.dump** file into a Neo4j database.
+
+    :param session: An active Neo4j session with sufficient privileges to create a new database
+                    and execute the `dbms.listConfig()` procedure.
+    :type session: Neo4jSession
+    :param dump_file_path: Absolute file path to the the **.dump** file.
+    :type dump_file_path: Path
+    :param rename: To choose a database name different from that of the **.dump** file.
+    :type rename: Optional[str]
+    :param overwrite_destination: If `True` (default), overwrite the target database if it already exists.
+    :type overwrite_destination: bool
+    :param verbose: If `True` (default), enable detailed output when running the `neo4j-admin` command.
+    :type verbose: bool
+    :return: The result of the load operation.
+    :rtype: LoadResult
+    """
     dump_folder = dump_file_path.parent
     new_db_name: str
 
@@ -78,6 +95,7 @@ def load_from_dump(
             command.append("--verbose")
 
         session.close()
+
         return _load_with_admin(command, db_folder, new_db_name, recovery=False)
     else:
         return LoadResult.NO_DB_HOME
@@ -94,7 +112,7 @@ def load_from_csv(
     verbose: bool = True,
 ) -> LoadResult:
     """
-    Load CSV files into a Neo4j database.
+    Load **CSV** files into a Neo4j database.
 
     !!! CAUTION: The Neo4j instance is stopped and restarted during the process.
     The provided `session` will therefore no longer be valid after this function completes.
@@ -160,6 +178,22 @@ def load_from_csv(
 def _load_with_admin(
     command: list[str], db_folder: Path, new_db_name: str, recovery: bool = True
 ) -> LoadResult:
+    """
+    Execute the `neo4j-admin` command took in input with `command` to be executed from the home folder of the database (`db_folder`).
+
+    Note : `recovery` parameter permite you to choose if the failure of your command need to recovery the database.
+
+    :param command: The `neo4j-admin` shell command.
+    :type command: list[str]
+    :param db_folder: Home folder of the Neo4j instance.
+    :type db_folder: Path
+    :param new_db_name: Name of the database to create.
+    :type new_db_name: str
+    :param recovery: If the failure of the command need to recovery the database.
+    :type recovery: bool
+    :return: The result of the load operation.
+    :rtype: LoadResult
+    """
     if _alter_instance(db_folder, _InstanceAction.STOP):
         if safe_exec(command):
             return (
@@ -183,6 +217,15 @@ def _load_with_admin(
 
 
 def _create_database(session: Neo4jSession, new_db_name: str) -> None:
+    """
+    Create a new database called `new_db_name`.\n
+    Note : Your user's session needs to have the rights to create a new database.
+
+    :param session: Neo4j session to query the database.
+    :type session: Neo4jSession
+    :param new_db_name: Name of the database to create.
+    :type new_db_name: str
+    """
     try:
         session.run_query("CREATE DATABASE $name", {"name": new_db_name})
     except Exception as _:
