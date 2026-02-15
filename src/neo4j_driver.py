@@ -1,11 +1,19 @@
 import os
+from pathlib import Path
 from typing import Any, LiteralString, Optional
 
 from dotenv import load_dotenv
-from neo4j import GraphDatabase, Query, Result
+from neo4j import Driver, GraphDatabase, Query, Result, Session
 from pandas import DataFrame
 
-from utils import some
+from utils import logger, some
+
+_CONFIG_QUERY = (
+    "CALL dbms.listConfig() "
+    "YIELD name, value, description "
+    "WHERE name = 'server.directories.neo4j_home' "
+    "RETURN name, value, description; "
+)
 
 
 class Neo4jSession:
@@ -28,15 +36,34 @@ class Neo4jSession:
         :param database: Database name.
         :type database: str
         """
-        self._driver = GraphDatabase.driver(uri, auth=(user, password))
-        self._session = self._driver.session(database=database)
-        self._closed = False
+
+        self._uri: str = uri
+        self._user: str = user
+        self._password: str = password
+        self._database: str = database
+        self._driver: Driver = GraphDatabase.driver(uri, auth=(user, password))
+        self._session: Session = self._driver.session(database=database)
+        self._closed: bool = False
+        self._home_folder: Optional[Path] = None
+
+    def get_home_folder(self) -> Optional[Path]:
+        """
+        Use it to retrieve the absolute file path of the home database folder of the current session.
+
+        :param self: A `Neo4jSession` object.
+        :return: Description
+        :rtype: Path | None
+        """
+        if some(self._home_folder):
+            return self._home_folder
+        else:
+            return _get_db_home(self)
 
     def __enter__(self):
         """
         Overload the `__enter__` who's provide to use the `Neo4jSession` in ***with*** clause.
 
-        :param self: Description
+        :param self: A `Neo4jSession` object.
         """
         return self
 
@@ -44,7 +71,7 @@ class Neo4jSession:
         """
         Overload the `__enter__` who's provide to use the `Neo4jSession` in ***with*** clause.
 
-        :param self: Description
+        :param self: A `Neo4jSession` object.
         """
         self.close()
 
@@ -53,7 +80,7 @@ class Neo4jSession:
         Automatically close the connection when the object is deleted.\n
         !! CAUTION : Sometimes it isn't called by python, so i hardly recommand to use the ***with*** clause.
 
-        :param self: Description
+        :param self: A `Neo4jSession` object.
         """
         self.close()
 
@@ -61,12 +88,29 @@ class Neo4jSession:
         """
         Call the method `.close()` on both object `neo4j.Driver` and `neo4j.Session`.
 
-        :param self: Description
+        :param self: A `Neo4jSession` object.
         """
         if not self._closed:
             if not self._session.closed():
                 self._session.close()
             self._driver.close()
+
+        self._closed = True
+
+    def reopen(self) -> None:
+        """
+        Try to reopen the session (it's called by `.runquery()` after a massive loading who stop/restart the Neo4j insatnce and automatically close all the sessions).
+
+        :param self: A `Neo4jSession` object.
+        """
+        try:
+            self._driver = GraphDatabase.driver(
+                self._uri, auth=(self._user, self._password)
+            )
+            self._session = self._driver.session(database=self._database)
+            self._closed = False
+        except Exception as error:
+            logger.error(error)
 
     def run_query(
         self,
@@ -75,9 +119,10 @@ class Neo4jSession:
         timeout: Optional[float] = None,
     ) -> Result:
         """
-        Get a **Lazy result** of a **Cypher** query with both READ/WRITE rights.
+        Get a **Lazy result** of a **Cypher** query with both READ/WRITE rights.\n
+        Note : it automatically try to use `.reopen()` method when the session is closed.
 
-        :param self: The object itself.
+        :param self: A `Neo4jSession` object.
         :param query: Cypher query.
         :type query: LiteralString
         :param parameters: Parameters passed to `neo4j.Session.run(parameters=)`
@@ -88,6 +133,10 @@ class Neo4jSession:
         :rtype: Result
         """
         kwargs: dict[str, Any] = _prepare_query(query, parameters, timeout)
+
+        if self._closed:
+            self.reopen()
+
         return self._session.run(**kwargs)
 
 
@@ -114,6 +163,29 @@ def _prepare_query(
         "query": query_prepared,
         "parameters": parameters,
     }
+
+
+def _get_db_home(session: Neo4jSession) -> Optional[Path]:
+    """
+    Retrieve the _import_ and _home_ folders of the Neo4j database.
+
+    :param session: Neo4j session to query the database.
+    :type session: Neo4jSession
+    :return: The value of `$NEO4J_HOME` (it's the main directory of the Neo4j instance used by the session in input).
+    :rtype: Tuple[Path, Path] | None
+    """
+    try:
+        result: Result = session.run_query(_CONFIG_QUERY)
+        df: DataFrame = result.to_df()
+
+        path: Any = df.loc[
+            df["name"].str.endswith(".neo4j_home", na=False), "value"
+        ].iloc[0]
+
+        return Path(path)
+    except Exception as error:
+        logger.error(error)
+        return None
 
 
 if __name__ == "__main__":

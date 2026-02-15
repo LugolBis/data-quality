@@ -1,20 +1,10 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-
-from neo4j import Result
-from pandas import DataFrame
+from typing import Optional
 
 from neo4j_driver import Neo4jSession
 from utils import logger, safe_exec, some
-
-_CONFIG_QUERY = (
-    "CALL dbms.listConfig() "
-    "YIELD name, value, description "
-    "WHERE name = 'server.directories.neo4j_home' "
-    "RETURN name, value, description; "
-)
 
 
 class _InstanceAction(Enum):
@@ -75,7 +65,7 @@ def load_from_dump(
 
     _create_database(session, new_db_name)
 
-    db_folder: Optional[Path] = _get_db_home(session)
+    db_folder: Optional[Path] = session.get_home_folder()
 
     if some(db_folder):
         os.chdir(db_folder)
@@ -141,7 +131,7 @@ def load_from_csv(
 
     _create_database(session, new_db_name)
 
-    db_folder: Optional[Path] = _get_db_home(session)
+    db_folder: Optional[Path] = session.get_home_folder()
 
     if some(db_folder):
         os.chdir(db_folder)
@@ -230,29 +220,6 @@ def _create_database(session: Neo4jSession, new_db_name: str) -> None:
         session.run_query("CREATE DATABASE $name", {"name": new_db_name})
     except Exception as _:
         pass
-
-
-def _get_db_home(session: Neo4jSession) -> Optional[Path]:
-    """
-    Retrieve the _import_ and _home_ folders of the Neo4j database.
-
-    :param session: Neo4j session to query the database.
-    :type session: Neo4jSession
-    :return: The value of `$NEO4J_HOME` (it's the main directory of the Neo4j instance used by the session in input).
-    :rtype: Tuple[Path, Path] | None
-    """
-    try:
-        result: Result = session.run_query(_CONFIG_QUERY)
-        df: DataFrame = result.to_df()
-
-        path: Any = df.loc[
-            df["name"].str.endswith(".neo4j_home", na=False), "value"
-        ].iloc[0]
-
-        return Path(path)
-    except Exception as error:
-        logger.error(error)
-        return None
 
 
 def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
