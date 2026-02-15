@@ -7,7 +7,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from neo4j import Result
 
-from neo4j_driver import Neo4jSession
+from driver.neo4j import Neo4jSession
 from utils import some
 
 
