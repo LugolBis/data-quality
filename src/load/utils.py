@@ -1,33 +1,10 @@
 import os
 import time
-from enum import Enum
 from pathlib import Path
 
-from driver.neo4j import Neo4jSession
-from utils import logger, safe_exec
-
-
-class _InstanceAction(Enum):
-    """
-    Enumeration to choose which action to apply to the Neo4j instance.
-    """
-
-    START = "start"
-    STOP = "stop"
-
-
-class LoadResult(Enum):
-    """
-    Enumeration to describe the Load Result.
-    """
-
-    NO_DB_HOME = "failed to get the Neo4j instance home folder"
-    LOAD_SUCCESS = "successfully to load the data"
-    LOAD_FAILED = "failed to load the data"
-    STOP_FAILED = "failed to stop the instance to import the data"
-    START_FAILED = "failed to restart the database after the import"
-    RECOVERY_SUCCESS = "successfully recovery the database after the failed import"
-    RECOVERY_FAILED = "failed to recovery the database"
+from driver.neo4j_driver import Neo4jSession
+from load.enums import LoadResult, _InstanceAction
+from utils.utils import logger, safe_exec
 
 
 def _load_with_admin(

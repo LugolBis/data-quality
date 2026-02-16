@@ -1,10 +1,17 @@
 from pathlib import Path
 from typing import Any, LiteralString, Optional
 
-from neo4j import Driver, GraphDatabase, Result, Session
+from neo4j import Driver, GraphDatabase, Query, Result, Session
+from pandas import DataFrame
 
-from driver.utils import _get_db_home, _prepare_query
-from utils import logger, some
+from utils.utils import logger, some
+
+_CONFIG_QUERY = (
+    "CALL dbms.listConfig() "
+    "YIELD name, value, description "
+    "WHERE name = 'server.directories.neo4j_home' "
+    "RETURN name, value, description; "
+)
 
 
 class Neo4jSession:
@@ -183,3 +190,51 @@ class Neo4jSession:
             command.extend(["--file", str(script_path)])
 
         return command
+
+
+def _prepare_query(
+    query: LiteralString,
+    parameters: Optional[dict[str, Any]] = None,
+    timeout: Optional[float] = None,
+) -> dict[str, Any]:
+    """
+    Format the arguments took in input as the `neo4j.Session.run()` arguments format.
+
+    :param query: Cypher query.
+    :type query: LiteralString
+    :param parameters: Parameters passed to `neo4j.Session.run(parameters=)`
+    :type parameters: Optional[dict[str, Any]]
+    :param timeout:Timeouit before cancel a query.
+    :type timeout: Optional[float]
+    :return: Parameters formated.
+    :rtype: dict[str, Any]
+    """
+    query_prepared = Query(text=query, timeout=timeout)
+
+    return {
+        "query": query_prepared,
+        "parameters": parameters,
+    }
+
+
+def _get_db_home(session: Neo4jSession) -> Optional[Path]:
+    """
+    Retrieve the _import_ and _home_ folders of the Neo4j database.
+
+    :param session: Neo4j session to query the database.
+    :type session: Neo4jSession
+    :return: The value of `$NEO4J_HOME` (it's the main directory of the Neo4j instance used by the session in input).
+    :rtype: Tuple[Path, Path] | None
+    """
+    try:
+        result: Result = session.run_query(_CONFIG_QUERY)
+        df: DataFrame = result.to_df()
+
+        path: Any = df.loc[
+            df["name"].str.endswith(".neo4j_home", na=False), "value"
+        ].iloc[0]
+
+        return Path(path)
+    except Exception as error:
+        logger.error(error)
+        return None

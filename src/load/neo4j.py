@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from driver.neo4j import Neo4jSession
-from load.utils import LoadResult, _create_database, _load_with_admin
-from utils import logger, safe_exec, some
+from driver.neo4j_driver import Neo4jSession
+from load.enums import LoadResult
+from load.utils import _create_database, _load_with_admin
+from utils.utils import logger, safe_exec, some
 
 
 def load_from_script(

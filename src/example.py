@@ -2,9 +2,10 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
+from neo4j import Result
+from pandas import DataFrame
 
 from driver.neo4j_driver import Neo4jSession
-from quality.integrity import detecter_doublons, verifier_coherence_proprietes
 from utils.utils import some
 
 if __name__ == "__main__":
@@ -17,5 +18,11 @@ if __name__ == "__main__":
 
     if some(uri) and some(db_user) and some(db_password) and some(db_name):
         with Neo4jSession(uri, db_user, db_password, db_name) as session:
-            verifier_coherence_proprietes(session)
-            detecter_doublons(session, seuil_similarite=0.6)
+            result: Result = session.run_query(
+                "CREATE (p:Person { born: $born, name: $name }) RETURN p",
+                {"name": "Julius Trevam", "born": 1990},
+            )
+
+            df: DataFrame = result.to_df(expand=True)
+
+        print(df)
