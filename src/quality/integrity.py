@@ -68,6 +68,50 @@ def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelSt
     # print("\n" + "=" * 60)
     return analysis
 
+def check_relationships_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
+    """
+    [Relationship Schema Integrity]
+    Analyze if relationships of the same TYPE share the exact same set of property keys.
+
+    :param self: The object itself.
+    """
+    query: str = (
+        "MATCH ()-[r]->() "
+        "WITH type(r) AS RelType, keys(r) AS PropertyKeys "
+        "RETURN RelType, PropertyKeys, count(*) AS Nombre "
+    )
+
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df()
+
+    try:
+        df["Property_Keys_Set"] = df["PropertyKeys"].apply(lambda x: tuple(sorted(x)))
+        types_unique = df["RelType"].unique()
+    except Exception as error:
+        logger.error(error)
+        return None
+
+    analysis: list[LabelStats] = []
+
+    for r_type in types_unique:
+        groupe: pd.DataFrame = df[df["RelType"] == r_type]
+        total: int = groupe["Nombre"].sum()
+        
+        properties: list[NodeProperties] = []
+        groupe_sorted = groupe.sort_values(by="Nombre", ascending=False)
+
+        for index, row in groupe_sorted.iterrows():
+            props: list[str] = list(row["Property_Keys_Set"])
+            count: int = int(row["Nombre"])
+            percent: float = float((count / total) * 100)
+            
+            properties.append(NodeProperties(props, count, percent))
+
+        analysis.append(
+            LabelStats(label=r_type, count=total, properties=properties)
+        )
+
+    return analysis
 
 def detecter_doublons(
     session: Neo4jSession, seuil_similarite: float = 0.8
