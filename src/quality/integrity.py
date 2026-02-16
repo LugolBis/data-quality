@@ -1,61 +1,76 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
+from typing import Any, Optional
 
 import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
+from quality.types import LabelStats, NodeProperties, TextSimilarity
+from utils.utils import logger
 
 
-def verifier_coherence_proprietes(session: Neo4jSession) -> None:
+def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
     """
     [Schema Integrity] Analyze if nodes with the same label combination
     share the exact same set of property keys.
 
     :param self: The object itself.
     """
-    print("\n1. Analyse de l'intégrité du schéma (Schema Integrity)...")
+    # print("\n1. Analyse de l'intégrité du schéma (Schema Integrity)...")
 
-    requete = """
-    MATCH (n)
-    WITH labels(n) AS Labels, keys(n) AS PropertyKeys
-    RETURN Labels, PropertyKeys, count(*) AS Nombre
-    """
+    query: str = (
+        "MATCH (n) "
+        "WITH labels(n) AS Labels, keys(n) AS PropertyKeys "
+        "RETURN Labels, PropertyKeys, count(*) AS Nombre "
+    )
 
-    resultat = session.run_query(requete)
-    donnees = [record.data() for record in resultat]
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df()
 
-    if not donnees:
-        print("Aucune donnée trouvée.")
-        return
+    try:
+        df["Label_Combo"] = df["Labels"].apply(lambda x: tuple(sorted(x)))
+        df["Property_Keys_Set"] = df["PropertyKeys"].apply(lambda x: tuple(sorted(x)))
+        labels_uniques = df["Label_Combo"].unique()
+    except Exception as error:
+        logger.error(error)
+        return None
 
-    df = pd.DataFrame(donnees)
-    df["Label_Combo"] = df["Labels"].apply(lambda x: tuple(sorted(x)))
-    df["Property_Keys_Set"] = df["PropertyKeys"].apply(lambda x: tuple(sorted(x)))
-    labels_uniques = df["Label_Combo"].unique()
+    # print("\nRAPPORT DE PROPRIÉTÉS (SCHEMA VIOLATION):")
+    # print("=" * 60)
 
-    print("\nRAPPORT DE PROPRIÉTÉS (SCHEMA VIOLATION):")
-    print("=" * 60)
+    analysis: list[LabelStats] = []
 
     for label_tuple in labels_uniques:
-        groupe = df[df["Label_Combo"] == label_tuple]
-        total_noeuds = groupe["Nombre"].sum()
-        label_str = ":" + ":".join(label_tuple)
+        groupe: pd.DataFrame = df[df["Label_Combo"] == label_tuple]
+        total_nodes: int = groupe["Nombre"].sum()
+        label_str: str = "&".join(label_tuple)
 
-        print(f"\n{label_str} (Total: {total_noeuds})")
+        properties: list[NodeProperties] = []
 
-        groupe = groupe.sort_values(by="Nombre", ascending=False)
+        # print(f"\n{label_str} (Total: {total_nodes})")
 
-        for index, row in groupe.iterrows():
-            props = list(row["Property_Keys_Set"])
-            count = row["Nombre"]
-            percent = (count / total_noeuds) * 100
-            print(f"   -> {props} : {count} ({percent:.1f}%)")
+        groupe_sorted: pd.DataFrame = groupe.sort_values(by="Nombre", ascending=False)
 
-    print("\n" + "=" * 60)
+        for index, row in groupe_sorted.iterrows():
+            props: list[str] = list(row["Property_Keys_Set"])
+            count: int = int(row["Nombre"])
+            percent: float = float((count / total_nodes) * 100)
+
+            properties.append(NodeProperties(props, count, percent))
+            # print(f"   -> {props} : {count} ({percent:.1f}%)")
+
+        analysis.append(
+            LabelStats(label=label_str, count=total_nodes, properties=properties)
+        )
+
+    # print("\n" + "=" * 60)
+    return analysis
 
 
-def detecter_doublons(session: Neo4jSession, seuil_similarite: float = 0.8) -> None:
+def detecter_doublons(
+    session: Neo4jSession, seuil_similarite: float = 0.8
+) -> Optional[list[TextSimilarity]]:
     """
     [Duplicate Detection] Scan all nodes to find potential duplicates based
     on string property similarity using SequenceMatcher.
@@ -63,29 +78,27 @@ def detecter_doublons(session: Neo4jSession, seuil_similarite: float = 0.8) -> N
     :param seuil_similarite: Similarity threshold between 0 and 1.
     :type seuil_similarite: float
     """
-    print(f"\n2. Recherche de doublons (Similarity >= {seuil_similarite})...")
+    # print(f"\n2. Recherche de doublons (Similarity >= {seuil_similarite})...")
 
-    requete = """
-    MATCH (n)
-    RETURN elementId(n) as ID, labels(n) as Labels, properties(n) as Props
-    """
+    query = (
+        "MATCH (n) "
+        "RETURN elementId(n) as ID, labels(n) as Labels, properties(n) as Props "
+    )
 
-    resultat: Result = session.run_query(requete)
-    nodes = [record.data() for record in resultat]
+    result: Result = session.run_query(query)
+    nodes: list[dict[str, Any]] = [record.data() for record in result]
 
-    detectes = []
+    detected: list[TextSimilarity] = []
 
     groups = defaultdict(list)
     for node in nodes:
         label_key = tuple(sorted(node["Labels"]))
         groups[label_key].append(node)
 
-    print(
-        f"   -> {len(nodes)} noeuds chargés, répartis en {len(groups)} groupes de labels."
-    )
+    # print(f"   -> {len(nodes)} noeuds chargés, répartis en {len(groups)} groupes de labels.")
 
     for label_key, group_nodes in groups.items():
-        label_str = ":" + ":".join(label_key)
+        label_str = "&".join(label_key)
         n_count = len(group_nodes)
 
         if n_count < 2:
@@ -111,23 +124,28 @@ def detecter_doublons(session: Neo4jSession, seuil_similarite: float = 0.8) -> N
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
-                            detectes.append(
-                                {
-                                    "Labels": label_str,
-                                    "Property": key,
-                                    "Value_1": val1,
-                                    "Value_2": val2,
-                                    "Similarity": f"{similarity:.2f}",
-                                }
+                            detected.append(
+                                TextSimilarity(
+                                    label=label_str,
+                                    similarity=similarity,
+                                    property=key,
+                                    first_value=val1,
+                                    second_value=val2,
+                                )
                             )
 
-    if not detectes:
-        print("\nAucun doublon détecté (No duplicates found).")
+    if len(detected) == 0:
+        # print("\nAucun doublon détecté (No duplicates found).")
+        return None
     else:
+        """
         print(f"\nDOUBLONS POTENTIELS DÉTECTÉS (SIMILARITY >= {seuil_similarite}):")
-        df_doublons = pd.DataFrame(detectes)
+        df_doublons = pd.DataFrame(detected)
         df_doublons = df_doublons.sort_values(by="Similarity", ascending=False)
 
         for idx, row in df_doublons.iterrows():
             print(f"   [{row['Similarity']}] {row['Labels']} sur '{row['Property']}':")
             print(f'       "{row["Value_1"]}"  <-->  "{row["Value_2"]}"')
+        """
+
+        return sorted(detected, key=lambda x: x.similarity, reverse=True)

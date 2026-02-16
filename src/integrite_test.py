@@ -4,7 +4,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from driver.neo4j_driver import Neo4jSession
-from quality.integrity import detecter_doublons, verifier_coherence_proprietes
+from quality.integrity import check_properties_consistency, detecter_doublons
 from utils.utils import some
 
 if __name__ == "__main__":
@@ -17,5 +17,12 @@ if __name__ == "__main__":
 
     if some(uri) and some(db_user) and some(db_password) and some(db_name):
         with Neo4jSession(uri, db_user, db_password, db_name) as session:
-            verifier_coherence_proprietes(session)
-            detecter_doublons(session, seuil_similarite=0.6)
+            properties = check_properties_consistency(session)
+            similarities = detecter_doublons(session, seuil_similarite=0.6)
+
+            if some(properties):
+                print(properties)
+
+            if some(similarities):
+                print("\n")
+                print("\n".join([sim.__repr__() for sim in similarities]))
