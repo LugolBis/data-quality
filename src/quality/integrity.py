@@ -6,6 +6,7 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
+from quality.enums import EntityType
 from quality.types import LabelStats, NodeProperties, SchemaViolation, TextSimilarity
 from utils.utils import logger, some
 
@@ -154,9 +155,9 @@ def detecter_doublons(
 def check_schema_violation(session: Neo4jSession) -> Optional[list[SchemaViolation]]:
     query: str = (
         "SHOW INDEXES "
-        "YIELD labelsOrTypes, properties "
+        "YIELD entityType, labelsOrTypes, properties "
         "WHERE labelsOrTypes IS NOT NULL and properties IS NOT NULL "
-        "RETURN labelsOrTypes, properties "
+        "RETURN * "
     )
 
     result: Result = session.run_query(query)
@@ -166,20 +167,36 @@ def check_schema_violation(session: Neo4jSession) -> Optional[list[SchemaViolati
     df_exploded: pd.DataFrame = df.explode("properties")
 
     df_grouped: pd.DataFrame = pd.DataFrame(
-        df_exploded.groupby("labelsOrTypes", as_index=False)["properties"].agg(set)
+        df_exploded.groupby(["entityType", "labelsOrTypes"], as_index=False)[
+            "properties"
+        ].agg(set)
     )
 
     violations: list[SchemaViolation] = []
     for idx, row in df_grouped.iterrows():
+        entity_type: EntityType = EntityType(row["entityType"])
         labels_str: str = row["labelsOrTypes"]
         properties: list[str] = list(row["properties"])
+        sub_query: str
 
-        sub_query: str = (
-            f"WITH {properties} AS requiredProps "
-            f"MATCH (n: {labels_str}) "
-            "RETURN COUNT(n) as count, "
-            "COUNT(CASE WHEN any(p IN requiredProps WHERE n[p] IS NULL) THEN 1 END) AS invalid "
-        )
+        match entity_type:
+            case EntityType.NODE:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps "
+                    f"MATCH (n: {labels_str}) "
+                    "RETURN COUNT(n) as count, "
+                    "COUNT(CASE WHEN any(p IN requiredProps WHERE n[p] IS NULL) THEN 1 END) AS invalid "
+                )
+            case EntityType.RELATIONSHIP:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps "
+                    f"MATCH ()-[r: {labels_str}]->() "
+                    "RETURN COUNT(r) as count, "
+                    "COUNT(CASE WHEN any(p IN requiredProps WHERE r[p] IS NULL) THEN 1 END) AS invalid "
+                )
+            case default:
+                logger.error(f"Unknown <EnityType> : {default}")
+                continue
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
         first_row = result_label.single()
@@ -190,7 +207,12 @@ def check_schema_violation(session: Neo4jSession) -> Optional[list[SchemaViolati
             if invalid > 0:
                 percent: float = round(float((invalid / count) * 100), 2)
                 violations.append(
-                    SchemaViolation(label=labels_str, count=count, percent=percent)
+                    SchemaViolation(
+                        entity=entity_type,
+                        label=labels_str,
+                        count=count,
+                        percent=percent,
+                    )
                 )
 
     if len(violations) > 0:

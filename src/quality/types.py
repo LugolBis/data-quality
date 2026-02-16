@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from quality.enums import EntityType
+
 
 @dataclass
 class NodeProperties:
@@ -35,9 +37,16 @@ class TextSimilarity:
 
 @dataclass
 class SchemaViolation:
+    entity: EntityType
     label: str
     count: int
     percent: float
 
     def __repr__(self) -> str:
-        return f"[{self.label}] | count={self.count} -> {self.percent} of properties schema violation."
+        match self.entity:
+            case EntityType.NODE:
+                return f"({self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
+            case EntityType.RELATIONSHIP:
+                return f"[{self.label}] | count={self.count} -> {self.percent}% of properties schema violation"
+            case default:
+                return f"Unknown type : {default} - {self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
