@@ -31,3 +31,13 @@ class TextSimilarity:
 
     def __repr__(self) -> str:
         return f"[{self.similarity:.2f}] | {self.label} -> {self.property}\n\t'{self.first_value}' <--> '{self.second_value}'"
+
+
+@dataclass
+class SchemaViolation:
+    label: str
+    count: int
+    percent: float
+
+    def __repr__(self) -> str:
+        return f"[{self.label}] | count={self.count} -> {self.percent} of properties schema violation."

@@ -6,8 +6,8 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
-from quality.types import LabelStats, NodeProperties, TextSimilarity
-from utils.utils import logger
+from quality.types import LabelStats, NodeProperties, SchemaViolation, TextSimilarity
+from utils.utils import logger, some
 
 
 def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
@@ -149,3 +149,51 @@ def detecter_doublons(
         """
 
         return sorted(detected, key=lambda x: x.similarity, reverse=True)
+
+
+def check_schema_violation(session: Neo4jSession) -> Optional[list[SchemaViolation]]:
+    query: str = (
+        "SHOW INDEXES "
+        "YIELD labelsOrTypes, properties "
+        "WHERE labelsOrTypes IS NOT NULL and properties IS NOT NULL "
+        "RETURN labelsOrTypes, properties "
+    )
+
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df()
+
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(lambda x: "&".join(x))
+    df_exploded: pd.DataFrame = df.explode("properties")
+
+    df_grouped: pd.DataFrame = pd.DataFrame(
+        df_exploded.groupby("labelsOrTypes", as_index=False)["properties"].agg(set)
+    )
+
+    violations: list[SchemaViolation] = []
+    for idx, row in df_grouped.iterrows():
+        labels_str: str = row["labelsOrTypes"]
+        properties: list[str] = list(row["properties"])
+
+        sub_query: str = (
+            f"WITH {properties} AS requiredProps "
+            f"MATCH (n: {labels_str}) "
+            "RETURN COUNT(n) as count, "
+            "COUNT(CASE WHEN any(p IN requiredProps WHERE n[p] IS NULL) THEN 1 END) AS invalid "
+        )
+
+        result_label: Result = session.run_query(sub_query)  # type: ignore
+        first_row = result_label.single()
+        if some(first_row):
+            invalid: int = first_row["invalid"]
+            count: int = first_row["count"]
+
+            if invalid > 0:
+                percent: float = round(float((invalid / count) * 100), 2)
+                violations.append(
+                    SchemaViolation(label=labels_str, count=count, percent=percent)
+                )
+
+    if len(violations) > 0:
+        return violations
+    else:
+        return None
