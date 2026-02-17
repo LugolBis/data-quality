@@ -62,3 +62,13 @@ class IndexViolation(Violation):
 @dataclass
 class ConstraintViolation(Violation):
     constraint: Constraint
+    properties: list[str]
+
+    def __repr__(self) -> str:
+        match self.entity:
+            case Entity.NODE:
+                return f"({self.label}) : {self.constraint} on {self.properties} | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"
+            case Entity.RELATIONSHIP:
+                return f"[{self.label}] : {self.constraint} on {self.properties} | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"
+            case default:
+                return f"Unknown type : {default} - {self.label}) | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"

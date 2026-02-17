@@ -78,20 +78,13 @@ def check_constraint_violation(
 
     df["type"] = df["type"].apply(lambda x: x.split("_")[-1])
     df["labelsOrTypes"] = df["labelsOrTypes"].apply(lambda x: "&".join(x))
-    df_exploded: pd.DataFrame = df.explode("properties")
-
-    df_grouped: pd.DataFrame = pd.DataFrame(
-        df_exploded.groupby(
-            ["type", "entityType", "labelsOrTypes", "propertyType"], as_index=False
-        )["properties"].agg(set)
-    )
 
     violations: list[ConstraintViolation] = []
-    for idx, row in df_grouped.iterrows():
+    for idx, row in df.iterrows():
         constraint_type: Constraint = Constraint(row["type"])
         entity_type: Entity = Entity(row["entityType"])
         labels_str: str = row["labelsOrTypes"]
-        properties: list[str] = list(row["properties"])
+        properties: list[str] = row["properties"]
         sub_query: str
 
         match constraint_type:
@@ -101,9 +94,9 @@ def check_constraint_violation(
                     f"{_build_match(entity_type, labels_str, 'e1')} "
                     f"{_build_match(entity_type, labels_str, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
-                    "WITH e1, e2, any(p IN requiredProps WHERE e1[p] = e2[p]) AS is_invalid "
+                    "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
                     "RETURN COUNT(*) AS count, "
-                    "COUNT(CASE WHEN is_invalid THEN 1 END) AS invalid"
+                    "COUNT(CASE WHEN NOT is_valid THEN 1 END) AS invalid"
                 )
             case Constraint.EXISTENCE:
                 sub_query = (
@@ -129,15 +122,17 @@ def check_constraint_violation(
                     f"{_build_match(entity_type, labels_str, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, "
-                    "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR e1[p] = e2[p] OR valueType(e1[p]) <> valueType(e2[p])) AS is_invalid"
+                    "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR valueType(e1[p]) <> valueType(e2[p])) AS is_invalid, "
+                    "any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
                     "RETURN COUNT(*) AS count, "
-                    "COUNT(CASE WHEN is_invalid THEN 1 END) AS invalid"
+                    "COUNT(CASE WHEN (NOT is_valid) AND (is_invalid) THEN 1 END) AS invalid"
                 )
             case default:
                 logger.error(f"Unknown <EntityType> : {default}")
                 continue
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
+        print(result_label.data())
         first_row = result_label.single()
         if some(first_row):
             invalid: int = first_row["invalid"]
@@ -151,13 +146,14 @@ def check_constraint_violation(
                         label=labels_str,
                         count=count,
                         invalid=invalid,
+                        properties=properties,
                     )
                 )
 
     if len(violations) > 0:
-        return None
-    else:
         return violations
+    else:
+        return None
 
 
 def _build_match(entity_type: Entity, label_str: str, alias: str = "e") -> str:
