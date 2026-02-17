@@ -37,7 +37,7 @@ def check_string_format(
     for property in properties:
         query: str = (
             f"{_build_match(entity, label)} "
-            f"WITH e, e[{property}] ~= '{pattern_str}' AS valid "
+            f"WITH e, e['{property}'] =~ '{pattern_str}' AS valid "
             "RETURN COUNT(*) as count, COUNT(CASE WHEN valid THEN 1 END) AS invalid"
         )
 
