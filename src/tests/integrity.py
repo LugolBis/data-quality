@@ -2,20 +2,20 @@ from typing import Optional
 
 from driver.neo4j_driver import Neo4jSession
 from quality.integrity import (
-    check_properties_consistency,
-    check_relationships_consistency,
+    distr_nodes_properties,
+    distr_relationships_properties,
     detecter_doublons,
 )
-from quality.types import LabelStats, TextSimilarity
+from quality.types import EntityStats, TextSimilarity
 from utils.utils import some
 
 
 def main(session: Neo4jSession) -> None:
-    properties: Optional[list[LabelStats]] = check_properties_consistency(session)
+    properties: Optional[list[EntityStats]] = distr_nodes_properties(session)
     similarities: Optional[list[TextSimilarity]] = detecter_doublons(
         session, seuil_similarite=0.6
     )
-    relationships: Optional[list[LabelStats]] = check_relationships_consistency(session)
+    relationships: Optional[list[EntityStats]] = distr_relationships_properties(session)
 
     if some(properties):
         print(properties)

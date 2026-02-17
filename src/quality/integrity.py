@@ -6,11 +6,12 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
-from quality.types import LabelStats, NodeProperties, TextSimilarity
+from quality.types import EntityStats, EntityProperties, TextSimilarity
+from quality.enums import Entity
 from utils.utils import logger
 
 
-def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
+def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]:
     """
     [Schema Integrity] Analyze if nodes with the same label combination
     share the exact same set of property keys.
@@ -39,14 +40,14 @@ def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelSt
     # print("\nRAPPORT DE PROPRIÉTÉS (SCHEMA VIOLATION):")
     # print("=" * 60)
 
-    analysis: list[LabelStats] = []
+    analysis: list[EntityStats] = []
 
     for label_tuple in labels_uniques:
         groupe: pd.DataFrame = df[df["Label_Combo"] == label_tuple]
         total_nodes: int = groupe["Nombre"].sum()
         label_str: str = "&".join(label_tuple)
 
-        properties: list[NodeProperties] = []
+        properties: list[EntityProperties] = []
 
         # print(f"\n{label_str} (Total: {total_nodes})")
 
@@ -57,20 +58,20 @@ def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelSt
             count: int = int(row["Nombre"])
             percent: float = float((count / total_nodes) * 100)
 
-            properties.append(NodeProperties(props, count, percent))
+            properties.append(EntityProperties(props, count, percent))
             # print(f"   -> {props} : {count} ({percent:.1f}%)")
 
         analysis.append(
-            LabelStats(label=label_str, count=total_nodes, properties=properties)
+            EntityStats(entity=Entity.NODE, label=label_str, count=total_nodes, properties=properties)
         )
 
     # print("\n" + "=" * 60)
     return analysis
 
 
-def check_relationships_consistency(
+def distr_relationships_properties(
     session: Neo4jSession,
-) -> Optional[list[LabelStats]]:
+) -> Optional[list[EntityStats]]:
     """
     [Relationship Schema Integrity]
     Analyze if relationships of the same TYPE share the exact same set of property keys.
@@ -93,13 +94,13 @@ def check_relationships_consistency(
         logger.error(error)
         return None
 
-    analysis: list[LabelStats] = []
+    analysis: list[EntityStats] = []
 
     for r_type in types_unique:
         groupe: pd.DataFrame = df[df["RelType"] == r_type]
         total: int = groupe["Nombre"].sum()
 
-        properties: list[NodeProperties] = []
+        properties: list[EntityProperties] = []
         groupe_sorted = groupe.sort_values(by="Nombre", ascending=False)
 
         for index, row in groupe_sorted.iterrows():
@@ -107,9 +108,9 @@ def check_relationships_consistency(
             count: int = int(row["Nombre"])
             percent: float = float((count / total) * 100)
 
-            properties.append(NodeProperties(props, count, percent))
+            properties.append(EntityProperties(props, count, percent))
 
-        analysis.append(LabelStats(label=r_type, count=total, properties=properties))
+        analysis.append(EntityStats(entity=Entity.RELATIONSHIP, label=r_type, count=total, properties=properties))
 
     return analysis
 

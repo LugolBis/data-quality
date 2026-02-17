@@ -5,7 +5,7 @@ from quality.enums import Constraint, Entity
 
 
 @dataclass
-class NodeProperties:
+class EntityProperties:
     names: list[str]
     count: int
     percent: float
@@ -15,13 +15,18 @@ class NodeProperties:
 
 
 @dataclass
-class LabelStats:
+class EntityStats:
+    entity: Entity
     label: str
     count: int
-    properties: list[NodeProperties]
+    properties: list[EntityProperties]
 
     def __repr__(self) -> str:
-        return f"\n{self.label} | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
+        match self.entity:
+            case Entity.NODE:
+                return f"\n({self.label}) | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
+            case Entity.RELATIONSHIP:
+                return f"\n[{self.label}] | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
 
 
 @dataclass
