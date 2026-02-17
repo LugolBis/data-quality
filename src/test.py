@@ -4,7 +4,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 import tests.consistency as consistency
-import tests.integrite as integrite
+import tests.integrity as integrity
 import tests.schema as schema
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import some
@@ -19,6 +19,6 @@ if __name__ == "__main__":
 
     if some(uri) and some(db_user) and some(db_password) and some(db_name):
         with Neo4jSession(uri, db_user, db_password, db_name) as session:
-            integrite.main(session)
+            integrity.main(session)
             schema.main(session)
             consistency.main(session)
