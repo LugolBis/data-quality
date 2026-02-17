@@ -1,12 +1,13 @@
 import re
 from typing import Optional
 
+import pandas as pd
 from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Entity
 from quality.schema import _build_match
-from quality.types import TextFormat
+from quality.types import PairPropertiesType, TextFormat
 from utils.utils import some
 
 
@@ -71,17 +72,75 @@ def check_string_format(
             count: int = row["count"]
 
             if invalid > 0:
-                violations.append(
-                    TextFormat(
-                        entity=entity,
-                        label=label,
-                        count=count,
-                        invalid=invalid,
-                        property=property,
-                    )
-                )
+                violations.append(TextFormat(entity, label, count, invalid, property))
 
     if len(violations) > 0:
         return violations
+    else:
+        return None
+
+
+def check_properties_type(session: Neo4jSession) -> Optional[list[PairPropertiesType]]:
+    query: str = (
+        "CALL () { "
+        "CALL db.schema.nodeTypeProperties() "
+        "YIELD nodeLabels, propertyName, propertyTypes "
+        "RETURN nodeLabels AS label, 'NODE' AS elementType, propertyName, propertyTypes AS type "
+        "UNION ALL "
+        "CALL db.schema.relTypeProperties() "
+        "YIELD relType, propertyName, propertyTypes "
+        "RETURN relType AS label, 'RELATIONSHIP' AS elementType, propertyName, propertyTypes AS type "
+        "} RETURN label, elementType, type, collect(propertyName) AS properties "
+    )
+
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df()
+
+    inconsistencies: list[PairPropertiesType] = []
+    for idx, row in df.iterrows():
+        entity: Entity = Entity(row["elementType"])
+        properties: list[str] = row["properties"]
+        type: str = row["type"][0]
+
+        if len(properties) == 0:
+            continue
+
+        label: str
+        match entity:
+            case Entity.NODE:
+                label = "&".join(row["label"])
+            case Entity.RELATIONSHIP:
+                label = str(row["label"]).split(":")[-1].replace("`", "")
+
+        sub_query: str = (
+            f"WITH {properties} AS requiredProps "
+            f"{_build_match(entity, label, 'e1')} "
+            f"{_build_match(entity, label, 'e2')} "
+            "WHERE elementId(e1) < elementId(e2) "
+            "WITH e1, e2, "
+            "any( p IN requiredProps"
+            "   WHERE e1[p] IS NOT NULL AND e2[p] IS NOT NULL "
+            f"   AND ((valueType(e1[p]) STARTS WITH '{type} ') <> (valueType(e2[p]) STARTS WITH '{type} '))"
+            ") AS is_invalid "
+            "RETURN COUNT(*) AS count, "
+            "COUNT(CASE WHEN is_invalid THEN 1 END) AS invalid"
+        )
+
+        print(sub_query)
+
+        sub_result: Result = session.run_query(sub_query)  # type: ignore
+        sub_row: Optional[Record] = sub_result.single()
+
+        if some(sub_row):
+            count: int = sub_row["count"]
+            invalid: int = sub_row["invalid"]
+
+            if invalid > 0:
+                inconsistencies.append(
+                    PairPropertiesType(entity, label, count, invalid)
+                )
+
+    if len(inconsistencies) > 0:
+        return inconsistencies
     else:
         return None

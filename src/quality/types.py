@@ -62,6 +62,15 @@ class Violation(ABC):
 
 
 @dataclass
+class PairPropertiesType(Violation):
+    def __repr__(self) -> str:
+        return (
+            super().__repr__()
+            + " of Inconsistant properties type between pairs of entities."
+        )
+
+
+@dataclass
 class TextFormat(Violation):
     property: str
 

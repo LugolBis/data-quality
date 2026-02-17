@@ -41,13 +41,13 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
 
     violations: list[IndexViolation] = []
     for idx, row in df_grouped.iterrows():
-        entity_type: Entity = Entity(row["entityType"])
-        labels_str: str = row["labelsOrTypes"]
+        entity: Entity = Entity(row["entityType"])
+        label: str = row["labelsOrTypes"]
         properties: list[str] = list(row["properties"])
 
         sub_query: str = (
             f"WITH {properties} AS requiredProps "
-            f"{_build_match(entity_type, labels_str)} "
+            f"{_build_match(entity, label)} "
             "RETURN COUNT(e) as count, "
             "COUNT(CASE WHEN any(p IN requiredProps WHERE e[p] IS NULL) THEN 1 END) AS invalid "
         )
@@ -59,14 +59,7 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
             count: int = first_row["count"]
 
             if invalid > 0:
-                violations.append(
-                    IndexViolation(
-                        entity=entity_type,
-                        label=labels_str,
-                        count=count,
-                        invalid=invalid,
-                    )
-                )
+                violations.append(IndexViolation(entity, label, count, invalid))
 
     if len(violations) > 0:
         return violations
@@ -100,18 +93,18 @@ def check_constraint_violation(
 
     violations: list[ConstraintViolation] = []
     for idx, row in df.iterrows():
-        constraint_type: Constraint = Constraint(row["type"])
-        entity_type: Entity = Entity(row["entityType"])
-        labels_str: str = row["labelsOrTypes"]
+        constraint: Constraint = Constraint(row["type"])
+        entity: Entity = Entity(row["entityType"])
+        label: str = row["labelsOrTypes"]
         properties: list[str] = row["properties"]
         sub_query: str
 
-        match constraint_type:
+        match constraint:
             case Constraint.UNIQUENESS:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity_type, labels_str, 'e1')} "
-                    f"{_build_match(entity_type, labels_str, 'e2')} "
+                    f"{_build_match(entity, label, 'e1')} "
+                    f"{_build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
                     "RETURN COUNT(*) AS count, "
@@ -120,7 +113,7 @@ def check_constraint_violation(
             case Constraint.EXISTENCE:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity_type, labels_str)} "
+                    f"{_build_match(entity, label)} "
                     "WITH e, any(p IN requiredProps WHERE e[p] IS NULL) AS is_invalid "
                     "RETURN COUNT(*) AS count, "
                     "COUNT(CASE WHEN is_invalid THEN 1 END) as invalid"
@@ -128,7 +121,7 @@ def check_constraint_violation(
             case Constraint.TYPE:
                 sub_query = (
                     f"WITH {properties} AS requiredProps"
-                    f"{_build_match(entity_type, labels_str)} "
+                    f"{_build_match(entity, label)} "
                     "WITH e, "
                     f"any(p IN requiredProps WHERE NOT valueType(e[p]) STARTS WITH '{row['propertyType']} ') AS is_invalid"
                     "RETURN COUNT(*) AS count, "
@@ -137,8 +130,8 @@ def check_constraint_violation(
             case Constraint.KEY:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity_type, labels_str, 'e1')} "
-                    f"{_build_match(entity_type, labels_str, 'e2')} "
+                    f"{_build_match(entity, label, 'e1')} "
+                    f"{_build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, "
                     "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR valueType(e1[p]) <> valueType(e2[p])) AS is_invalid, "
@@ -160,12 +153,7 @@ def check_constraint_violation(
             if invalid > 0:
                 violations.append(
                     ConstraintViolation(
-                        entity=entity_type,
-                        constraint=constraint_type,
-                        label=labels_str,
-                        count=count,
-                        invalid=invalid,
-                        properties=properties,
+                        entity, label, count, invalid, constraint, properties
                     )
                 )
 

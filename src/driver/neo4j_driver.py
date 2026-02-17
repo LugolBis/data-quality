@@ -120,7 +120,7 @@ class Neo4jSession:
 
         self._closed = True
 
-    def reopen(self) -> None:
+    def _reopen(self) -> None:
         """
         Try to reopen the session (it's called by `.runquery()` after a massive loading who stop/restart the Neo4j insatnce and automatically close all the sessions).
 
@@ -158,7 +158,7 @@ class Neo4jSession:
         kwargs: dict[str, Any] = _prepare_query(query, parameters, timeout)
 
         if self._closed:
-            self.reopen()
+            self._reopen()
 
         return self._session.run(**kwargs)
 
