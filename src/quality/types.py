@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from quality.enums import EntityType
+from quality.enums import Constraint, Entity
 
 
 @dataclass
@@ -36,17 +36,26 @@ class TextSimilarity:
 
 
 @dataclass
-class SchemaViolation:
-    entity: EntityType
+class IndexViolation:
+    entity: Entity
     label: str
     count: int
     percent: float
 
     def __repr__(self) -> str:
         match self.entity:
-            case EntityType.NODE:
+            case Entity.NODE:
                 return f"({self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
-            case EntityType.RELATIONSHIP:
+            case Entity.RELATIONSHIP:
                 return f"[{self.label}] | count={self.count} -> {self.percent}% of properties schema violation"
             case default:
                 return f"Unknown type : {default} - {self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
+
+
+@dataclass
+class ConstraintViolation:
+    entity: Entity
+    constraint: Constraint
+    label: str
+    count: int
+    percent: float

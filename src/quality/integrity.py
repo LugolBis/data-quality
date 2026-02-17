@@ -6,9 +6,8 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
-from quality.enums import EntityType
-from quality.types import LabelStats, NodeProperties, SchemaViolation, TextSimilarity
-from utils.utils import logger, some
+from quality.types import LabelStats, NodeProperties, TextSimilarity
+from utils.utils import logger
 
 
 def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
@@ -68,7 +67,10 @@ def check_properties_consistency(session: Neo4jSession) -> Optional[list[LabelSt
     # print("\n" + "=" * 60)
     return analysis
 
-def check_relationships_consistency(session: Neo4jSession) -> Optional[list[LabelStats]]:
+
+def check_relationships_consistency(
+    session: Neo4jSession,
+) -> Optional[list[LabelStats]]:
     """
     [Relationship Schema Integrity]
     Analyze if relationships of the same TYPE share the exact same set of property keys.
@@ -96,7 +98,7 @@ def check_relationships_consistency(session: Neo4jSession) -> Optional[list[Labe
     for r_type in types_unique:
         groupe: pd.DataFrame = df[df["RelType"] == r_type]
         total: int = groupe["Nombre"].sum()
-        
+
         properties: list[NodeProperties] = []
         groupe_sorted = groupe.sort_values(by="Nombre", ascending=False)
 
@@ -104,14 +106,13 @@ def check_relationships_consistency(session: Neo4jSession) -> Optional[list[Labe
             props: list[str] = list(row["Property_Keys_Set"])
             count: int = int(row["Nombre"])
             percent: float = float((count / total) * 100)
-            
+
             properties.append(NodeProperties(props, count, percent))
 
-        analysis.append(
-            LabelStats(label=r_type, count=total, properties=properties)
-        )
+        analysis.append(LabelStats(label=r_type, count=total, properties=properties))
 
     return analysis
+
 
 def detecter_doublons(
     session: Neo4jSession, seuil_similarite: float = 0.8
@@ -194,72 +195,3 @@ def detecter_doublons(
         """
 
         return sorted(detected, key=lambda x: x.similarity, reverse=True)
-
-
-def check_schema_violation(session: Neo4jSession) -> Optional[list[SchemaViolation]]:
-    query: str = (
-        "SHOW INDEXES "
-        "YIELD entityType, labelsOrTypes, properties "
-        "WHERE labelsOrTypes IS NOT NULL and properties IS NOT NULL "
-        "RETURN * "
-    )
-
-    result: Result = session.run_query(query)
-    df: pd.DataFrame = result.to_df()
-
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(lambda x: "&".join(x))
-    df_exploded: pd.DataFrame = df.explode("properties")
-
-    df_grouped: pd.DataFrame = pd.DataFrame(
-        df_exploded.groupby(["entityType", "labelsOrTypes"], as_index=False)[
-            "properties"
-        ].agg(set)
-    )
-
-    violations: list[SchemaViolation] = []
-    for idx, row in df_grouped.iterrows():
-        entity_type: EntityType = EntityType(row["entityType"])
-        labels_str: str = row["labelsOrTypes"]
-        properties: list[str] = list(row["properties"])
-        sub_query: str
-
-        match entity_type:
-            case EntityType.NODE:
-                sub_query = (
-                    f"WITH {properties} AS requiredProps "
-                    f"MATCH (n: {labels_str}) "
-                    "RETURN COUNT(n) as count, "
-                    "COUNT(CASE WHEN any(p IN requiredProps WHERE n[p] IS NULL) THEN 1 END) AS invalid "
-                )
-            case EntityType.RELATIONSHIP:
-                sub_query = (
-                    f"WITH {properties} AS requiredProps "
-                    f"MATCH ()-[r: {labels_str}]->() "
-                    "RETURN COUNT(r) as count, "
-                    "COUNT(CASE WHEN any(p IN requiredProps WHERE r[p] IS NULL) THEN 1 END) AS invalid "
-                )
-            case default:
-                logger.error(f"Unknown <EnityType> : {default}")
-                continue
-
-        result_label: Result = session.run_query(sub_query)  # type: ignore
-        first_row = result_label.single()
-        if some(first_row):
-            invalid: int = first_row["invalid"]
-            count: int = first_row["count"]
-
-            if invalid > 0:
-                percent: float = round(float((invalid / count) * 100), 2)
-                violations.append(
-                    SchemaViolation(
-                        entity=entity_type,
-                        label=labels_str,
-                        count=count,
-                        percent=percent,
-                    )
-                )
-
-    if len(violations) > 0:
-        return violations
-    else:
-        return None

@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 from driver.neo4j_driver import Neo4jSession
 from quality.integrity import (
     check_properties_consistency,
-    check_schema_violation,
     detecter_doublons,
 )
+from quality.schema import check_index_violation
 from utils.utils import some
 
 if __name__ == "__main__":
@@ -31,4 +31,4 @@ if __name__ == "__main__":
                 print("\n")
                 print("\n".join([sim.__repr__() for sim in similarities]))
 
-            print(check_schema_violation(session))
+            print(check_index_violation(session))
