@@ -1,3 +1,4 @@
+from abc import ABC
 from dataclasses import dataclass
 
 from quality.enums import Constraint, Entity
@@ -36,26 +37,28 @@ class TextSimilarity:
 
 
 @dataclass
-class IndexViolation:
+class Violation(ABC):
     entity: Entity
     label: str
     count: int
-    percent: float
+    invalid: int
 
-    def __repr__(self) -> str:
-        match self.entity:
-            case Entity.NODE:
-                return f"({self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
-            case Entity.RELATIONSHIP:
-                return f"[{self.label}] | count={self.count} -> {self.percent}% of properties schema violation"
-            case default:
-                return f"Unknown type : {default} - {self.label}) | count={self.count} -> {self.percent}% of properties schema violation"
+    def get_percent(self, precision: int = 2) -> float:
+        return round(float((self.invalid / self.count) * 100), precision)
 
 
 @dataclass
-class ConstraintViolation:
-    entity: Entity
+class IndexViolation(Violation):
+    def __repr__(self) -> str:
+        match self.entity:
+            case Entity.NODE:
+                return f"({self.label}) | count={self.count} -> {self.get_percent()}% of properties schema violation"
+            case Entity.RELATIONSHIP:
+                return f"[{self.label}] | count={self.count} -> {self.get_percent()}% of properties schema violation"
+            case default:
+                return f"Unknown type : {default} - {self.label}) | count={self.count} -> {self.get_percent()}% of properties schema violation"
+
+
+@dataclass
+class ConstraintViolation(Violation):
     constraint: Constraint
-    label: str
-    count: int
-    percent: float
