@@ -46,17 +46,28 @@ class Violation(ABC):
     def get_percent(self, precision: int = 2) -> float:
         return round(float((self.invalid / self.count) * 100), precision)
 
+    def __repr__(self) -> str:
+        match self.entity:
+            case Entity.NODE:
+                return f"({self.label}) | count={self.count} -> {self.get_percent()}%"
+            case Entity.RELATIONSHIP:
+                return f"[{self.label}] | count={self.count} -> {self.get_percent()}%"
+            case default:
+                return f"Unknown entity : {default} - {self.label}) | count={self.count} -> {self.get_percent()}%"
+
+
+@dataclass
+class TextFormat(Violation):
+    property: str
+
+    def __repr__(self) -> str:
+        return super().__repr__() + f" of Text Format violation for {self.property}"
+
 
 @dataclass
 class IndexViolation(Violation):
     def __repr__(self) -> str:
-        match self.entity:
-            case Entity.NODE:
-                return f"({self.label}) | count={self.count} -> {self.get_percent()}% of properties schema violation"
-            case Entity.RELATIONSHIP:
-                return f"[{self.label}] | count={self.count} -> {self.get_percent()}% of properties schema violation"
-            case default:
-                return f"Unknown type : {default} - {self.label}) | count={self.count} -> {self.get_percent()}% of properties schema violation"
+        return super().__repr__() + " of Index violation"
 
 
 @dataclass
@@ -65,10 +76,8 @@ class ConstraintViolation(Violation):
     properties: list[str]
 
     def __repr__(self) -> str:
-        match self.entity:
-            case Entity.NODE:
-                return f"({self.label}) : {self.constraint} on {self.properties} | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"
-            case Entity.RELATIONSHIP:
-                return f"[{self.label}] : {self.constraint} on {self.properties} | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"
-            case default:
-                return f"Unknown type : {default} - {self.label}) | pair_count={self.count} -> {self.get_percent()}% of properties schema violation"
+        return (
+            f"{self.constraint} on {self.properties} | "
+            + super().__repr__()
+            + " of Constraint violation"
+        )

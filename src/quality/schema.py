@@ -1,11 +1,12 @@
 from typing import Optional
 
 import pandas as pd
-from neo4j import Result
+from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Constraint, Entity
 from quality.types import ConstraintViolation, IndexViolation
+from quality.utils import _build_match
 from utils.utils import logger, some
 
 
@@ -133,7 +134,7 @@ def check_constraint_violation(
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
         print(result_label.data())
-        first_row = result_label.single()
+        first_row: Optional[Record] = result_label.single()
         if some(first_row):
             invalid: int = first_row["invalid"]
             count: int = first_row["count"]
@@ -154,14 +155,3 @@ def check_constraint_violation(
         return violations
     else:
         return None
-
-
-def _build_match(entity_type: Entity, label_str: str, alias: str = "e") -> str:
-    match entity_type:
-        case Entity.NODE:
-            return f"MATCH ({alias}:{label_str}) "
-        case Entity.RELATIONSHIP:
-            return f"MATCH ()-[{alias}:{label_str}]->() "
-        case default:
-            logger.error(f"Unknown entity : {default}")
-            return f"// Unknown entity {default}\nMATCH ({alias}:{label_str}) "
