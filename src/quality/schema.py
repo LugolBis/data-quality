@@ -11,6 +11,15 @@ from utils.utils import logger, some
 
 
 def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation]]:
+    """
+    Check if there is any **Node**/**Relationship** who's a `NULL` value on an indexed property.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The detailed report.
+    :rtype: list[ConstraintViolation] | None
+    """
+
     query: str = (
         "SHOW INDEXES "
         "YIELD entityType, labelsOrTypes, properties "
@@ -68,6 +77,15 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
 def check_constraint_violation(
     session: Neo4jSession,
 ) -> Optional[list[ConstraintViolation]]:
+    """
+    Check if there is any **Node**/**Relationship** constraint who's violated.\n
+    !!! CAUTION !!! : When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `ConstraintViolation.count` is the number of distinct pair of entity who violate the constraint.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The detailed report.
+    :rtype: list[ConstraintViolation] | None
+    """
     query: str = (
         "SHOW CONSTRAINTS "
         "YIELD type, entityType, labelsOrTypes, properties, ownedIndex, propertyType "

@@ -20,6 +20,28 @@ def check_string_format(
     multiline: bool = False,
     dotall: bool = False,
 ) -> Optional[list[TextFormat]]:
+    """
+    Check if there is any **Node**/**Relationship** who has one of `properties` who doesn't match the string `pattern`.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :param entity: Entity kind.
+    :type entity: Entity
+    :param label: Label or Type of the entity.
+    :type label: str
+    :param properties: Target properties.
+    :type properties: list[str]
+    :param pattern: Regular expression to match the target format.
+    :type pattern: re.Pattern
+    :param case_insensitive: `True` if case sensitivity doesn't matter.
+    :type case_insensitive: bool
+    :param multiline: `True` if multiline doesn't matter.
+    :type multiline: bool
+    :param dotall: `True` if dotall doesn't matter.
+    :type dotall: bool
+    :return: DescriptionThe detailed report.
+    :rtype: list[TextFormat] | None
+    """
     pattern_str: str = pattern.pattern
     flags: str = ""
 
