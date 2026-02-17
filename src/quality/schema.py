@@ -12,7 +12,7 @@ from utils.utils import logger, some
 def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation]]:
     query: str = (
         "SHOW INDEXES "
-        "YIELD Entity, labelsOrTypes, properties "
+        "YIELD entityType, labelsOrTypes, properties "
         "WHERE labelsOrTypes IS NOT NULL and properties IS NOT NULL "
         "RETURN * "
     )
