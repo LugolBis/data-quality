@@ -6,6 +6,13 @@ from quality.enums import Constraint, Degree, Entity
 
 
 @dataclass
+class MultiGraphEdges:
+    label_from: str
+    label_to: str
+    relationships: list[str]
+
+
+@dataclass
 class Statistics:
     count: int
     limits: Tuple[float, float]

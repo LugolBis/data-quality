@@ -5,8 +5,8 @@ from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Degree
-from quality.types import NodeDegrees, Statistics
-from quality.utils import _compute_statistics
+from quality.types import MultiGraphEdges, NodeDegrees, Statistics
+from quality.utils import _compute_statistics, _format_label
 from utils.utils import some
 
 
@@ -43,9 +43,37 @@ def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
         return None
 
 
+def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdges]]:
+    query: str = (
+        "MATCH (n1)-[r]->(n2) "
+        "WITH n1, n2, collect(type(r)) AS relationships "
+        "WHERE size(relationships) > 1 "
+        "RETURN labels(n1) AS labels_from, labels(n2) AS labels_to, relationships "
+    )
+
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df()
+
+    df["labels_from"] = df["labels_from"].apply(_format_label)
+    df["labels_to"] = df["labels_to"].apply(_format_label)
+
+    edges: list[MultiGraphEdges] = []
+    for idx, row in df.iterrows():
+        label_from: str = row["labels_from"]
+        label_to: str = row["labels_to"]
+        relationships: list[str] = row["relationships"]
+
+        edges.append(MultiGraphEdges(label_from, label_to, relationships))
+
+    if len(edges) > 0:
+        return edges
+    else:
+        return None
+
+
 def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDegrees]]:
     df: pd.DataFrame = result.to_df()
-    df["label"] = df["label"].apply(lambda x: "&".join(sorted(x)))
+    df["label"] = df["label"].apply(_format_label)
 
     df_aggregated: pd.DataFrame = pd.DataFrame(
         df.groupby("label", as_index=False)["degree"].agg(list)
