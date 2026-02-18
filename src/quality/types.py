@@ -1,5 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
+from typing import Set, Tuple
 
 from quality.enums import Constraint, Entity
 
@@ -31,6 +32,7 @@ class EntityStats:
 
 @dataclass
 class TextSimilarity:
+    entity: Entity
     label: str
     similarity: float
     property: str
@@ -63,11 +65,11 @@ class Violation(ABC):
 
 @dataclass
 class PairPropertiesType(Violation):
+    property: str
+    types: Set[Tuple[str, str]]
+
     def __repr__(self) -> str:
-        return (
-            super().__repr__()
-            + " of Inconsistant properties type between pairs of entities."
-        )
+        return super().__repr__() + f" | {self.property}\n\t{self.types}"
 
 
 @dataclass

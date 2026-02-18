@@ -6,8 +6,8 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
-from quality.types import EntityStats, EntityProperties, TextSimilarity
 from quality.enums import Entity
+from quality.types import EntityProperties, EntityStats, TextSimilarity
 from utils.utils import logger
 
 
@@ -62,7 +62,12 @@ def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]
             # print(f"   -> {props} : {count} ({percent:.1f}%)")
 
         analysis.append(
-            EntityStats(entity=Entity.NODE, label=label_str, count=total_nodes, properties=properties)
+            EntityStats(
+                entity=Entity.NODE,
+                label=label_str,
+                count=total_nodes,
+                properties=properties,
+            )
         )
 
     # print("\n" + "=" * 60)
@@ -110,7 +115,14 @@ def distr_relationships_properties(
 
             properties.append(EntityProperties(props, count, percent))
 
-        analysis.append(EntityStats(entity=Entity.RELATIONSHIP, label=r_type, count=total, properties=properties))
+        analysis.append(
+            EntityStats(
+                entity=Entity.RELATIONSHIP,
+                label=r_type,
+                count=total,
+                properties=properties,
+            )
+        )
 
     return analysis
 
@@ -169,13 +181,15 @@ def detecter_doublons_node(
                         if len(val1) < 3 or len(val2) < 3:
                             continue
 
-                        if val1 == val2: continue
+                        if val1 == val2:
+                            continue
 
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
                             detected.append(
                                 TextSimilarity(
+                                    entity=Entity.NODE,
                                     label=label_str,
                                     similarity=similarity,
                                     property=key,
@@ -200,6 +214,7 @@ def detecter_doublons_node(
 
         return sorted(detected, key=lambda x: x.similarity, reverse=True)
 
+
 def detecter_doublons_relationships(
     session: Neo4jSession, seuil_similarite: float = 0.8
 ) -> Optional[list[TextSimilarity]]:
@@ -210,7 +225,7 @@ def detecter_doublons_relationships(
     :param session: The Neo4j session wrapper.
     :param seuil_similarite: Similarity threshold between 0 and 1.
     """
-    
+
     query = (
         "MATCH ()-[r]->() "
         "RETURN elementId(r) as ID, type(r) as Type, properties(r) as Props "
@@ -249,16 +264,17 @@ def detecter_doublons_relationships(
                     if isinstance(val1, str) and isinstance(val2, str):
                         if len(val1) < 3 or len(val2) < 3:
                             continue
-                        
-                        if val1 == val2: continue
-                        
+
+                        if val1 == val2:
+                            continue
+
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
                             detected.append(
                                 TextSimilarity(
-                                    entity=Entity.RELATIONSHIP,  
-                                    label=r_type,              
+                                    entity=Entity.RELATIONSHIP,
+                                    label=r_type,
                                     similarity=similarity,
                                     property=key,
                                     first_value=val1,
