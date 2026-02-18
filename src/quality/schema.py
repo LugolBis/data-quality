@@ -6,7 +6,7 @@ from neo4j import Record, Result
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Constraint, Entity
 from quality.types import ConstraintViolation, IndexViolation
-from quality.utils import _build_match
+from quality.utils import _build_match, _format_label
 from utils.utils import logger, some
 
 
@@ -30,7 +30,7 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
     result: Result = session.run_query(query)
     df: pd.DataFrame = result.to_df()
 
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(lambda x: "&".join(x))
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(_format_label)
     df_exploded: pd.DataFrame = df.explode("properties")
 
     df_grouped: pd.DataFrame = pd.DataFrame(
@@ -89,7 +89,7 @@ def check_constraint_violation(
     df: pd.DataFrame = result.to_df()
 
     df["type"] = df["type"].apply(lambda x: x.split("_")[-1])
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(lambda x: "&".join(x))
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(_format_label)
 
     violations: list[ConstraintViolation] = []
     for idx, row in df.iterrows():

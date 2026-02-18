@@ -1,5 +1,5 @@
 from math import nan, sqrt
-from typing import Optional
+from typing import Iterable, Optional
 
 from quality.enums import Entity
 from quality.types import Statistics
@@ -15,6 +15,10 @@ def _build_match(entity_type: Entity, label_str: str, alias: str = "e") -> str:
         case default:
             logger.error(f"Unknown entity : {default}")
             return f"// Unknown entity {default}\nMATCH ({alias}:{label_str}) "
+
+
+def _format_label(iterable: Iterable[str]) -> str:
+    return "&".join(sorted(iterable))
 
 
 def _compute_statistics(data: list[int | float]) -> Optional[Statistics]:

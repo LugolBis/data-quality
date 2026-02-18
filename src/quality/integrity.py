@@ -8,6 +8,7 @@ from neo4j import Result
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Entity
 from quality.types import EntityProperties, EntityStats, TextSimilarity
+from quality.utils import _format_label
 from utils.utils import logger
 
 
@@ -45,7 +46,7 @@ def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]
     for label_tuple in labels_uniques:
         groupe: pd.DataFrame = df[df["Label_Combo"] == label_tuple]
         total_nodes: int = groupe["Nombre"].sum()
-        label_str: str = "&".join(label_tuple)
+        label_str: str = _format_label(label_tuple)
 
         properties: list[EntityProperties] = []
 
@@ -157,7 +158,7 @@ def detecter_doublons_node(
     # print(f"   -> {len(nodes)} noeuds chargés, répartis en {len(groups)} groupes de labels.")
 
     for label_key, group_nodes in groups.items():
-        label_str = "&".join(label_key)
+        label_str = _format_label(label_key)
         n_count = len(group_nodes)
 
         if n_count < 2:

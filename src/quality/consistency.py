@@ -8,6 +8,7 @@ from driver.neo4j_driver import Neo4jSession
 from quality.enums import Entity
 from quality.schema import _build_match
 from quality.types import PairPropertiesType, TextFormat
+from quality.utils import _format_label
 from utils.utils import some
 
 
@@ -116,7 +117,7 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
         label: str
         match entity:
             case Entity.NODE:
-                label = "&".join(row["label"])
+                label = _format_label(row["label"])
             case Entity.RELATIONSHIP:
                 label = str(row["label"]).split(":")[-1].replace("`", "")
 
