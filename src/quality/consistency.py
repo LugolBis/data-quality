@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, Set, Tuple
 
 import pandas as pd
 from neo4j import Record, Result
@@ -81,6 +81,15 @@ def check_string_format(
 
 
 def check_properties_type(session: Neo4jSession) -> Optional[list[PairPropertiesType]]:
+    """
+    Check if there is any pair of **Node**/**Relationship** who has one property with different type.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The list of pair who has one or more shared properties with different type.
+    :rtype: list[PairPropertiesType] | None
+    """
+
     query: str = (
         "CALL () { "
         "CALL db.schema.nodeTypeProperties() "
@@ -111,32 +120,38 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
             case Entity.RELATIONSHIP:
                 label = str(row["label"]).split(":")[-1].replace("`", "")
 
-        sub_query: str = (
-            f"WITH {properties} AS requiredProps "
-            f"{_build_match(entity, label, 'e1')} "
-            f"{_build_match(entity, label, 'e2')} "
-            "WHERE elementId(e1) < elementId(e2) "
-            "WITH e1, e2, "
-            "any( p IN requiredProps"
-            "   WHERE e1[p] IS NOT NULL AND e2[p] IS NOT NULL "
-            f"  AND (SPLIT(valueType(e1[p]), ' ')[0] <> SPLIT(valueType(e2[p]), ' ')[0])"
-            ") AS is_invalid "
-            "RETURN COUNT(*) AS count, "
-            "COUNT(CASE WHEN is_invalid THEN 1 END) AS invalid"
+        query_sub: str = (
+            f"{_build_match(entity, label, 'e')} \n"
+            "WITH collect(e) AS entities, COUNT(e) AS total_entities \n"
+            "UNWIND entities AS e1 \n"
+            "UNWIND entities AS e2 \n"
+            "WITH e1, e2, \n"
+            "   (total_entities * (total_entities - 1)) / 2 AS count \n"
+            "WHERE elementId(e1) < elementId(e2) \n"
+            f"UNWIND {properties} AS property \n"
+            "WITH e1, e2, count, property, \n"
+            "   e1[property] AS v1, e2[property] AS v2 \n"
+            "WHERE v1 IS NOT NULL AND v2 IS NOT NULL \n"
+            "   AND SPLIT(valueType(v1), ' ')[0] <> SPLIT(valueType(v2), ' ')[0] \n"
+            "WITH property, count, [SPLIT(valueType(v1), ' ')[0], SPLIT(valueType(v2), ' ')[0]] AS types \n"
+            "RETURN property, count, COUNT(*) AS invalid, collect(DISTINCT types) AS type_pairs \n"
         )
 
-        print(sub_query)
+        result_sub: Result = session.run_query(query_sub)  # type: ignore
+        df_sub: pd.DataFrame = result_sub.to_df()
 
-        sub_result: Result = session.run_query(sub_query)  # type: ignore
-        sub_row: Optional[Record] = sub_result.single()
-
-        if some(sub_row):
-            count: int = sub_row["count"]
-            invalid: int = sub_row["invalid"]
+        for idx, row_sub in df_sub.iterrows():
+            invalid: int = row_sub["invalid"]
 
             if invalid > 0:
+                count: int = row_sub["count"]
+                property: str = row_sub["property"]
+                types: Set[Tuple[str, str]] = {
+                    tuple(sorted(types)) for types in row_sub["type_pairs"]
+                }
+
                 inconsistencies.append(
-                    PairPropertiesType(entity, label, count, invalid)
+                    PairPropertiesType(entity, label, count, invalid, property, types)
                 )
 
     if len(inconsistencies) > 0:
