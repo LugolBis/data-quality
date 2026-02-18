@@ -2,7 +2,28 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Set, Tuple
 
-from quality.enums import Constraint, Entity
+from quality.enums import Constraint, Degree, Entity
+
+
+@dataclass
+class Statistics:
+    count: int
+    limits: Tuple[float, float]
+    sum_: float
+    average: float
+    median: float
+    variance: float
+    standard_deviation: float
+    q1: float
+    q2: float
+    q3: float
+
+
+@dataclass
+class NodeDegrees(Statistics):
+    label: str
+    degree: Degree
+    count: int
 
 
 @dataclass

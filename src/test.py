@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 import tests.consistency as consistency
 import tests.integrity as integrity
+import tests.lisibility as lisibility
 import tests.schema as schema
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import some
@@ -22,3 +23,4 @@ if __name__ == "__main__":
             integrity.main(session)
             schema.main(session)
             consistency.main(session)
+            lisibility.main(session)
