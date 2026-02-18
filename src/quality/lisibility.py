@@ -1,13 +1,14 @@
+import math
 from typing import Optional
 
 import pandas as pd
-from neo4j import Result
+from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import Degree
 from quality.types import MultiGraphEdges, NodeDegrees, Statistics
 from quality.utils import _compute_statistics, _format_label
-from utils.utils import some
+from utils.utils import logger, some
 
 
 def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
@@ -69,6 +70,42 @@ def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdg
         return edges
     else:
         return None
+
+
+def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
+    _create_gds_graph(session, gds_graph_name)
+
+    query: str = (
+        "MATCH (n) "
+        "CALL gds.allShortestPaths.dijkstra.stream( "
+        f"  '{gds_graph_name}', "
+        "   { sourceNode: n } "
+        ") YIELD totalCost "
+        "WITH n, MAX(totalCost) AS distant "
+        "WHERE distant > 0 "
+        "RETURN max(distant) as diameter"
+    )
+
+    try:
+        print(query)
+
+        result: Result = session.run_query(query)  # type: ignore
+        row: Optional[Record] = result.single()
+
+        if some(row):
+            return row["diameter"]
+    except Exception as error:
+        logger.error(error)
+
+    return math.nan
+
+
+def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
+    try:
+        session.run_query(f"CALL gds.graph.drop('{gds_graph_name}')")  # type: ignore
+        session.run_query(f"CALL gds.graph.project('{gds_graph_name}', '*', '*')")  # type: ignore
+    except Exception as error:
+        logger.error(error)
 
 
 def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDegrees]]:
