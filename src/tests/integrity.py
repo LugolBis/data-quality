@@ -4,7 +4,7 @@ from driver.neo4j_driver import Neo4jSession
 from quality.integrity import (
     distr_nodes_properties,
     distr_relationships_properties,
-    detecter_doublons,
+    detecter_doublons_node,
 )
 from quality.types import EntityStats, TextSimilarity
 from utils.utils import some
@@ -12,7 +12,7 @@ from utils.utils import some
 
 def main(session: Neo4jSession) -> None:
     properties: Optional[list[EntityStats]] = distr_nodes_properties(session)
-    similarities: Optional[list[TextSimilarity]] = detecter_doublons(
+    similarities: Optional[list[TextSimilarity]] = detecter_doublons_node(
         session, seuil_similarite=0.6
     )
     relationships: Optional[list[EntityStats]] = distr_relationships_properties(session)

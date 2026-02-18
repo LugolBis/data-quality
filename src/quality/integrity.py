@@ -115,7 +115,7 @@ def distr_relationships_properties(
     return analysis
 
 
-def detecter_doublons(
+def detecter_doublons_node(
     session: Neo4jSession, seuil_similarite: float = 0.8
 ) -> Optional[list[TextSimilarity]]:
     """
@@ -168,6 +168,9 @@ def detecter_doublons(
                     if isinstance(val1, str) and isinstance(val2, str):
                         if len(val1) < 3 or len(val2) < 3:
                             continue
+
+                        if val1 == val2: continue
+
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
@@ -247,7 +250,8 @@ def detecter_doublons_relationships(
                         if len(val1) < 3 or len(val2) < 3:
                             continue
                         
-
+                        if val1 == val2: continue
+                        
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
