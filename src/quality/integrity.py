@@ -115,7 +115,7 @@ def distr_relationships_properties(
     return analysis
 
 
-def detecter_doublons(
+def detecter_doublons_node(
     session: Neo4jSession, seuil_similarite: float = 0.8
 ) -> Optional[list[TextSimilarity]]:
     """
@@ -168,6 +168,9 @@ def detecter_doublons(
                     if isinstance(val1, str) and isinstance(val2, str):
                         if len(val1) < 3 or len(val2) < 3:
                             continue
+
+                        if val1 == val2: continue
+
                         similarity = SequenceMatcher(None, val1, val2).ratio()
 
                         if similarity >= seuil_similarite:
@@ -195,4 +198,75 @@ def detecter_doublons(
             print(f'       "{row["Value_1"]}"  <-->  "{row["Value_2"]}"')
         """
 
+        return sorted(detected, key=lambda x: x.similarity, reverse=True)
+
+def detecter_doublons_relationships(
+    session: Neo4jSession, seuil_similarite: float = 0.8
+) -> Optional[list[TextSimilarity]]:
+    """
+    [Relationship Duplicate Detection]
+    Scan all relationships to find potential duplicates based
+    on string property similarity using SequenceMatcher.
+    :param session: The Neo4j session wrapper.
+    :param seuil_similarite: Similarity threshold between 0 and 1.
+    """
+    
+    query = (
+        "MATCH ()-[r]->() "
+        "RETURN elementId(r) as ID, type(r) as Type, properties(r) as Props "
+    )
+
+    result: Result = session.run_query(query)
+    rels: list[dict[str, Any]] = [record.data() for record in result]
+
+    detected: list[TextSimilarity] = []
+
+    groups = defaultdict(list)
+    for r in rels:
+        type_key = r["Type"]
+        groups[type_key].append(r)
+
+    for r_type, group_rels in groups.items():
+        n_count = len(group_rels)
+
+        if n_count < 2:
+            continue
+
+        for i in range(n_count):
+            for j in range(i + 1, n_count):
+                r1 = group_rels[i]
+                r2 = group_rels[j]
+
+                props1 = r1["Props"]
+                props2 = r2["Props"]
+
+                common_keys = set(props1.keys()) & set(props2.keys())
+
+                for key in common_keys:
+                    val1 = props1[key]
+                    val2 = props2[key]
+
+                    if isinstance(val1, str) and isinstance(val2, str):
+                        if len(val1) < 3 or len(val2) < 3:
+                            continue
+                        
+                        if val1 == val2: continue
+                        
+                        similarity = SequenceMatcher(None, val1, val2).ratio()
+
+                        if similarity >= seuil_similarite:
+                            detected.append(
+                                TextSimilarity(
+                                    entity=Entity.RELATIONSHIP,  
+                                    label=r_type,              
+                                    similarity=similarity,
+                                    property=key,
+                                    first_value=val1,
+                                    second_value=val2,
+                                )
+                            )
+
+    if len(detected) == 0:
+        return None
+    else:
         return sorted(detected, key=lambda x: x.similarity, reverse=True)
