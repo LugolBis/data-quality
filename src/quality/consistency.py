@@ -84,13 +84,13 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
     query: str = (
         "CALL () { "
         "CALL db.schema.nodeTypeProperties() "
-        "YIELD nodeLabels, propertyName, propertyTypes "
-        "RETURN nodeLabels AS label, 'NODE' AS elementType, propertyName, propertyTypes AS type "
+        "YIELD nodeLabels, propertyName "
+        "RETURN nodeLabels AS label, 'NODE' AS elementType, propertyName "
         "UNION ALL "
         "CALL db.schema.relTypeProperties() "
-        "YIELD relType, propertyName, propertyTypes "
-        "RETURN relType AS label, 'RELATIONSHIP' AS elementType, propertyName, propertyTypes AS type "
-        "} RETURN label, elementType, type, collect(propertyName) AS properties "
+        "YIELD relType, propertyName "
+        "RETURN relType AS label, 'RELATIONSHIP' AS elementType, propertyName "
+        "} RETURN label, elementType, collect(propertyName) AS properties "
     )
 
     result: Result = session.run_query(query)
@@ -100,7 +100,6 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
     for idx, row in df.iterrows():
         entity: Entity = Entity(row["elementType"])
         properties: list[str] = row["properties"]
-        type: str = row["type"][0]
 
         if len(properties) == 0:
             continue
@@ -120,7 +119,7 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
             "WITH e1, e2, "
             "any( p IN requiredProps"
             "   WHERE e1[p] IS NOT NULL AND e2[p] IS NOT NULL "
-            f"   AND ((valueType(e1[p]) STARTS WITH '{type} ') <> (valueType(e2[p]) STARTS WITH '{type} '))"
+            f"  AND (SPLIT(valueType(e1[p]), ' ')[0] <> SPLIT(valueType(e2[p]), ' ')[0])"
             ") AS is_invalid "
             "RETURN COUNT(*) AS count, "
             "COUNT(CASE WHEN is_invalid THEN 1 END) AS invalid"
