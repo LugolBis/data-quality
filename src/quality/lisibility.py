@@ -101,21 +101,15 @@ def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
 
 
 def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
-    errors: list[Exception] = []
-
     try:
-        session.run_query(f"CALL gds.graph.drop('{gds_graph_name}')")  # type: ignore
+        session.run_query(f"CALL gds.graph.drop('{gds_graph_name}', false)")  # type: ignore
     except Exception as error:
-        errors.append(error)
+        logger.error(error)
 
     try:
         session.run_query(f"CALL gds.graph.project('{gds_graph_name}', '*', '*')")  # type: ignore
     except Exception as error:
-        errors.append(error)
-
-    if len(errors) > 1:
-        logger.error(f"Failed to DROP GDS Graph '{gds_graph_name}' : {errors[0]}")
-        logger.error(f"Failed to CREATE GDS Graph '{gds_graph_name}' : {errors[1]}")
+        logger.error(error)
 
 
 def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDegrees]]:
