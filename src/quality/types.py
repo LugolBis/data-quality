@@ -30,7 +30,6 @@ class Statistics:
 class NodeDegrees(Statistics):
     label: str
     degree: Degree
-    count: int
 
 
 @dataclass
