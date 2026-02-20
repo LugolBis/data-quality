@@ -62,7 +62,7 @@ def check_string_format(
         query: str = (
             f"{_build_match(entity, label)} "
             f"WITH e, e['{property}'] =~ '{pattern_str}' AS valid "
-            "RETURN COUNT(*) as count, COUNT(CASE WHEN valid THEN 1 END) AS invalid"
+            "RETURN COUNT(*) as count, COUNT(CASE WHEN NOT valid THEN 1 END) AS invalid"
         )
 
         result: Result = session.run_query(query)  # type: ignore
