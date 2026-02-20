@@ -1,36 +1,41 @@
-import pandas as pd
-from typing import Any, Optional
 from collections import defaultdict
+from typing import Any, Optional
+
+import pandas as pd
+from neo4j import Result
+
 from driver.neo4j_driver import Neo4jSession
-from utils.utils import logger
 from quality.types import NumericalOutlier, OutlierDetail
+from quality.utils import _format_label
+from utils.utils import logger
+
 
 def detecter_outliers_numeriques(
     session: Neo4jSession, z_score_threshold: float = 1.96
 ) -> Optional[list[NumericalOutlier]]:
     """
-    [Numerical Outliers] 
+    [Numerical Outliers]
     Calculer la moyenne, l'écart-type et l'intervalle de confiance.
     """
-    query = "MATCH (n) RETURN elementId(n) as ID, labels(n) as Labels, properties(n) as Props"
-    
+    query: str = "MATCH (n) RETURN elementId(n) as ID, labels(n) as Labels, properties(n) as Props"
+
     try:
-        result = session.run_query(query)
+        result: Result = session.run_query(query)
         nodes: list[dict[str, Any]] = [record.data() for record in result]
     except Exception as e:
         logger.error(f"Error fetching nodes for outliers: {e}")
         return None
 
-    groups = defaultdict(list)
+    groups: dict[str, list] = defaultdict(list)
     for node in nodes:
-        label_key = "&".join(sorted(node["Labels"]))
+        label_key = _format_label(node["Labels"])
         groups[label_key].append(node)
 
     detected_outliers: list[NumericalOutlier] = []
 
     for label_str, group_nodes in groups.items():
         numeric_data = defaultdict(dict)
-        
+
         for node in group_nodes:
             node_id = node["ID"]
             for key, val in node["Props"].items():
@@ -40,7 +45,7 @@ def detecter_outliers_numeriques(
         for prop, values_dict in numeric_data.items():
             if len(values_dict) < 3:
                 continue
-            
+
             s = pd.Series(values_dict)
             moyenne = float(s.mean())
             ecart_type = float(s.std())
@@ -55,10 +60,10 @@ def detecter_outliers_numeriques(
 
             if not outliers.empty:
                 details = [
-                    OutlierDetail(node_id=str(out_id), value=float(out_val)) 
+                    OutlierDetail(node_id=str(out_id), value=float(out_val))
                     for out_id, out_val in outliers.items()
                 ]
-                
+
                 detected_outliers.append(
                     NumericalOutlier(
                         label=label_str,
@@ -67,7 +72,7 @@ def detecter_outliers_numeriques(
                         std_dev=ecart_type,
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
-                        outliers=details
+                        outliers=details,
                     )
                 )
 
