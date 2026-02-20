@@ -144,8 +144,8 @@ def check_constraint_violation(
                 continue
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
-        print(result_label.data())
         first_row: Optional[Record] = result_label.single()
+
         if some(first_row):
             invalid: int = first_row["invalid"]
             count: int = first_row["count"]

@@ -5,14 +5,14 @@ from typing import Set, Tuple
 from quality.enums import Constraint, Degree, Entity
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class MultiGraphEdges:
     label_from: str
     label_to: str
     relationships: list[str]
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class Statistics:
     count: int
     limits: Tuple[float, float]
@@ -26,13 +26,13 @@ class Statistics:
     q3: float
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class NodeDegrees(Statistics):
     label: str
     degree: Degree
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class EntityProperties:
     names: list[str]
     count: int
@@ -42,7 +42,7 @@ class EntityProperties:
         return f"[{', '.join(self.names)}] |-> count={self.count} | percent={self.percent:.1f}%"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class EntityStats:
     entity: Entity
     label: str
@@ -57,7 +57,7 @@ class EntityStats:
                 return f"\n[{self.label}] | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class TextSimilarity:
     entity: Entity
     label: str
@@ -70,7 +70,7 @@ class TextSimilarity:
         return f"[{self.similarity:.2f}] | {self.label} -> {self.property}\n\t'{self.first_value}' <--> '{self.second_value}'"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class Violation(ABC):
     entity: Entity
     label: str
@@ -90,7 +90,7 @@ class Violation(ABC):
                 return f"Unknown entity : {default} - {self.label}) | count={self.count} -> {self.get_percent()}%"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class PairPropertiesType(Violation):
     property: str
     types: Set[Tuple[str, str]]
@@ -99,7 +99,7 @@ class PairPropertiesType(Violation):
         return super().__repr__() + f" | {self.property}\n\t{self.types}"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class TextFormat(Violation):
     property: str
 
@@ -107,13 +107,13 @@ class TextFormat(Violation):
         return super().__repr__() + f" of Text Format violation for {self.property}"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class IndexViolation(Violation):
     def __repr__(self) -> str:
         return super().__repr__() + " of Index violation"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class ConstraintViolation(Violation):
     constraint: Constraint
     properties: list[str]
@@ -125,7 +125,8 @@ class ConstraintViolation(Violation):
             + " of Constraint violation"
         )
 
-@dataclass
+
+@dataclass(slots=True, frozen=True, eq=False)
 class OutlierDetail:
     node_id: str
     value: float
@@ -133,7 +134,8 @@ class OutlierDetail:
     def __repr__(self) -> str:
         return f"NodeID: {self.node_id} | Value: {self.value}"
 
-@dataclass
+
+@dataclass(slots=True, frozen=True, eq=False)
 class NumericalOutlier:
     label: str
     property: str
@@ -141,12 +143,13 @@ class NumericalOutlier:
     std_dev: float
     lower_bound: float
     upper_bound: float
-    outliers: list[OutlierDetail] 
+    outliers: list[OutlierDetail]
 
     def __repr__(self) -> str:
         details = "\n\t\t".join([str(o) for o in self.outliers])
-        return (f"(:{self.label}) on property '{self.property}'\n"
-                f"Mean: {self.mean:.2f} | Std: {self.std_dev:.2f}\n"
-                f"Confidence Interval: [{self.lower_bound:.2f}, {self.upper_bound:.2f}]\n"
-                f"Outliers ({len(self.outliers)} found):\n{details}")
-
+        return (
+            f"(:{self.label}) on property '{self.property}'\n"
+            f"Mean: {self.mean:.2f} | Std: {self.std_dev:.2f}\n"
+            f"Confidence Interval: [{self.lower_bound:.2f}, {self.upper_bound:.2f}]\n"
+            f"Outliers ({len(self.outliers)} found):\n{details}"
+        )

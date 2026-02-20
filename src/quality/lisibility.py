@@ -1,4 +1,5 @@
 import math
+from dataclasses import asdict
 from typing import Optional
 
 import pandas as pd
@@ -87,8 +88,6 @@ def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
     )
 
     try:
-        print(query)
-
         result: Result = session.run_query(query)  # type: ignore
         row: Optional[Record] = result.single()
 
@@ -130,7 +129,9 @@ def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDe
         statistics: Optional[Statistics] = _compute_statistics(values)
 
         if some(statistics):
-            degrees.append(NodeDegrees(**vars(statistics), label=label, degree=degree))
+            degrees.append(
+                NodeDegrees(**asdict(statistics), label=label, degree=degree)
+            )
 
     if len(degrees) > 0:
         return degrees
