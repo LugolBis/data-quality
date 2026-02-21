@@ -1,4 +1,5 @@
 from dataclasses import asdict, is_dataclass
+from functools import partial
 from typing import Any, Callable, List, Optional
 from venv import logger
 
@@ -71,3 +72,17 @@ def _config_page(function: Callable[..., None]) -> dict[str, Any]:
         "title": title,
         "url_path": url_path,
     }
+
+
+def _lazy_render(call: Callable[..., Any], *args, **kwargs) -> Callable[[], Any]:
+    """
+    Wrap a Streamlit call into a lazy callable.
+
+    :param call: A streamlit function.
+    :type call: Callable[..., Any]
+    :param args: Parameters to be passed to to the Streamlit function.
+    :param kwargs: Extended parameters.
+    :return: A lazy Streamlit function with the arguments setted.
+    :rtype: Callable[[], Any]
+    """
+    return partial(call, *args, **kwargs)
