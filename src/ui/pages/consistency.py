@@ -1,11 +1,13 @@
 import re
 from typing import Optional
 
+import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
 from quality.consistency import check_properties_type, check_string_format
-from quality.types import Entity, PairPropertiesType, TextFormat
+from quality.enums import Entity
+from quality.types import PairPropertiesType, TextFormat
 from ui.utils import _to_dataframe
 
 
@@ -30,88 +32,118 @@ def _string_format() -> None:
 
     session = app_st["db_session"]
 
-    entity = st.selectbox(
-        "Choose the kind of Neo4j entity :",
-        options=list(Entity),
-        format_func=lambda e: e.name,
+    df: pd.DataFrame = pd.DataFrame(
+        {
+            "Entity": pd.Series(dtype="string"),
+            "Label(s) / Type": pd.Series(dtype="string"),
+            "Properties": pd.Series(dtype="string"),
+            "Pattern": pd.Series(dtype="string"),
+            "Ignore case": pd.Series(dtype="bool"),
+            "Multiline": pd.Series(dtype="bool"),
+            "Dotall": pd.Series(dtype="bool"),
+        }
     )
 
-    label = st.text_input(
-        "Label(s) / Type :",
-        help="You can select multiple labels by separate them with a '&' like in Neo4j queries.",
+    edited_df = st.data_editor(
+        df,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Entity": st.column_config.SelectboxColumn(
+                label="Entity",
+                help="Choose the kind of Neo4j entity.",
+                options=["NODE", "RELATIONSHIP"],
+                required=True,
+            ),
+            "Label(s) / Type": st.column_config.TextColumn(
+                "Label(s) / Type",
+                help="You can select multiple labels by separate them with a '&' like in Neo4j queries.",
+                required=True,
+            ),
+            "Properties": st.column_config.TextColumn(
+                "Properties",
+                help="Properties separated by a comma.",
+                required=True,
+            ),
+            "Regex Pattern": st.column_config.TextColumn(
+                "Pattern",
+                help="https://neo4j.com/docs/cypher-manual/current/expressions/predicates/string-operators/#regular-expressions",
+                required=True,
+            ),
+            "Ignore case": st.column_config.CheckboxColumn(
+                "Ignore case",
+                default=False,
+            ),
+            "Multiline": st.column_config.CheckboxColumn(
+                "Multiline",
+                default=False,
+            ),
+            "Dotall": st.column_config.CheckboxColumn(
+                "Dotall",
+                default=False,
+            ),
+        },
     )
-
-    properties_input = st.text_input(
-        "Properties (separated by a comma)", placeholder="name, age, ..."
-    )
-
-    properties = [p.strip() for p in properties_input.split(",") if p.strip()]
-
-    pattern_input = st.text_input(
-        "Regex pattern :",
-        placeholder=r"^[A-Z].*",
-        help="https://neo4j.com/docs/cypher-manual/current/expressions/predicates/string-operators/#regular-expressions",
-    )
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        case_insensitive = st.checkbox("Ignore case")
-
-    with col2:
-        multiline = st.checkbox("Multiline")
-
-    with col3:
-        dotall = st.checkbox("Dotall")
 
     button: bool = st.button("Analyse string format")
     if button:
-        if not pattern_input:
-            st.warning("Please enter a regex pattern.")
-            return None
-
-        try:
-            flags = 0
-            if case_insensitive:
-                flags |= re.IGNORECASE
-            if multiline:
-                flags |= re.MULTILINE
-            if dotall:
-                flags |= re.DOTALL
-
-            pattern = re.compile(pattern_input, flags)
-
-            with st.spinner("Analysis in progress..."):
-                results: Optional[list[TextFormat]] = check_string_format(
-                    session,
-                    entity,
-                    label,
-                    properties,
-                    pattern,
-                    case_insensitive,
-                    multiline,
-                    dotall,
+        analysis: list[TextFormat] = []
+        for idx, row in edited_df.iterrows():
+            try:
+                case_insensitive, multiline, dotall = (
+                    row["Ignore case"],
+                    row["Multiline"],
+                    row["Dotall"],
                 )
 
-            if not results:
-                st.success("There isn't any inconsistent data detected.")
-            else:
-                st.warning(f"There is {len(results)} inconsistant values :")
+                flags = 0
+                if case_insensitive:
+                    flags |= re.IGNORECASE
+                if multiline:
+                    flags |= re.MULTILINE
+                if dotall:
+                    flags |= re.DOTALL
 
-                st.dataframe(_to_dataframe(results), use_container_width=True)
+                entity = Entity(row["Entity"])
+                label = row["Label(s) / Type"]
+                properties = [
+                    p.strip() for p in row["Properties"].split(",") if p.strip()
+                ]
+                pattern = re.compile(row["Pattern"], flags)
 
-                explanation: str = (
-                    "How it works : column `count` is the number of entities of the Label(s) / Type. "
-                    "And the column `invalid` is the number of nodes with the property who's not NULL "
-                    "and don't match the format specified by the Regex pattern."
-                )
-                st.markdown(explanation)
+                with st.spinner("Analysis in progress..."):
+                    results: Optional[list[TextFormat]] = check_string_format(
+                        session,
+                        entity,
+                        label,
+                        properties,
+                        pattern,
+                        case_insensitive,
+                        multiline,
+                        dotall,
+                    )
 
-        except re.error as error:
-            st.error(f"Invalid Regex : {error}")
+                if results:
+                    analysis.extend(results)
 
-        except Exception as error:
-            st.exception(error)
+            except re.error as error:
+                st.error(f"Invalid Regex : {error}")
+
+            except Exception as error:
+                st.exception(error)
+
+        if len(analysis) == 0:
+            st.success("There isn't any inconsistent data detected.")
+        else:
+            st.warning(f"There is {len(analysis)} inconsistant values :")
+            st.dataframe(_to_dataframe(analysis), use_container_width=True)
+
+            explanation: str = (
+                "How it works : column `count` is the number of entities of the Label(s) / Type. "
+                "And the column `invalid` is the number of nodes with the property who's not NULL "
+                "and don't match the format specified by the Regex pattern."
+            )
+            st.markdown(explanation)
 
 
 def _properties_type() -> None:
