@@ -7,7 +7,8 @@ from streamlit import session_state as app_st
 
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
-from quality.types import PairPropertiesType, TextFormat
+from quality.types import TextFormat
+from ui.components import _static_analysis
 from ui.utils import _to_dataframe
 
 
@@ -147,27 +148,9 @@ def _string_format() -> None:
 
 
 def _properties_type() -> None:
-    st.markdown("#### Analysis properties type.")
-    st.markdown(
-        "Check if there is any pair of **Node**/**Relationship** who has one property with different type."
+    _static_analysis(
+        "#### Analysis properties type.",
+        "Check if there is any pair of **Node**/**Relationship** who has one property with different type.",
+        "Analyse properties type",
+        check_properties_type,
     )
-
-    session = app_st["db_session"]
-
-    button: bool = st.button("Analyse properties type")
-    if button:
-        try:
-            with st.spinner("Analysis in progress..."):
-                results: Optional[list[PairPropertiesType]] = check_properties_type(
-                    session
-                )
-
-            if not results:
-                st.success("There isn't any inconsistent data detected.")
-            else:
-                st.warning(f"There is {len(results)} inconsistant values :")
-
-                st.dataframe(_to_dataframe(results), use_container_width=True)
-
-        except Exception as error:
-            st.exception(error)
