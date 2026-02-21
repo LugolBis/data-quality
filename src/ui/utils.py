@@ -31,8 +31,22 @@ def _to_dataframe(
 
     # Explode columns if needed
     for col in flatten:
-        if col in df.columns:
+        if col not in df.columns:
+            continue
+
+        # If the column contains list[] it explode it first
+        if df[col].apply(lambda x: isinstance(x, list)).any():
             df = df.explode(col, ignore_index=True)
+
+        # If the column contains dict[] it expands keys as columns
+        if df[col].apply(lambda x: isinstance(x, dict)).any():
+            expanded = pd.json_normalize(df[col])  # type: ignore
+            expanded.columns = [f"{col}_{k}" for k in expanded.columns]
+
+            df = df.drop(columns=[col]).reset_index(drop=True)
+            expanded = expanded.reset_index(drop=True)
+
+            df = pd.concat([df, expanded], axis=1)
 
     return df
 
