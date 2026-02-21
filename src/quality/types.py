@@ -153,3 +153,9 @@ class NumericalOutlier:
             f"Confidence Interval: [{self.lower_bound:.2f}, {self.upper_bound:.2f}]\n"
             f"Outliers ({len(self.outliers)} found):\n{details}"
         )
+
+@dataclass
+class CentralityScore:
+    element_id: str
+    label: str
+    score: float
