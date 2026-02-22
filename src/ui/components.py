@@ -14,7 +14,7 @@ def _static_analysis(
     section_name: str,
     description: str,
     button_label: str,
-    func: Callable[..., Optional[list[Any]]],
+    func: Callable[..., Optional[Any]],
     func_args: dict[str, Any] | None = None,
     flatten: list[str] | None = None,
 ) -> None:
@@ -28,13 +28,13 @@ def _static_analysis(
     :param button_label: Text to be display on the button.
     :type button_label: str
     :param func: Analysis function.
-    :type func: Callable[..., Optional[list[Any]]]
+    :type func: Callable[..., Optional[Any]]
     :param func_args: If necessary arguments to the function.
     :type func_args: dict[str, Any] | None
     :param flatten: List of properties of the result of `func` who needs to be flatten to be converted as a `pandas.DataFrame`.
     :type flatten: list[str] | None
     """
-    key = f"_static_analysis_result_{func.__name__}"
+    key = f"_static_res_{func.__name__}"
 
     if func_args is None:
         func_args = {}
@@ -57,7 +57,7 @@ def _dynamic_analysis(
     description: str,
     button_label: str,
     lazy_renders: list[Callable[[], Any]],
-    func: Callable[..., Optional[list[Any]]],
+    func: Callable[..., Optional[Any]],
     func_args: dict[str, Any] | None = None,
     lazy_func_args: dict[str, str] | None = None,
     flatten: list[str] | None = None,
@@ -77,7 +77,7 @@ def _dynamic_analysis(
     :param lazy_renders: Description
     :type lazy_renders: list[Callable[[], Any]]
     :param func: Analysis function.
-    :type func: Callable[..., Optional[list[Any]]]
+    :type func: Callable[..., Optional[Any]]
     :param func_args: If necessary arguments to the function.
     :type func_args: dict[str, Any] | None
     :param lazy_func_args: Dict of lazy arguments who need to retrieved with `st.session_state[value]`. The keys needs to match the arguments of `func` and the value are used to retrieve them from the session state.
@@ -86,7 +86,7 @@ def _dynamic_analysis(
     :type flatten: list[str] | None
     Docstring for _dynamic_analysis
     """
-    key = f"_static_analysis_result_{func.__name__}"
+    key = f"_dynamic_res_{func.__name__}"
 
     st.markdown(section_name)
     st.markdown(description)
@@ -116,7 +116,7 @@ def _dynamic_analysis(
 def _button(
     button_label: str,
     key: str,
-    func: Callable[..., Optional[list[Any]]],
+    func: Callable[..., Optional[Any]],
     session: Neo4jSession,
     func_args: dict[str, Any],
 ) -> None:
