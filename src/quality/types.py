@@ -162,3 +162,14 @@ class CentralityScore:
     element_id: str
     label: str
     score: float
+
+
+@dataclass
+class LabelCentralityStats:
+    label: str
+    count: int
+    avg_score: float
+    max_score: float
+
+    def __repr__(self) -> str:
+        return f"(:{self.label}) | count={self.count} -> Avg Score: {self.avg_score:.4f} (Max: {self.max_score:.4f})"

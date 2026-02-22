@@ -5,7 +5,12 @@ import pandas as pd
 from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
-from quality.types import NumericalOutlier, OutlierDetail, CentralityScore
+from quality.types import (
+    NumericalOutlier,
+    OutlierDetail,
+    CentralityScore,
+    LabelCentralityStats,
+)
 from quality.utils import _format_label
 from utils.utils import logger
 
@@ -86,12 +91,11 @@ def detecter_outliers_numeriques(
     return detected_outliers if detected_outliers else None
 
 
-def mesurer_centralite_eigenvector(
+def measure_eigenvector_centrality(
     session: Neo4jSession,
 ) -> Optional[list[CentralityScore]]:
     """
     Check the graph topology and measure 'Eigenvector Centrality' with the Neo4j GDS plugin.
-    This helps identify the top 5 most influential/central nodes in the graph, which might indicate data skew or single points of failure.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
@@ -146,5 +150,76 @@ def mesurer_centralite_eigenvector(
 
     if len(scores) > 0:
         return scores
+    else:
+        return None
+
+
+def measure_average_centrality_by_label(
+    session: Neo4jSession,
+) -> Optional[list[LabelCentralityStats]]:
+    """
+    Check the graph topology and calculate the average 'Eigenvector Centrality' grouped by node labels.\n
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: A list containing the average and max centrality scores per label combination.
+    :rtype: list[LabelCentralityStats] | None
+    """
+    graph_name: str = "quality_analysis_graph_avg"
+    stats_list: list[LabelCentralityStats] = []
+
+    try:
+        drop_query: str = f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+        session.run_query(drop_query)
+
+        project_query: str = (
+            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName"
+        )
+        session.run_query(project_query)
+
+        agg_query: str = (
+            f"CALL gds.eigenvector.stream('{graph_name}') "
+            "YIELD nodeId, score "
+            "WITH gds.util.asNode(nodeId) AS n, score "
+            "RETURN labels(n) AS raw_labels, "
+            "       count(n) AS nodeCount, "
+            "       avg(score) AS avgScore, "
+            "       max(score) AS maxScore "
+            "ORDER BY avgScore DESC"
+        )
+        result: Result = session.run_query(agg_query)
+
+        for record in result:
+            raw_labels: list[str] = record["raw_labels"]
+            count: int = record["nodeCount"]
+            avg_score: float = float(record["avgScore"])
+            max_score: float = float(record["maxScore"])
+
+            label_str: str = "&".join(sorted(raw_labels)) if raw_labels else "UNLABELED"
+
+            stats_list.append(
+                LabelCentralityStats(
+                    label=label_str,
+                    count=count,
+                    avg_score=avg_score,
+                    max_score=max_score,
+                )
+            )
+
+    except Exception as error:
+        logger.error(f"GDS Execution Error (Average Centrality): {error}")
+        return None
+
+    finally:
+        try:
+            cleanup_query: str = (
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+            )
+            session.run_query(cleanup_query)
+        except Exception as cleanup_error:
+            logger.error(f"Failed to drop GDS graph memory: {cleanup_error}")
+
+    if len(stats_list) > 0:
+        return stats_list
     else:
         return None
