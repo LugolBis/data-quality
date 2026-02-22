@@ -13,6 +13,14 @@ from utils.utils import logger, some
 
 
 def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
+    """
+    Compute statistics of the nodes degree.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The computed statistics of node degree.
+    :rtype: list[NodeDegrees] | None
+    """
     degrees: list[NodeDegrees] = []
 
     query: str = (
@@ -46,6 +54,15 @@ def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
 
 
 def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdges]]:
+    """
+    Retrieves the information of **Nodes** and **Relationships** who form a *Multi Graph*.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: A list of the edges and vertex who form a multigraph.
+    :rtype: list[MultiGraphEdges] | None
+    """
+
     query: str = (
         "MATCH (n1)-[r]->(n2) "
         "WITH n1, n2, collect(type(r)) AS relationships "
@@ -74,6 +91,16 @@ def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdg
 
 
 def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
+    """
+    Compute Graph diameter.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :param gds_graph_name: Name for the GDS graph.
+    :type gds_graph_name: str
+    :return: The graph diameter or `NaN` value if the computations failed.
+    :rtype: float
+    """
     _create_gds_graph(session, gds_graph_name)
 
     query: str = (
@@ -100,6 +127,14 @@ def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
 
 
 def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
+    """
+    Drop and Project a GDS graph.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :param gds_graph_name: Name for the GDS graph.
+    :type gds_graph_name: str
+    """
     try:
         session.run_query(f"CALL gds.graph.drop('{gds_graph_name}', false)")  # type: ignore
     except Exception as error:
@@ -112,6 +147,16 @@ def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
 
 
 def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDegrees]]:
+    """
+    Compute node degree.
+
+    :param result: Cypher query result.
+    :type result: Result
+    :param degree: Specify if the degree is `incoming` or `outcoming`.
+    :type degree: Degree
+    :return: A list of nodes degree.
+    :rtype: list[NodeDegrees] | None
+    """
     df: pd.DataFrame = result.to_df()
     df["label"] = df["label"].apply(_format_label)
 
