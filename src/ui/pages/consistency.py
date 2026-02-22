@@ -151,6 +151,5 @@ def _properties_type() -> None:
     _static_analysis(
         "#### Analysis properties type.",
         "Check if there is any pair of **Node**/**Relationship** who has one property with different type.",
-        "Analyse properties type",
         check_properties_type,
     )

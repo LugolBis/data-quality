@@ -22,7 +22,6 @@ def _node_degree() -> None:
     _static_analysis(
         "#### Distribution of **Nodes** degree.",
         "Compute statistics of the nodes degree.",
-        "Analyse",
         distr_node_degree,
     )
 
@@ -44,4 +43,4 @@ def _graph_diameter() -> None:
     )
 
     stored = st.session_state[key]
-    st.markdown("|  " + str(stored["data"]) + "  |")
+    st.metric("Graph Diameter", stored["data"], border=True)

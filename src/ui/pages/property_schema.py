@@ -26,7 +26,6 @@ def _constraint() -> None:
     _static_analysis(
         "#### Analyse constraint integrity",
         description,
-        "Analyse",
         check_constraint_violation,
     )
 
@@ -35,6 +34,5 @@ def _index() -> None:
     _static_analysis(
         "#### Analyse index integrity",
         "Check if there is any **Node**/**Relationship** who has a `NULL` value on an indexed property.",
-        "Analyse",
         check_index_violation,
     )

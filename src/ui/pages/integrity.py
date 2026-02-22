@@ -42,7 +42,6 @@ def _nodes_duplicates() -> None:
     _dynamic_analysis(
         "#### Detection of duplicate **Nodes**.",
         "Scan all nodes to find potential duplicates based on string property similarity using SequenceMatcher.",
-        "Analyse nodes duplicates",
         lazy_renders=[lazy_render],
         func=detecter_doublons_node,
         lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
@@ -61,7 +60,6 @@ def _relationships_duplicates() -> None:
     _dynamic_analysis(
         "#### Detection of duplicate **Relationships**.",
         "Scan all relationships to find potential duplicates based on string property similarity using SequenceMatcher.",
-        "Analyse relationships duplicates",
         lazy_renders=[lazy_render],
         func=detecter_doublons_relationships,
         lazy_func_args={
@@ -74,7 +72,6 @@ def _nodes_properties() -> None:
     _static_analysis(
         "#### Analysis distribution of **Node** properties.",
         "Analyze if nodes with the same label combination share the exact same set of property keys.",
-        "Analyse nodes properties type.",
         distr_nodes_properties,
         flatten=["properties"],
     )
@@ -84,7 +81,6 @@ def _rel_properties() -> None:
     _static_analysis(
         "#### Analysis distribution of **Relationship** properties.",
         "Analyze if relationship with the same type share the exact same set of property keys.",
-        "Analyse relationships properties type.",
         distr_relationships_properties,
         flatten=["properties"],
     )

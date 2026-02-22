@@ -13,10 +13,10 @@ from utils.utils import some
 def _static_analysis(
     section_name: str,
     description: str,
-    button_label: str,
     func: Callable[..., Optional[Any]],
     func_args: dict[str, Any] | None = None,
     flatten: list[str] | None = None,
+    button_label: str = "Analyse",
 ) -> None:
     """
     A Streamlit component for static analysis who needs to be persistent.
@@ -25,14 +25,14 @@ def _static_analysis(
     :type section_name: str
     :param description: Markdown text to describe the section.
     :type description: str
-    :param button_label: Text to be display on the button.
-    :type button_label: str
     :param func: Analysis function.
     :type func: Callable[..., Optional[Any]]
     :param func_args: If necessary arguments to the function.
     :type func_args: dict[str, Any] | None
     :param flatten: List of properties of the result of `func` who needs to be flatten to be converted as a `pandas.DataFrame`.
     :type flatten: list[str] | None
+    :param button_label: Text to be display on the button.
+    :type button_label: str
     """
     key = f"_static_res_{func.__name__}"
 
@@ -55,12 +55,12 @@ def _static_analysis(
 def _dynamic_analysis(
     section_name: str,
     description: str,
-    button_label: str,
     lazy_renders: list[Callable[[], Any]],
     func: Callable[..., Optional[Any]],
     func_args: dict[str, Any] | None = None,
     lazy_func_args: dict[str, str] | None = None,
     flatten: list[str] | None = None,
+    button_label: str = "Analyse",
 ) -> None:
     """
     A Streamlit component for dynamic analysis who needs to be persistent.\n
@@ -72,8 +72,6 @@ def _dynamic_analysis(
     :type section_name: str
     :param description: Markdown text to describe the section.
     :type description: str
-    :param button_label: Text to be display on the button.
-    :type button_label: str
     :param lazy_renders: Description
     :type lazy_renders: list[Callable[[], Any]]
     :param func: Analysis function.
@@ -84,7 +82,8 @@ def _dynamic_analysis(
     :type lazy_func_args: dict[str, str] | None
     :param flatten: List of properties of the result of `func` who needs to be flatten to be converted as a `pandas.DataFrame`.
     :type flatten: list[str] | None
-    Docstring for _dynamic_analysis
+    :param button_label: Text to be display on the button.
+    :type button_label: str
     """
     key = f"_dynamic_res_{func.__name__}"
 
