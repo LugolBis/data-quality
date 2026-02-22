@@ -5,7 +5,7 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from driver.neo4j_driver import Neo4jSession
-from ui.enums import AnalysisState
+from ui.enums import WidgetState
 from ui.utils import _to_dataframe
 from utils.utils import some
 
@@ -78,7 +78,7 @@ def _dynamic_analysis(
     :type func: Callable[..., Optional[Any]]
     :param func_args: If necessary arguments to the function.
     :type func_args: dict[str, Any] | None
-    :param lazy_func_args: Dict of lazy arguments who need to retrieved with `st.session_state[value]`. The keys needs to match the arguments of `func` and the value are used to retrieve them from the session state.
+    :param lazy_func_args: Dict of lazy arguments who need to retrieved with `app_st[value]`. The keys needs to match the arguments of `func` and the value are used to retrieve them from the session state.
     :type lazy_func_args: dict[str, str] | None
     :param flatten: List of properties of the result of `func` who needs to be flatten to be converted as a `pandas.DataFrame`.
     :type flatten: list[str] | None
@@ -115,43 +115,44 @@ def _dynamic_analysis(
 def _button(
     button_label: str,
     key: str,
-    func: Callable[..., Optional[Any]],
+    func: Callable[..., Any],
     session: Neo4jSession,
     func_args: dict[str, Any],
+    progress_message: str = "Analysis in progress...",
 ) -> None:
     # Initialize state
-    if key not in st.session_state:
-        st.session_state[key] = {
-            "state": AnalysisState.IDLE,
+    if key not in app_st:
+        app_st[key] = {
+            "state": WidgetState.IDLE,
             "data": None,
         }
 
     if st.button(button_label, key=f"{key}_button"):
         try:
-            with st.spinner("Analysis in progress..."):
+            with st.spinner(progress_message):
                 results = func(session, **func_args)
 
             if some(results):
-                st.session_state[key] = {
-                    "state": AnalysisState.SUCCESS,
+                app_st[key] = {
+                    "state": WidgetState.SUCCESS,
                     "data": results,
                 }
             else:
-                st.session_state[key] = {"state": AnalysisState.EMPTY, "data": None}
+                app_st[key] = {"state": WidgetState.EMPTY, "data": None}
         except Exception as error:
-            st.session_state[key] = {"state": AnalysisState.ERROR, "data": error}
+            app_st[key] = {"state": WidgetState.ERROR, "data": error}
 
 
 def _display_df(key: str, flatten: list[str]) -> None:
     # Persistent display
-    stored = st.session_state[key]
+    stored = app_st[key]
 
     match stored["state"]:
-        case AnalysisState.ERROR:
+        case WidgetState.ERROR:
             st.exception(stored["data"])
-        case AnalysisState.EMPTY:
+        case WidgetState.EMPTY:
             st.success("There isn't any data detected.")
-        case AnalysisState.SUCCESS:
+        case WidgetState.SUCCESS:
             df: Optional[pd.DataFrame] = _to_dataframe(
                 objects=stored["data"], flatten=flatten
             )

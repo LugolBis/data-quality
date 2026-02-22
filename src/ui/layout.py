@@ -6,6 +6,7 @@ from ui.pages import (
     consistency,
     integrity,
     lisibility,
+    load_data,
     log_in,
     outlier,
     property_schema,
@@ -21,6 +22,7 @@ def main() -> None:
     else:
         pages = [
             st.Page(**_config_page(log_in.render)),
+            st.Page(**_config_page(load_data.render)),
             st.Page(**_config_page(consistency.render)),
             st.Page(**_config_page(integrity.render)),
             st.Page(**_config_page(lisibility.render)),
