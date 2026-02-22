@@ -26,27 +26,30 @@ def _headers() -> None:
 def _main() -> None:
     key: str = "_load_data_result"
 
-    def clear_result(_):
+    def clear_result():
         app_st[key] = {"state": WidgetState.IDLE}
 
-    method = st.selectbox(
-        "Select the load method :",
-        ["Cypher script", ".dump file", "CSV file"],
-        key="_select_load_method",
-        help="Choose a method to perform a massive import.",
-        on_change=clear_result,
+    method: LoadMethod = LoadMethod(
+        st.selectbox(
+            "Select the load method :",
+            ["Cypher script", ".dump file", "CSV file"],
+            key="_select_load_method",
+            help="Choose a method to perform a massive import.",
+            on_change=clear_result,
+        )
     )
 
-    st.text_input(
-        "Enter the file path :",
-        key="_load_file_path",
-        placeholder="Enter the absolute file path of a single file.",
-    )
+    if method in (LoadMethod.DUMP, LoadMethod.SCRIPT):
+        st.text_input(
+            "Enter the file path :",
+            key="_load_file_path",
+            placeholder="Enter the absolute file path of a single file.",
+        )
 
     func: Callable[..., Any]
     func_args: dict[str, Any]
 
-    match LoadMethod(method):
+    match method:
         case LoadMethod.CSV:
             func, func_args = _from_csv()
         case LoadMethod.DUMP:
@@ -92,14 +95,14 @@ def _from_csv() -> Tuple[Callable[..., Any], dict[str, Any]]:
     col3, col4 = st.columns(2)
     with col3:
         func_args["overwrite_destination"] = st.checkbox(
-            "Overwrite destination :", value=True
+            "Overwrite destination", value=True
         )
 
     with col4:
-        func_args["verbose"] = st.checkbox("Verbose :", value=True)
+        func_args["verbose"] = st.checkbox("Verbose", value=True)
 
-    func_args["nodes_editor"] = _list_editor("Nodes files path", "_load_csv_nodes")
-    func_args["relationships_editor"] = _list_editor(
+    func_args["nodes"] = _list_editor("Nodes files path", "_load_csv_nodes")
+    func_args["relationships"] = _list_editor(
         "Relationships files path", "_load_csv_relationships"
     )
 
@@ -113,11 +116,11 @@ def _from_dump() -> Tuple[Callable[..., Any], dict[str, Any]]:
     col1, col2 = st.columns(2)
     with col1:
         func_args["overwrite_destination"] = st.checkbox(
-            "Overwrite destination :", value=True
+            "Overwrite destination", value=True
         )
 
     with col2:
-        func_args["verbose"] = st.checkbox("Verbose :", value=False)
+        func_args["verbose"] = st.checkbox("Verbose", value=False)
 
     if func_args["rename"].strip() == "":
         func_args["rename"] = None
@@ -129,15 +132,12 @@ def _from_dump() -> Tuple[Callable[..., Any], dict[str, Any]]:
 
 def _from_script() -> Tuple[Callable[..., Any], dict[str, Any]]:
     func_args: dict[str, Any] = dict()
-    col1, col2 = st.columns(2)
 
-    with col1:
-        func_args["new_db_name"] = st.text_input("[Optional] New database name :")
+    func_args["new_db_name"] = st.text_input("[Optional] New database name :")
 
-    with col2:
-        func_args["overwrite_destination"] = st.checkbox(
-            "Overwrite destination :", value=True
-        )
+    func_args["overwrite_destination"] = st.checkbox(
+        "Overwrite destination", value=True
+    )
 
     if func_args["new_db_name"].strip() == "":
         func_args["new_db_name"] = None
@@ -148,14 +148,18 @@ def _from_script() -> Tuple[Callable[..., Any], dict[str, Any]]:
 
 
 def _list_editor(label: str, key: str) -> list[str]:
-    if key not in st.session_state:
-        app_st[key] = pd.DataFrame({label: [""]})
-
     df = st.data_editor(
-        app_st[key], num_rows="dynamic", use_container_width=True, key=key
+        pd.DataFrame({label: [""]}),
+        num_rows="dynamic",
+        use_container_width=True,
+        key=key,
     )
 
-    return df[label].dropna().astype(str).str.strip().loc[lambda x: x != ""].tolist()
+    cleaned_list = (
+        df[label].dropna().astype(str).str.strip().loc[lambda x: x != ""].tolist()
+    )
+
+    return cleaned_list
 
 
 def _display_load(result: LoadResult) -> None:
