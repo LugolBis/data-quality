@@ -154,6 +154,7 @@ class NumericalOutlier:
             f"Outliers ({len(self.outliers)} found):\n{details}"
         )
 
+
 @dataclass
 class CentralityScore:
     element_id: str

@@ -123,7 +123,7 @@ def mesurer_centralite_eigenvector(
             node = record["node"]
             score: float = float(record["score"])
 
-            labels: str = "&".join(list(node.labels))
+            labels: str = _format_label(list(node.labels))
 
             display_name: str = str(
                 node.get("name") or node.get("title") or "<Unnamed>"
