@@ -12,7 +12,7 @@ from utils.utils import logger, some
 
 def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation]]:
     """
-    Check if there is any **Node**/**Relationship** who's a `NULL` value on an indexed property.
+    Check if there is any **Node**/**Relationship** who has a `NULL` value on an indexed property.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
@@ -59,7 +59,9 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
             count: int = first_row["count"]
 
             if invalid > 0:
-                violations.append(IndexViolation(entity, label, count, invalid))
+                violations.append(
+                    IndexViolation(entity, label, count, invalid, properties)
+                )
 
     if len(violations) > 0:
         return violations

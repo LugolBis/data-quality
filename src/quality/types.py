@@ -109,6 +109,8 @@ class TextFormat(Violation):
 
 @dataclass(slots=True, frozen=True, eq=False)
 class IndexViolation(Violation):
+    properties: list[str]
+
     def __repr__(self) -> str:
         return super().__repr__() + " of Index violation"
 

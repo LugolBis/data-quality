@@ -1,0 +1,40 @@
+import streamlit as st
+
+from quality.schema import check_constraint_violation, check_index_violation
+from ui.components import _static_analysis
+
+
+def render() -> None:
+    _headers()
+    st.divider()
+    _constraint()
+    st.divider()
+    _index()
+
+
+def _headers() -> None:
+    st.title("Property Schema")
+    st.markdown("#### Analysis of compliance with the property schema")
+
+
+def _constraint() -> None:
+    description: str = (
+        "Scan the database to search schema constraint violations.\n"
+        "When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `count` is the number of distinct pair of entity who violate the constraint."
+    )
+
+    _static_analysis(
+        "#### Analyse constraint integrity",
+        description,
+        "Analyse",
+        check_constraint_violation,
+    )
+
+
+def _index() -> None:
+    _static_analysis(
+        "#### Analyse index integrity",
+        "Check if there is any **Node**/**Relationship** who has a `NULL` value on an indexed property.",
+        "Analyse",
+        check_index_violation,
+    )
