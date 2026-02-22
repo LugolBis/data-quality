@@ -4,6 +4,8 @@ import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
+from driver.neo4j_driver import Neo4jSession
+from ui.enums import AnalysisState
 from ui.utils import _to_dataframe
 from utils.utils import some
 
@@ -45,33 +47,9 @@ def _static_analysis(
 
     session = app_st["db_session"]
 
-    # Initialize state
-    if key not in st.session_state:
-        st.session_state[key] = None
+    _button(button_label, key, func, session, func_args)
 
-    if st.button(button_label, key=f"{key}_button"):
-        try:
-            with st.spinner("Analysis in progress..."):
-                results = func(session, **func_args)
-
-            st.session_state[key] = results
-        except Exception as error:
-            st.session_state[key] = error
-
-    # Persistent display
-    stored = st.session_state[key]
-
-    if isinstance(stored, Exception):
-        st.exception(stored)
-    elif stored is not None:
-        if not stored:
-            st.success("There isn't any inconsistent data detected.")
-        else:
-            df: Optional[pd.DataFrame] = _to_dataframe(objects=stored, flatten=flatten)
-
-            if some(df):
-                st.warning("Result of the analysis:")
-                st.dataframe(df, use_container_width=True)
+    _display_df(key, flatten)
 
 
 def _dynamic_analysis(
@@ -130,30 +108,57 @@ def _dynamic_analysis(
     if flatten is None:
         flatten = []
 
+    _button(button_label, key, func, session, func_args)
+
+    _display_df(key, flatten)
+
+
+def _button(
+    button_label: str,
+    key: str,
+    func: Callable[..., Optional[list[Any]]],
+    session: Neo4jSession,
+    func_args: dict[str, Any],
+) -> None:
     # Initialize state
     if key not in st.session_state:
-        st.session_state[key] = None
+        st.session_state[key] = {
+            "state": AnalysisState.IDLE,
+            "data": None,
+        }
 
     if st.button(button_label, key=f"{key}_button"):
         try:
             with st.spinner("Analysis in progress..."):
                 results = func(session, **func_args)
 
-            st.session_state[key] = results
+            if some(results):
+                st.session_state[key] = {
+                    "state": AnalysisState.SUCCESS,
+                    "data": results,
+                }
+            else:
+                st.session_state[key] = {"state": AnalysisState.EMPTY, "data": None}
         except Exception as error:
-            st.session_state[key] = error
+            st.session_state[key] = {"state": AnalysisState.ERROR, "data": error}
 
+
+def _display_df(key: str, flatten: list[str]) -> None:
     # Persistent display
     stored = st.session_state[key]
 
-    if isinstance(stored, Exception):
-        st.exception(stored)
-    elif stored is not None:
-        if not stored:
-            st.success("There isn't any inconsistent data detected.")
-        else:
-            df: Optional[pd.DataFrame] = _to_dataframe(objects=stored, flatten=flatten)
+    match stored["state"]:
+        case AnalysisState.ERROR:
+            st.exception(stored["data"])
+        case AnalysisState.EMPTY:
+            st.success("There isn't any data detected.")
+        case AnalysisState.SUCCESS:
+            df: Optional[pd.DataFrame] = _to_dataframe(
+                objects=stored["data"], flatten=flatten
+            )
 
             if some(df):
                 st.warning("Result of the analysis:")
                 st.dataframe(df, use_container_width=True)
+        case _:
+            pass

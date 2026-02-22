@@ -155,7 +155,7 @@ class NumericalOutlier:
         )
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class CentralityScore:
     element_id: str
     label: str
