@@ -8,8 +8,8 @@ from streamlit import session_state as app_st
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
 from quality.types import TextFormat
+from quality.utils import _to_dataframe
 from ui.components import _static_analysis
-from ui.utils import _to_dataframe
 
 
 def render() -> None:

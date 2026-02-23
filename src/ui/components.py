@@ -5,8 +5,8 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from driver.neo4j_driver import Neo4jSession
+from quality.utils import _to_dataframe
 from ui.enums import WidgetState
-from ui.utils import _to_dataframe
 from utils.utils import some
 
 

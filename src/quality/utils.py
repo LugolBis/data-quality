@@ -1,5 +1,8 @@
+from dataclasses import asdict, is_dataclass
 from math import nan, sqrt
-from typing import Iterable, Optional
+from typing import Any, Iterable, List, Optional
+
+import pandas as pd
 
 from quality.enums import Entity
 from quality.types import Statistics
@@ -75,3 +78,49 @@ def _compute_median(sorted_values: list[int | float]) -> float:
             return sorted_values[mid]
     except IndexError:
         return nan
+
+
+def _to_dataframe(
+    objects: List[Any], flatten: List[str] = []
+) -> Optional[pd.DataFrame]:
+    """
+    Convert a list of Python `@dataclass` object into a `pandas.DataFrame`.
+
+    :param objects: A list of Python objects.
+    :type objects: List[Any]
+    :param flatten: The list of parameters/fields who needs to be flattened.
+    :type flatten: List[str]
+    :return: A `pandas.DataFrame`.
+    :rtype: DataFrame
+    """
+
+    if not objects:
+        return pd.DataFrame()
+
+    if not is_dataclass(objects[0]):
+        logger.error(f"The objects not contains @dataclass objects : {type(objects)}")
+        return None
+
+    records = [asdict(obj) for obj in objects]
+    df = pd.DataFrame(records)
+
+    # Explode columns if needed
+    for col in flatten:
+        if col not in df.columns:
+            continue
+
+        # If the column contains list[] it explode it first
+        if df[col].apply(lambda x: isinstance(x, list)).any():
+            df = df.explode(col, ignore_index=True)
+
+        # If the column contains dict[] it expands keys as columns
+        if df[col].apply(lambda x: isinstance(x, dict)).any():
+            expanded = pd.json_normalize(df[col])  # type: ignore
+            expanded.columns = [f"{col}_{k}" for k in expanded.columns]
+
+            df = df.drop(columns=[col]).reset_index(drop=True)
+            expanded = expanded.reset_index(drop=True)
+
+            df = pd.concat([df, expanded], axis=1)
+
+    return df
