@@ -3,8 +3,12 @@ from typing import Any, Callable
 import numpy as np
 import streamlit as st
 
-from quality.outlier import detecter_outliers_numeriques
-from ui.components import _dynamic_analysis
+from quality.outlier import (
+    detecter_outliers_numeriques,
+    measure_average_centrality_by_label,
+    measure_eigenvector_centrality,
+)
+from ui.components import _dynamic_analysis, _static_analysis
 from ui.utils import _lazy_render
 
 
@@ -12,6 +16,10 @@ def render() -> None:
     _headers()
     st.divider()
     _numeric()
+    st.divider()
+    _outliers_centrality()
+    st.divider()
+    _avg_centrality()
 
 
 def _headers() -> None:
@@ -35,4 +43,20 @@ def _numeric() -> None:
         func=detecter_outliers_numeriques,
         lazy_func_args={"z_score_threshold": "_outlier_z_score_threshold"},
         flatten=["outliers"],
+    )
+
+
+def _outliers_centrality() -> None:
+    _static_analysis(
+        "#### Detection of **Nodes** outliers based on their `Eigenvector Centrality` score.",
+        "The `Eigenvector Centrality` is a measure of the influence of a node in a connected network.",
+        measure_eigenvector_centrality,
+    )
+
+
+def _avg_centrality() -> None:
+    _static_analysis(
+        "#### Analyze `Eigenvector Centrality` of **Nodes**.",
+        "Check the graph topology and calculate the average Eigenvector Centrality grouped by node labels.",
+        measure_average_centrality_by_label,
     )
