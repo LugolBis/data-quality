@@ -1,6 +1,5 @@
 from typing import Any, Callable
 
-import numpy as np
 import streamlit as st
 
 from quality.integrity import (
@@ -11,6 +10,30 @@ from quality.integrity import (
 )
 from ui.components import _dynamic_analysis, _static_analysis
 from ui.utils import _lazy_render
+
+SIMILARITY_SLIDER = (
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0,
+)
 
 
 def render() -> None:
@@ -34,7 +57,7 @@ def _nodes_duplicates() -> None:
     lazy_render: Callable[[], Any] = _lazy_render(
         st.select_slider,
         label="Select nodes similarity threshold :",
-        options=np.arange(0, 1.05, 0.05).tolist(),
+        options=SIMILARITY_SLIDER,
         value=0.5,
         key="_integrity_nodes_duplicates_treshold",
     )
@@ -52,7 +75,7 @@ def _relationships_duplicates() -> None:
     lazy_render: Callable[[], Any] = _lazy_render(
         st.select_slider,
         label="Select relationships similarity threshold :",
-        options=np.arange(0, 1.05, 0.05).tolist(),
+        options=SIMILARITY_SLIDER,
         value=0.8,
         key="_integrity_relationships_duplicates_treshold",
     )

@@ -1,6 +1,5 @@
 from typing import Any, Callable
 
-import numpy as np
 import streamlit as st
 
 from quality.outlier import (
@@ -10,6 +9,8 @@ from quality.outlier import (
 )
 from ui.components import _dynamic_analysis, _static_analysis
 from ui.utils import _lazy_render
+
+THRESHOLD_SLIDER = tuple(round(0.05 * x, 2) for x in range(-60, 61))
 
 
 def render() -> None:
@@ -31,7 +32,7 @@ def _numeric() -> None:
     lazy_render: Callable[[], Any] = _lazy_render(
         st.select_slider,
         label="Select property Z-Score threshold :",
-        options=np.arange(-3, 3.05, 0.05).tolist(),
+        options=THRESHOLD_SLIDER,
         value=1.95,
         key="_outlier_z_score_threshold",
     )
