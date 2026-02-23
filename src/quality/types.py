@@ -164,7 +164,7 @@ class CentralityScore:
     score: float
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class LabelCentralityStats:
     label: str
     count: int
@@ -173,3 +173,18 @@ class LabelCentralityStats:
 
     def __repr__(self) -> str:
         return f"(:{self.label}) | count={self.count} -> Avg Score: {self.avg_score:.4f} (Max: {self.max_score:.4f})"
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class QualityScore:
+    valid: int
+    total: int
+
+    def __add__(self, other: QualityScore) -> QualityScore:
+        return QualityScore(self.valid + other.valid, self.total + other.total)
+
+    def __repr__(self) -> str:
+        return f"{self.valid}\n_  is valid\n{self.total}"
+
+    def percent(self) -> str:
+        return f"{(self.valid / self.total) * 100:.2f}%"
