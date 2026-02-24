@@ -13,7 +13,7 @@ from utils.utils import some
 def main(session: Neo4jSession) -> None:
     degrees: Optional[list[NodeDegrees]] = distr_node_degree(session)
     edges: Optional[list[MultiGraphEdges]] = check_multigraph_edges(session)
-    diameter: float = compute_graph_diameter(session, "gds_graph")
+    diameter: float = compute_graph_diameter(session)
 
     if some(degrees):
         print("\n".join([d.__repr__() for d in degrees]))

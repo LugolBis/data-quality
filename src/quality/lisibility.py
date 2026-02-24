@@ -90,7 +90,7 @@ def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdg
         return None
 
 
-def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
+def compute_graph_diameter(session: Neo4jSession) -> float:
     """
     Compute Graph diameter.
 
@@ -101,6 +101,7 @@ def compute_graph_diameter(session: Neo4jSession, gds_graph_name: str) -> float:
     :return: The graph diameter or `NaN` value if the computations failed.
     :rtype: float
     """
+    gds_graph_name: str = "analysis_graph_diameter"
     _create_gds_graph(session, gds_graph_name)
 
     query: str = (
