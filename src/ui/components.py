@@ -5,6 +5,8 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from driver.neo4j_driver import Neo4jSession
+from quality.evaluate import ratio
+from quality.types import QualityScore
 from quality.utils import _to_dataframe
 from ui.enums import WidgetState
 from utils.utils import some
@@ -112,6 +114,29 @@ def _dynamic_analysis(
     _display_df(key, flatten)
 
 
+def _button_call(
+    key: str,
+    func: Callable[..., Any],
+    session: Neo4jSession,
+    func_args: dict[str, Any],
+    progress_message: str,
+) -> None:
+    try:
+        with st.spinner(progress_message):
+            results = func(session, **func_args)
+
+        if some(results):
+            app_st[key] = {
+                "state": WidgetState.SUCCESS,
+                "data": results,
+            }
+        else:
+            app_st[key] = {"state": WidgetState.EMPTY, "data": None}
+
+    except Exception as error:
+        app_st[key] = {"state": WidgetState.ERROR, "data": error}
+
+
 def _button(
     button_label: str,
     key: str,
@@ -128,37 +153,39 @@ def _button(
         }
 
     if st.button(button_label, key=f"{key}_button"):
-        try:
-            with st.spinner(progress_message):
-                results = func(session, **func_args)
-
-            if some(results):
-                app_st[key] = {
-                    "state": WidgetState.SUCCESS,
-                    "data": results,
-                }
-            else:
-                app_st[key] = {"state": WidgetState.EMPTY, "data": None}
-        except Exception as error:
-            app_st[key] = {"state": WidgetState.ERROR, "data": error}
+        _button_call(key, func, session, func_args, progress_message)
 
 
 def _display_df(key: str, flatten: list[str]) -> None:
     # Persistent display
-    stored = app_st[key]
 
-    match stored["state"]:
+    match app_st[key]["state"]:
         case WidgetState.ERROR:
-            st.exception(stored["data"])
+            st.exception(app_st[key]["data"])
         case WidgetState.EMPTY:
             st.success("There isn't any data detected.")
         case WidgetState.SUCCESS:
-            df: Optional[pd.DataFrame] = _to_dataframe(
-                objects=stored["data"], flatten=flatten
-            )
+            if not isinstance(app_st[key]["data"], pd.DataFrame):
+                df = _to_dataframe(objects=app_st[key]["data"], flatten=flatten)
 
-            if some(df):
+                if some(df):
+                    app_st[key]["data"] = df
+
+            if isinstance(app_st[key]["data"], pd.DataFrame):
                 st.warning("Result of the analysis:")
-                st.dataframe(df, use_container_width=True)
+                st.dataframe(app_st[key]["data"], use_container_width=True)
+        case _:
+            pass
+
+
+def _display_score(key: str, func: Callable[[pd.DataFrame], int], total: int) -> None:
+    score: Optional[QualityScore]
+
+    match app_st[key]["state"]:
+        case WidgetState.EMPTY:
+            score = QualityScore(total, total)
+        case WidgetState.SUCCESS:
+            if isinstance(app_st[key]["data"], pd.DataFrame):
+                score = ratio(app_st[key]["data"], func, total)
         case _:
             pass
