@@ -15,9 +15,7 @@ from utils.utils import some
 def _static_analysis(
     section_name: str,
     description: str,
-    func: Callable[..., Optional[Any]],
-    func_args: dict[str, Any] | None = None,
-    flatten: list[str] | None = None,
+    key: str,
     button_label: str = "Analyse",
 ) -> None:
     """
@@ -36,46 +34,34 @@ def _static_analysis(
     :param button_label: Text to be display on the button.
     :type button_label: str
     """
-    key = f"_static_res_{func.__name__}"
-
-    if func_args is None:
-        func_args = {}
-
-    if flatten is None:
-        flatten = []
 
     st.markdown(section_name)
     st.markdown(description)
 
-    session = app_st["db_session"]
+    _button(button_label, key)
 
-    _button(button_label, key, func, session, func_args)
-
-    _display_df(key, flatten)
+    _display_df(key)
 
 
 def _dynamic_analysis(
     section_name: str,
     description: str,
+    key: str,
     lazy_renders: list[Callable[[], Any]],
-    func: Callable[..., Optional[Any]],
-    func_args: dict[str, Any] | None = None,
-    lazy_func_args: dict[str, str] | None = None,
-    flatten: list[str] | None = None,
     button_label: str = "Analyse",
 ) -> None:
     """
     A Streamlit component for dynamic analysis who needs to be persistent.\n
     **Note** : the main difference with `_static_analysis` is that you can specify\n
-        a list of **lazy** Streamlit functions constructed with `_lazy_render()`\n
+        a list of **lazy** Streamlit functions constructed with `_lazy_func()`\n
         to specify Streamlit objects to be rendered in the analysis.
 
     :param section_name: Markdown text.
     :type section_name: str
     :param description: Markdown text to describe the section.
     :type description: str
-    :param lazy_renders: Description
-    :type lazy_renders: list[Callable[[], Any]]
+    :param lazy_funcs: Description
+    :type lazy_funcs: list[Callable[[], Any]]
     :param func: Analysis function.
     :type func: Callable[..., Optional[Any]]
     :param func_args: If necessary arguments to the function.
@@ -87,7 +73,6 @@ def _dynamic_analysis(
     :param button_label: Text to be display on the button.
     :type button_label: str
     """
-    key = f"_dynamic_res_{func.__name__}"
 
     st.markdown(section_name)
     st.markdown(description)
@@ -98,82 +83,108 @@ def _dynamic_analysis(
         for lazy_render in lazy_renders:
             lazy_render()
 
-    session = app_st["db_session"]
+    _button(button_label, key)
 
-    if func_args is None:
-        func_args = dict()
-
-    if some(lazy_func_args):
-        func_args.update({key: app_st[value] for key, value in lazy_func_args.items()})
-
-    if flatten is None:
-        flatten = []
-
-    _button(button_label, key, func, session, func_args)
-
-    _display_df(key, flatten)
+    _display_df(key)
 
 
-def _button_call(
-    key: str,
+def _analyze_call(
     func: Callable[..., Any],
-    session: Neo4jSession,
-    func_args: dict[str, Any],
-    progress_message: str,
+    key: str,
+    func_args: Optional[dict[str, Any]] = None,
+    lazy_func_args: Optional[dict[str, str]] = None,
+    flatten: Optional[list[str]] = None,
+    to_df: bool = True,
+    progress_message: str = "Analysis in progress...",
+) -> None:
+    # TODO ! Replace 'key' by 'key_res'
+    key_res = f"{key}_res"
+
+    func_args = dict(func_args) if func_args else {}
+    lazy_func_args = dict(lazy_func_args) if lazy_func_args else {}
+    flatten = list(flatten) if flatten else []
+
+    try:
+        with st.spinner(progress_message):
+            session: Neo4jSession = app_st["db_session"]
+
+            func_args.update({k: app_st[v] for k, v in lazy_func_args.items()})
+
+            results = func(session=session, **func_args)
+
+        if some(results):
+            if to_df:
+                df = _to_dataframe(objects=results, flatten=flatten)
+
+                if some(df):
+                    app_st[key_res] = {"state": WidgetState.SUCCESS, "data": df}
+                else:
+                    app_st[key_res] = {
+                        "state": WidgetState.ERROR,
+                        "data": "Failed to convert the result as pandas.DataFrame during _analyze_call().",
+                    }
+            else:
+                app_st[key_res] = {"state": WidgetState.SUCCESS, "data": results}
+        else:
+            app_st[key_res] = {"state": WidgetState.EMPTY, "data": None}
+    except Exception as error:
+        app_st[key_res] = {"state": WidgetState.ERROR, "data": error}
+
+
+def _spinner_call(
+    func: Callable[..., Any],
+    key_res: str,
+    func_args: dict[str, Any] = dict(),
+    progress_message: str = "Work in progress...",
 ) -> None:
     try:
         with st.spinner(progress_message):
-            results = func(session, **func_args)
+            session: Neo4jSession = app_st["db_session"]
 
-        if some(results):
-            app_st[key] = {
-                "state": WidgetState.SUCCESS,
-                "data": results,
-            }
-        else:
-            app_st[key] = {"state": WidgetState.EMPTY, "data": None}
+            result = func(session=session, **func_args)
 
+            if result is not None:
+                app_st[key_res] = {"state": WidgetState.SUCCESS, "data": result}
+            else:
+                app_st[key_res] = {"state": WidgetState.EMPTY, "data": None}
     except Exception as error:
-        app_st[key] = {"state": WidgetState.ERROR, "data": error}
+        app_st[key_res] = {"state": WidgetState.ERROR, "data": error}
 
 
 def _button(
     button_label: str,
     key: str,
-    func: Callable[..., Any],
-    session: Neo4jSession,
-    func_args: dict[str, Any],
-    progress_message: str = "Analysis in progress...",
 ) -> None:
     # Initialize state
-    if key not in app_st:
-        app_st[key] = {
+    key_res = f"{key}_res"
+
+    if key_res not in app_st:
+        app_st[key_res] = {
             "state": WidgetState.IDLE,
             "data": None,
         }
 
     if st.button(button_label, key=f"{key}_button"):
-        _button_call(key, func, session, func_args, progress_message)
+        app_st[key]()
 
 
-def _display_df(key: str, flatten: list[str]) -> None:
+def _display_df(key: str) -> None:
     # Persistent display
+    key_res = f"{key}_res"
 
-    match app_st[key]["state"]:
+    match app_st[key_res]["state"]:
         case WidgetState.ERROR:
-            st.exception(app_st[key]["data"])
+            st.exception(app_st[key_res]["data"])
         case WidgetState.EMPTY:
             st.success("There isn't any data detected.")
         case WidgetState.SUCCESS:
-            if not isinstance(app_st[key]["data"], pd.DataFrame):
-                df = _to_dataframe(objects=app_st[key]["data"], flatten=flatten)
-
-                if some(df):
-                    app_st[key]["data"] = df
-
-            if isinstance(app_st[key]["data"], pd.DataFrame):
+            if isinstance(app_st[key_res]["data"], pd.DataFrame):
                 st.warning("Result of the analysis:")
-                st.dataframe(app_st[key]["data"], use_container_width=True)
+                st.dataframe(app_st[key_res]["data"], use_container_width=True)
+            else:
+                st.error(
+                    f"You can't display a pandas.DataFrame from an object of {type(app_st[key_res]['data'])}"
+                )
         case _:
             pass
 

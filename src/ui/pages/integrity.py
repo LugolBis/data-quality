@@ -8,8 +8,37 @@ from quality.integrity import (
     distr_nodes_properties,
     distr_relationships_properties,
 )
-from ui.components import _dynamic_analysis, _static_analysis
-from ui.utils import _lazy_render
+from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from ui.utils import _lazy_func
+
+_LAZY_FUNCS = {
+    "Iddn": _lazy_func(
+        _analyze_call,
+        func=detecter_doublons_node,
+        key="Iddn",
+        lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
+    ),
+    "Iddr": _lazy_func(
+        _analyze_call,
+        func=detecter_doublons_relationships,
+        key="Iddr",
+        lazy_func_args={
+            "seuil_similarite": "_integrity_relationships_duplicates_treshold"
+        },
+    ),
+    "Idnp": _lazy_func(
+        _analyze_call,
+        func=distr_nodes_properties,
+        key="Idnp",
+        flatten=["properties"],
+    ),
+    "Idrp": _lazy_func(
+        _analyze_call,
+        func=distr_relationships_properties,
+        key="Idrp",
+        flatten=["properties"],
+    ),
+}
 
 SIMILARITY_SLIDER = (
     0.0,
@@ -54,7 +83,7 @@ def _headers() -> None:
 
 
 def _nodes_duplicates() -> None:
-    lazy_render: Callable[[], Any] = _lazy_render(
+    lazy_render: Callable[[], Any] = _lazy_func(
         st.select_slider,
         label="Select nodes similarity threshold :",
         options=SIMILARITY_SLIDER,
@@ -65,14 +94,13 @@ def _nodes_duplicates() -> None:
     _dynamic_analysis(
         "#### Detection of duplicate **Nodes**.",
         "Scan all nodes to find potential duplicates based on string property similarity using SequenceMatcher.",
+        "Iddn",
         lazy_renders=[lazy_render],
-        func=detecter_doublons_node,
-        lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
     )
 
 
 def _relationships_duplicates() -> None:
-    lazy_render: Callable[[], Any] = _lazy_render(
+    lazy_render: Callable[[], Any] = _lazy_func(
         st.select_slider,
         label="Select relationships similarity threshold :",
         options=SIMILARITY_SLIDER,
@@ -83,11 +111,8 @@ def _relationships_duplicates() -> None:
     _dynamic_analysis(
         "#### Detection of duplicate **Relationships**.",
         "Scan all relationships to find potential duplicates based on string property similarity using SequenceMatcher.",
+        "Iddr",
         lazy_renders=[lazy_render],
-        func=detecter_doublons_relationships,
-        lazy_func_args={
-            "seuil_similarite": "_integrity_relationships_duplicates_treshold"
-        },
     )
 
 
@@ -95,8 +120,7 @@ def _nodes_properties() -> None:
     _static_analysis(
         "#### Analysis distribution of **Node** properties.",
         "Analyze if nodes with the same label combination share the exact same set of property keys.",
-        distr_nodes_properties,
-        flatten=["properties"],
+        "Idnp",
     )
 
 
@@ -104,6 +128,5 @@ def _rel_properties() -> None:
     _static_analysis(
         "#### Analysis distribution of **Relationship** properties.",
         "Analyze if relationship with the same type share the exact same set of property keys.",
-        distr_relationships_properties,
-        flatten=["properties"],
+        "Idrp",
     )

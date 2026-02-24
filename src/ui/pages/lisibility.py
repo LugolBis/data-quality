@@ -2,7 +2,15 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from quality.lisibility import compute_graph_diameter, distr_node_degree
-from ui.components import _button, _static_analysis
+from ui.components import _analyze_call, _button, _static_analysis
+from ui.utils import _lazy_func
+
+_LAZY_FUNCS = {
+    "Ldnd": _lazy_func(_analyze_call, func=distr_node_degree, key="Ldnd"),
+    "Lcgd": _lazy_func(
+        _analyze_call, func=compute_graph_diameter, key="Lcgd", to_df=False
+    ),
+}
 
 
 def render() -> None:
@@ -22,25 +30,18 @@ def _node_degree() -> None:
     _static_analysis(
         "#### Distribution of **Nodes** degree.",
         "Compute statistics of the nodes degree.",
-        distr_node_degree,
+        "Ldnd",
     )
 
 
 def _graph_diameter() -> None:
-    key = "_static_analysis_result_graph_diameter"
-
     st.markdown("#### Graph diameter.")
     st.markdown("Compute Graph diameter.")
 
-    session = app_st["db_session"]
-
     _button(
         "Analyse",
-        key,
-        compute_graph_diameter,
-        session,
-        {"gds_graph_name": "gds_diameter"},
+        "Lcgd",
     )
 
-    stored = st.session_state[key]
+    stored = app_st["Lcgd_res"]
     st.metric("Graph Diameter", stored["data"], border=True)

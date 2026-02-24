@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import pandas as pd
 import streamlit as st
@@ -9,7 +9,12 @@ from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
 from quality.types import TextFormat
 from quality.utils import _to_dataframe
-from ui.components import _static_analysis
+from ui.components import _analyze_call, _static_analysis
+from ui.utils import _lazy_func
+
+_LAZY_FUNCS: dict[str, Callable[[], Any]] = {
+    "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt")
+}
 
 
 def render() -> None:
@@ -151,5 +156,5 @@ def _properties_type() -> None:
     _static_analysis(
         "#### Analysis properties type.",
         "Check if there is any pair of **Node**/**Relationship** who has one property with different type.",
-        check_properties_type,
+        "Ccpt",
     )

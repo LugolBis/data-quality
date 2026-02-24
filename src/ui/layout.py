@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 import streamlit as st
 
@@ -13,8 +13,19 @@ from ui.pages import (
 )
 from ui.utils import _config_page
 
+_LAZY_FUNCS = {
+    "Consistency": consistency._LAZY_FUNCS,
+    "Integrity": integrity._LAZY_FUNCS,
+    "Lisibility": lisibility._LAZY_FUNCS,
+    "Outlier": outlier._LAZY_FUNCS,
+    "Property schema": property_schema._LAZY_FUNCS,
+}
+
 
 def main() -> None:
+    for key, value in _LAZY_FUNCS.items():
+        _config_init_session(key, value)
+
     pages: list[Any] | dict[str, Any]
 
     if not st.session_state.get("is_connected", False):
@@ -36,3 +47,11 @@ def main() -> None:
 
     pg = st.navigation(pages)
     pg.run()
+
+
+def _config_init_session(section: str, constant: dict[str, Callable[[], Any]]):
+    section = f"{section} :"
+    st.session_state[section] = list(constant.keys())
+
+    for key, value in constant.items():
+        st.session_state[key] = value

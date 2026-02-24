@@ -7,8 +7,9 @@ from streamlit import session_state as app_st
 
 from load.enums import LoadResult
 from load.neo4j import load_from_csv, load_from_dump, load_from_script
-from ui.components import _button
+from ui.components import _button, _spinner_call
 from ui.enums import LoadMethod, WidgetState
+from ui.utils import _lazy_func
 from utils.utils import logger
 
 
@@ -24,10 +25,11 @@ def _headers() -> None:
 
 
 def _main() -> None:
-    key: str = "_load_data_result"
+    key: str = "load_data_fn"
+    key_res: str = f"{key}_res"
 
     def clear_result():
-        app_st[key] = {"state": WidgetState.IDLE}
+        app_st[key_res] = {"state": WidgetState.IDLE}
 
     method: LoadMethod = LoadMethod(
         st.selectbox(
@@ -61,16 +63,20 @@ def _main() -> None:
             st.exception(f"Unknwon load method : {default}")
             return
 
+    app_st[key] = _lazy_func(
+        _spinner_call,
+        func=func,
+        key_res=key_res,
+        func_args=func_args,
+        progress_message="Import in progress...",
+    )
+
     _button(
         "Run import",
         key,
-        func,
-        app_st["db_session"],
-        func_args,
-        "Import in progress...",
     )
 
-    stored = app_st[key]
+    stored = app_st[key_res]
 
     match stored["state"]:
         case WidgetState.ERROR:
