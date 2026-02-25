@@ -1,20 +1,17 @@
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
+from driver.neo4j_driver import Neo4jSession
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
-from quality.types import TextFormat
 from quality.utils import _to_dataframe
-from ui.components import _analyze_call, _static_analysis
+from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from ui.enums import WidgetState
 from ui.utils import _lazy_func
-
-_LAZY_FUNCS: dict[str, Callable[[], Any]] = {
-    "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt")
-}
 
 
 def render() -> None:
@@ -31,27 +28,21 @@ def _headers() -> None:
 
 
 def _string_format() -> None:
-    st.markdown("#### Analysis string properties format.")
-    st.write(
-        "It check the entities who does'nt respect the format specified by the Regex pattern."
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Label(s) / Type",
+            "Properties",
+            "Pattern",
+            "Ignore case",
+            "Multiline",
+            "Dotall",
+        ]
     )
 
-    session = app_st["db_session"]
-
-    df: pd.DataFrame = pd.DataFrame(
-        {
-            "Entity": pd.Series(dtype="string"),
-            "Label(s) / Type": pd.Series(dtype="string"),
-            "Properties": pd.Series(dtype="string"),
-            "Pattern": pd.Series(dtype="string"),
-            "Ignore case": pd.Series(dtype="bool"),
-            "Multiline": pd.Series(dtype="bool"),
-            "Dotall": pd.Series(dtype="bool"),
-        }
-    )
-
-    edited_df = st.data_editor(
-        df,
+    lazy_editor = _lazy_func(
+        st.data_editor,
+        df_template,
         num_rows="dynamic",
         use_container_width=True,
         column_config={
@@ -71,8 +62,8 @@ def _string_format() -> None:
                 help="Properties separated by a comma.",
                 required=True,
             ),
-            "Regex Pattern": st.column_config.TextColumn(
-                "Pattern",
+            "Pattern": st.column_config.TextColumn(
+                "Regex Pattern",
                 help="https://neo4j.com/docs/cypher-manual/current/expressions/predicates/string-operators/#regular-expressions",
                 required=True,
             ),
@@ -89,67 +80,22 @@ def _string_format() -> None:
                 default=False,
             ),
         },
+        key="_string_format_editor",
     )
 
-    button: bool = st.button("Analyse string format")
-    if button:
-        analysis: list[TextFormat] = []
-        for idx, row in edited_df.iterrows():
-            try:
-                case_insensitive, multiline, dotall = (
-                    row["Ignore case"],
-                    row["Multiline"],
-                    row["Dotall"],
-                )
+    _dynamic_analysis(
+        "#### Analysis string properties format.",
+        "It check the entities who does'nt respect the format specified by the Regex pattern.",
+        "StrF",
+        lazy_renders=[lazy_editor],
+        button_label="Analyse string format",
+    )
 
-                flags = 0
-                if case_insensitive:
-                    flags |= re.IGNORECASE
-                if multiline:
-                    flags |= re.MULTILINE
-                if dotall:
-                    flags |= re.DOTALL
-
-                entity = Entity(row["Entity"])
-                label = row["Label(s) / Type"]
-                properties = [
-                    p.strip() for p in row["Properties"].split(",") if p.strip()
-                ]
-                pattern = re.compile(row["Pattern"], flags)
-
-                with st.spinner("Analysis in progress..."):
-                    results: Optional[list[TextFormat]] = check_string_format(
-                        session,
-                        entity,
-                        label,
-                        properties,
-                        pattern,
-                        case_insensitive,
-                        multiline,
-                        dotall,
-                    )
-
-                if results:
-                    analysis.extend(results)
-
-            except re.error as error:
-                st.error(f"Invalid Regex : {error}")
-
-            except Exception as error:
-                st.exception(error)
-
-        if len(analysis) == 0:
-            st.success("There isn't any inconsistent data detected.")
-        else:
-            st.warning(f"There is {len(analysis)} inconsistant values :")
-            st.dataframe(_to_dataframe(analysis), use_container_width=True)
-
-            explanation: str = (
-                "How it works : column `count` is the number of entities of the Label(s) / Type. "
-                "And the column `invalid` is the number of nodes with the property who's not NULL "
-                "and don't match the format specified by the Regex pattern."
-            )
-            st.markdown(explanation)
+    st.markdown(
+        "How it works : column `count` is the number of entities of the Label(s) / Type. "
+        "And the column `invalid` is the number of nodes with the property who's not NULL "
+        "and don't match the format specified by the Regex pattern."
+    )
 
 
 def _properties_type() -> None:
@@ -158,3 +104,75 @@ def _properties_type() -> None:
         "Check if there is any pair of **Node**/**Relationship** who has one property with different type.",
         "Ccpt",
     )
+
+
+def _run_string_format_analysis(editor_key: str) -> None:
+    """Analyse les formats de chaînes à partir des règles saisies dans le data editor."""
+    key_res = "StrF_res"
+    df_edited = app_st.get(editor_key)
+
+    if df_edited is None or df_edited.empty:
+        app_st[key_res] = {"state": WidgetState.EMPTY, "data": None}
+        return
+
+    session: Neo4jSession = app_st["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in df_edited.iterrows():
+        try:
+            entity = Entity(row["Entity"])
+            label = row["Label(s) / Type"]
+            properties = [p.strip() for p in row["Properties"].split(",") if p.strip()]
+            case_insensitive = row["Ignore case"]
+            multiline = row["Multiline"]
+            dotall = row["Dotall"]
+
+            flags = 0
+            if case_insensitive:
+                flags |= re.IGNORECASE
+            if multiline:
+                flags |= re.MULTILINE
+            if dotall:
+                flags |= re.DOTALL
+
+            pattern = re.compile(row["Pattern"], flags)
+
+            results = check_string_format(
+                session,
+                entity,
+                label,
+                properties,
+                pattern,
+                case_insensitive,
+                multiline,
+                dotall,
+            )
+            if results:
+                analysis.extend(results)
+        except re.error as e:
+            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    if analysis:
+        df_result = _to_dataframe(analysis)
+        if df_result is not None:
+            app_st[key_res] = {"state": WidgetState.SUCCESS, "data": df_result}
+        else:
+            app_st[key_res] = {
+                "state": WidgetState.ERROR,
+                "data": "Failed to convert results to DataFrame.",
+            }
+    else:
+        app_st[key_res] = {"state": WidgetState.EMPTY, "data": None}
+
+
+_LAZY_FUNCS: dict[str, Callable[[], Any]] = {
+    "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt"),
+    "StrF": _lazy_func(_run_string_format_analysis, editor_key="_string_format_editor"),
+}
