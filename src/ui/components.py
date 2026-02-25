@@ -5,8 +5,6 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from driver.neo4j_driver import Neo4jSession
-from quality.evaluate import ratio
-from quality.types import QualityScore
 from quality.utils import _to_dataframe
 from ui.enums import WidgetState
 from utils.utils import some
@@ -187,18 +185,5 @@ def _display_df(key: str) -> None:
                 st.error(
                     f"You can't display a pandas.DataFrame from an object of {type(app_st[key_res]['data'])}"
                 )
-        case _:
-            pass
-
-
-def _display_score(key: str, func: Callable[[pd.DataFrame], int], total: int) -> None:
-    score: Optional[QualityScore]
-
-    match app_st[key]["state"]:
-        case WidgetState.EMPTY:
-            score = QualityScore(total, total)
-        case WidgetState.SUCCESS:
-            if isinstance(app_st[key]["data"], pd.DataFrame):
-                score = ratio(app_st[key]["data"], func, total)
         case _:
             pass
