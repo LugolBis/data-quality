@@ -93,6 +93,7 @@ def detecter_outliers_numeriques(
 
 def measure_eigenvector_centrality(
     session: Neo4jSession,
+    epsilon: float = 0.5,
 ) -> Optional[list[CentralityScore]]:
     """
     Check the graph topology and measure 'Eigenvector Centrality' with the Neo4j GDS plugin.
@@ -117,9 +118,9 @@ def measure_eigenvector_centrality(
         eigen_query: str = (
             f"CALL gds.eigenvector.stream('{graph_name}') "
             "YIELD nodeId, score "
+            f"WHERE score > {epsilon} "
             "RETURN gds.util.asNode(nodeId) AS node, score "
             "ORDER BY score DESC "
-            "LIMIT 5 "
         )
         result: Result = session.run_query(eigen_query)
 
