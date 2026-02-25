@@ -8,6 +8,7 @@ import tests.integrity as integrity
 import tests.lisibility as lisibility
 import tests.schema as schema
 import tests.outliers as outliers
+import tests.completeness as completeness
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import some
 
@@ -26,3 +27,4 @@ if __name__ == "__main__":
             consistency.main(session)
             lisibility.main(session)
             outliers.main(session)
+            completeness.main(session)  

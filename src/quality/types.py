@@ -173,3 +173,42 @@ class LabelCentralityStats:
 
     def __repr__(self) -> str:
         return f"(:{self.label}) | count={self.count} -> Avg Score: {self.avg_score:.4f} (Max: {self.max_score:.4f})"
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class QualityScore:
+    valid: int
+    total: int
+
+    def __add__(self, other: QualityScore) -> QualityScore:
+        return QualityScore(self.valid + other.valid, self.total + other.total)
+
+    def __repr__(self) -> str:
+        return f"{self.valid}\n_  is valid\n{self.total}"
+
+    def percent(self) -> str:
+        return f"{(self.valid / self.total) * 100:.2f}%"
+
+
+@dataclass
+class ComponentDetail:
+    component_id: int
+    size: int
+
+    def __repr__(self) -> str:
+        return f"Component ID: {self.component_id} -> {self.size} nodes"
+
+
+@dataclass
+class ConnectedComponentsReport:
+    algorithm: str
+    total_components: int
+    total_nodes: int
+    largest_components: list[ComponentDetail]
+
+    def __repr__(self) -> str:
+        details: str = "\n\t\t".join([str(c) for c in self.largest_components])
+        return (
+            f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
+            f"\tTop Largest Components:\n\t\t{details}"
+        )
