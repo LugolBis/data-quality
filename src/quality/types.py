@@ -188,3 +188,27 @@ class QualityScore:
 
     def percent(self) -> str:
         return f"{(self.valid / self.total) * 100:.2f}%"
+
+
+@dataclass
+class ComponentDetail:
+    component_id: int
+    size: int
+
+    def __repr__(self) -> str:
+        return f"Component ID: {self.component_id} -> {self.size} nodes"
+
+
+@dataclass
+class ConnectedComponentsReport:
+    algorithm: str
+    total_components: int
+    total_nodes: int
+    largest_components: list[ComponentDetail]
+
+    def __repr__(self) -> str:
+        details: str = "\n\t\t".join([str(c) for c in self.largest_components])
+        return (
+            f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
+            f"\tTop Largest Components:\n\t\t{details}"
+        )
