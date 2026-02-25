@@ -108,7 +108,9 @@ def _analyze_call(
         with st.spinner(progress_message):
             session: Neo4jSession = app_st["db_session"]
 
-            func_args.update({k: app_st[v] for k, v in lazy_func_args.items()})
+            for k, v in lazy_func_args.items():
+                if v in app_st:
+                    func_args[k] = app_st[v]
 
             results = func(session=session, **func_args)
 

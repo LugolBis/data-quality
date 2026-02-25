@@ -87,7 +87,7 @@ def _nodes_duplicates() -> None:
         st.select_slider,
         label="Select nodes similarity threshold :",
         options=SIMILARITY_SLIDER,
-        value=0.5,
+        value=0.8,
         key="_integrity_nodes_duplicates_treshold",
     )
 

@@ -9,6 +9,7 @@ from ui.pages import (
     load_data,
     log_in,
     outlier,
+    overview,
     property_schema,
 )
 from ui.utils import _config_page
@@ -37,6 +38,7 @@ def main() -> None:
                 st.Page(**_config_page(load_data.render)),
             ],
             "Data Quality analysis": [
+                st.Page(**_config_page(overview.render)),
                 st.Page(**_config_page(consistency.render)),
                 st.Page(**_config_page(integrity.render)),
                 st.Page(**_config_page(lisibility.render)),
@@ -50,7 +52,6 @@ def main() -> None:
 
 
 def _config_init_session(section: str, constant: dict[str, Callable[[], Any]]):
-    section = f"{section} :"
     st.session_state[section] = list(constant.keys())
 
     for key, value in constant.items():
