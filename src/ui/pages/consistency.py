@@ -111,7 +111,7 @@ def _run_string_format_analysis(editor_key: str) -> None:
     key_res = "StrF_res"
     df_edited = app_st.get(editor_key)
 
-    if df_edited is None or df_edited.empty:
+    if df_edited is None or len(df_edited["added_rows"]) == 0:
         app_st[key_res] = {"state": WidgetState.EMPTY, "data": None}
         return
 
@@ -119,7 +119,8 @@ def _run_string_format_analysis(editor_key: str) -> None:
     analysis = []
     errors = []
 
-    for idx, row in df_edited.iterrows():
+    rows = df_edited["added_rows"]
+    for idx, row in enumerate(rows):
         try:
             entity = Entity(row["Entity"])
             label = row["Label(s) / Type"]
