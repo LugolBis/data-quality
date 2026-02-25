@@ -128,7 +128,7 @@ def check_properties_type(session: Neo4jSession) -> Optional[list[PairProperties
             "UNWIND entities AS e2 \n"
             "WITH e1, e2, \n"
             "   (total_entities * (total_entities - 1)) / 2 AS count \n"
-            "WHERE elementId(e1) < elementId(e2) \n"
+            "WHERE elementId(e1) < elementId(e2) OR elementId(e1) > elementId(e2) \n"
             f"UNWIND {properties} AS property \n"
             "WITH e1, e2, count, property, \n"
             "   e1[property] AS v1, e2[property] AS v2 \n"
