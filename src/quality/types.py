@@ -200,7 +200,7 @@ class ComponentDetail:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
-class ConnectedComponentsReport:
+class IsolatedComponentsReport:
     algorithm: ComponentAlgo
     total_components: int
     total_nodes: int
@@ -210,5 +210,19 @@ class ConnectedComponentsReport:
         details: str = "\n\t\t".join([str(c) for c in self.largest_components])
         return (
             f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
-            f"\tTop Largest Components:\n\t\t{details}"
+            f"\tisolated components:\n\t\t{details}"
+        )
+    
+@dataclass(slots=True, frozen=True, eq=False)
+class CircularComponentsReport:
+    algorithm: ComponentAlgo
+    total_components: int
+    total_nodes: int
+    largest_components: list[ComponentDetail]
+
+    def __repr__(self) -> str:
+        details: str = "\n\t\t".join([str(c) for c in self.largest_components])
+        return (
+            f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
+            f"\tcircular components:\n\t\t{details}"
         )

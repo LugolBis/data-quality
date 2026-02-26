@@ -4,19 +4,24 @@ from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import ComponentAlgo
-from quality.types import ComponentDetail, ConnectedComponentsReport
+from quality.types import ComponentDetail, IsolatedComponentsReport,CircularComponentsReport
 from utils.utils import logger
 
 
-def measure_wcc(session: Neo4jSession) -> Optional[list[ConnectedComponentsReport]]:
+def measure_wcc(
+    session: Neo4jSession,
+    min_size: int = 1,
+) -> Optional[list[IsolatedComponentsReport]]:
     """
     Measure Weakly Connected Components (WCC) in the graph using GDS.\n
     Useful for finding isolated islands/fragments of data.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
-    :return: A report containing the total number of components and the sizes of the largest ones.
-    :rtype: ConnectedComponentsReport | None
+    :param min_size: The minimum number of nodes a component must have to be included in the details (default is 2).
+    :type min_size: int
+    :return: A report containing global stats and details of components exceeding the min_size.
+    :rtype: list[IsolatedComponentsReport] | None
     """
     graph_name: str = "quality_analysis_wcc"
 
@@ -34,24 +39,24 @@ def measure_wcc(session: Neo4jSession) -> Optional[list[ConnectedComponentsRepor
             "WITH collect({id: componentId, size: size}) AS all_components "
             "RETURN size(all_components) AS total_components, "
             "       reduce(s = 0, c IN all_components | s + c.size) AS total_nodes, "
-            "       all_components[0..10] AS top_components "
+            f"       [c IN all_components WHERE c.size = {min_size}] AS filtered_components "
         )
 
         result: Result = session.run_query(query)
         record: Optional[Record] = result.single()
 
         if record:
-            top_comps: list[ComponentDetail] = [
+            filtered_comps: list[ComponentDetail] = [
                 ComponentDetail(component_id=c["id"], size=c["size"])
-                for c in record["top_components"]
+                for c in record["filtered_components"]
             ]
 
             return [
-                ConnectedComponentsReport(
+                IsolatedComponentsReport(
                     algorithm=ComponentAlgo("WCC"),
                     total_components=record["total_components"],
                     total_nodes=record["total_nodes"],
-                    largest_components=top_comps,
+                    largest_components=filtered_comps,
                 )
             ]
 
@@ -70,15 +75,20 @@ def measure_wcc(session: Neo4jSession) -> Optional[list[ConnectedComponentsRepor
     return None
 
 
-def measure_scc(session: Neo4jSession) -> Optional[list[ConnectedComponentsReport]]:
+def measure_scc(
+    session: Neo4jSession,
+    min_size: int = 2,
+) -> Optional[list[CircularComponentsReport]]:
     """
     Measure Strongly Connected Components (SCC) in the graph using GDS.\n
     Useful for finding cyclic dependencies (loops) in directional relationships.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
-    :return: A report containing the total number of strongly connected components.
-    :rtype: ConnectedComponentsReport | None
+    :param min_size: The minimum number of nodes a component must have to be included in the details (default is 2).
+    :type min_size: int
+    :return: A report containing global stats and details of components exceeding the min_size.
+    :rtype: list[CircularComponentsReport] | None
     """
     graph_name: str = "quality_analysis_scc"
 
@@ -96,24 +106,24 @@ def measure_scc(session: Neo4jSession) -> Optional[list[ConnectedComponentsRepor
             "WITH collect({id: componentId, size: size}) AS all_components "
             "RETURN size(all_components) AS total_components, "
             "       reduce(s = 0, c IN all_components | s + c.size) AS total_nodes, "
-            "       all_components[0..10] AS top_components "
+            f"       [c IN all_components WHERE c.size >= {min_size}] AS filtered_components "
         )
 
         result: Result = session.run_query(query)
         record: Optional[Record] = result.single()
 
         if record:
-            top_comps: list[ComponentDetail] = [
+            filtered_comps: list[ComponentDetail] = [
                 ComponentDetail(component_id=c["id"], size=c["size"])
-                for c in record["top_components"]
+                for c in record["filtered_components"]
             ]
 
             return [
-                ConnectedComponentsReport(
+                CircularComponentsReport(
                     algorithm=ComponentAlgo("SCC"),
                     total_components=record["total_components"],
                     total_nodes=record["total_nodes"],
-                    largest_components=top_comps,
+                    largest_components=filtered_comps,
                 )
             ]
 
