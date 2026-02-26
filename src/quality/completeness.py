@@ -4,7 +4,11 @@ from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import ComponentAlgo
-from quality.types import ComponentDetail, IsolatedComponentsReport,CircularComponentsReport
+from quality.types import (
+    CircularComponentsReport,
+    ComponentDetail,
+    IsolatedComponentsReport,
+)
 from utils.utils import logger
 
 
@@ -42,7 +46,7 @@ def measure_wcc(
             f"       [c IN all_components WHERE c.size = {min_size}] AS filtered_components "
         )
 
-        result: Result = session.run_query(query)
+        result: Result = session.run_query(query)  # type: ignore
         record: Optional[Record] = result.single()
 
         if record:
@@ -109,7 +113,7 @@ def measure_scc(
             f"       [c IN all_components WHERE c.size >= {min_size}] AS filtered_components "
         )
 
-        result: Result = session.run_query(query)
+        result: Result = session.run_query(query)  # type: ignore
         record: Optional[Record] = result.single()
 
         if record:
