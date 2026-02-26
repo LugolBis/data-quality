@@ -8,6 +8,7 @@ from quality.outlier import (
     measure_eigenvector_centrality,
 )
 from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from ui.pages.integrity import _SIMILARITY_SLIDER
 from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {
@@ -18,13 +19,18 @@ _LAZY_FUNCS = {
         lazy_func_args={"z_score_threshold": "_outlier_z_score_threshold"},
         flatten=["outliers"],
     ),
-    "Omec": _lazy_func(_analyze_call, func=measure_eigenvector_centrality, key="Omec"),
+    "Omec": _lazy_func(
+        _analyze_call,
+        func=measure_eigenvector_centrality,
+        key="Omec",
+        lazy_func_args={"epsilon": "_outlier_ecs"},
+    ),
     "Omacbl": _lazy_func(
         _analyze_call, func=measure_average_centrality_by_label, key="Omacbl"
     ),
 }
 
-THRESHOLD_SLIDER = tuple(round(0.05 * x, 2) for x in range(-60, 61))
+_THRESHOLD_SLIDER = tuple(round(0.05 * x, 2) for x in range(-60, 61))
 
 
 def render() -> None:
@@ -46,7 +52,7 @@ def _numeric() -> None:
     lazy_render: Callable[[], Any] = _lazy_func(
         st.select_slider,
         label="Select property Z-Score threshold :",
-        options=THRESHOLD_SLIDER,
+        options=_THRESHOLD_SLIDER,
         value=1.95,
         key="_outlier_z_score_threshold",
     )
@@ -60,10 +66,19 @@ def _numeric() -> None:
 
 
 def _outliers_centrality() -> None:
-    _static_analysis(
+    lazy_render: Callable[[], Any] = _lazy_func(
+        st.select_slider,
+        label="Selection of the lower bound of score :",
+        options=_SIMILARITY_SLIDER,
+        value=0.5,
+        key="_outlier_ecs",
+    )
+
+    _dynamic_analysis(
         "#### Detection of **Nodes** outliers based on their `Eigenvector Centrality` score.",
         "The `Eigenvector Centrality` is a measure of the influence of a node in a connected network.",
         "Omec",
+        lazy_renders=[lazy_render],
     )
 
 

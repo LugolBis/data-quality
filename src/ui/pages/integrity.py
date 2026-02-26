@@ -40,7 +40,7 @@ _LAZY_FUNCS = {
     ),
 }
 
-SIMILARITY_SLIDER = (
+_SIMILARITY_SLIDER = (
     0.0,
     0.05,
     0.1,
@@ -86,7 +86,7 @@ def _nodes_duplicates() -> None:
     lazy_render: Callable[[], Any] = _lazy_func(
         st.select_slider,
         label="Select nodes similarity threshold :",
-        options=SIMILARITY_SLIDER,
+        options=_SIMILARITY_SLIDER,
         value=0.8,
         key="_integrity_nodes_duplicates_treshold",
     )
@@ -103,7 +103,7 @@ def _relationships_duplicates() -> None:
     lazy_render: Callable[[], Any] = _lazy_func(
         st.select_slider,
         label="Select relationships similarity threshold :",
-        options=SIMILARITY_SLIDER,
+        options=_SIMILARITY_SLIDER,
         value=0.8,
         key="_integrity_relationships_duplicates_treshold",
     )

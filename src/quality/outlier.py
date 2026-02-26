@@ -6,10 +6,10 @@ from neo4j import Result
 
 from driver.neo4j_driver import Neo4jSession
 from quality.types import (
-    NumericalOutlier,
-    OutlierDetail,
     CentralityScore,
     LabelCentralityStats,
+    NumericalOutlier,
+    OutlierDetail,
 )
 from quality.utils import _format_label
 from utils.utils import logger
@@ -122,7 +122,7 @@ def measure_eigenvector_centrality(
             "RETURN gds.util.asNode(nodeId) AS node, score "
             "ORDER BY score DESC "
         )
-        result: Result = session.run_query(eigen_query)
+        result: Result = session.run_query(eigen_query)  # type: ignore
 
         for record in result:
             node = record["node"]
