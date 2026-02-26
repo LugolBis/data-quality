@@ -19,7 +19,7 @@ def main(session: Neo4jSession) -> None:
     )
 
     centralite_eigenvector: Optional[list[CentralityScore]] = (
-        measure_eigenvector_centrality(session)
+        measure_eigenvector_centrality(session, epsilon=0.5)
     )
 
     centralite_moyenne_par_label: Optional[list[LabelCentralityStats]] = (
