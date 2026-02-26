@@ -86,7 +86,7 @@ def _string_format() -> None:
     _dynamic_analysis(
         "#### Analysis string properties format.",
         "It check the entities who does'nt respect the format specified by the Regex pattern.",
-        "StrF",
+        "Cstrf",
         lazy_renders=[lazy_editor],
         button_label="Analyse string format",
     )
@@ -108,7 +108,7 @@ def _properties_type() -> None:
 
 def _run_string_format_analysis(editor_key: str) -> None:
     """Analyse les formats de chaînes à partir des règles saisies dans le data editor."""
-    key_res = "StrF_res"
+    key_res = "Cstrf_res"
     df_edited = app_st.get(editor_key)
 
     if df_edited is None or len(df_edited["added_rows"]) == 0:
@@ -175,5 +175,7 @@ def _run_string_format_analysis(editor_key: str) -> None:
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
     "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt"),
-    "StrF": _lazy_func(_run_string_format_analysis, editor_key="_string_format_editor"),
+    "Cstrf": _lazy_func(
+        _run_string_format_analysis, editor_key="_string_format_editor"
+    ),
 }

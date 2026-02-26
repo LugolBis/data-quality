@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Set, Tuple
 
-from quality.enums import Constraint, Degree, Entity
+from quality.enums import ComponentAlgo, Constraint, Degree, Entity
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -190,7 +190,7 @@ class QualityScore:
         return f"{(self.valid / self.total) * 100:.2f}%"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class ComponentDetail:
     component_id: int
     size: int
@@ -199,9 +199,9 @@ class ComponentDetail:
         return f"Component ID: {self.component_id} -> {self.size} nodes"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, eq=False)
 class ConnectedComponentsReport:
-    algorithm: str
+    algorithm: ComponentAlgo
     total_components: int
     total_nodes: int
     largest_components: list[ComponentDetail]

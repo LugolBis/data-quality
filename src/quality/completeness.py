@@ -3,11 +3,12 @@ from typing import Optional
 from neo4j import Record, Result
 
 from driver.neo4j_driver import Neo4jSession
+from quality.enums import ComponentAlgo
 from quality.types import ComponentDetail, ConnectedComponentsReport
 from utils.utils import logger
 
 
-def measure_wcc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
+def measure_wcc(session: Neo4jSession) -> Optional[list[ConnectedComponentsReport]]:
     """
     Measure Weakly Connected Components (WCC) in the graph using GDS.\n
     Useful for finding isolated islands/fragments of data.
@@ -21,7 +22,9 @@ def measure_wcc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
 
     try:
         session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
-        session.run_query(f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName")
+        session.run_query(
+            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName"
+        )
 
         query: str = (
             f"CALL gds.wcc.stream('{graph_name}') "
@@ -42,13 +45,15 @@ def measure_wcc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
                 ComponentDetail(component_id=c["id"], size=c["size"])
                 for c in record["top_components"]
             ]
-            
-            return ConnectedComponentsReport(
-                algorithm="WCC (Weakly Connected Components)",
-                total_components=record["total_components"],
-                total_nodes=record["total_nodes"],
-                largest_components=top_comps,
-            )
+
+            return [
+                ConnectedComponentsReport(
+                    algorithm=ComponentAlgo("WCC"),
+                    total_components=record["total_components"],
+                    total_nodes=record["total_nodes"],
+                    largest_components=top_comps,
+                )
+            ]
 
     except Exception as error:
         logger.error(f"GDS Execution Error (WCC): {error}")
@@ -56,14 +61,16 @@ def measure_wcc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
 
     finally:
         try:
-            session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
+            session.run_query(
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+            )
         except Exception as cleanup_error:
             logger.error(f"Failed to drop WCC graph memory: {cleanup_error}")
 
     return None
 
 
-def measure_scc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
+def measure_scc(session: Neo4jSession) -> Optional[list[ConnectedComponentsReport]]:
     """
     Measure Strongly Connected Components (SCC) in the graph using GDS.\n
     Useful for finding cyclic dependencies (loops) in directional relationships.
@@ -77,7 +84,9 @@ def measure_scc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
 
     try:
         session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
-        session.run_query(f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName")
+        session.run_query(
+            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName"
+        )
 
         query: str = (
             f"CALL gds.scc.stream('{graph_name}') "
@@ -98,13 +107,15 @@ def measure_scc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
                 ComponentDetail(component_id=c["id"], size=c["size"])
                 for c in record["top_components"]
             ]
-            
-            return ConnectedComponentsReport(
-                algorithm="SCC (Strongly Connected Components)",
-                total_components=record["total_components"],
-                total_nodes=record["total_nodes"],
-                largest_components=top_comps,
-            )
+
+            return [
+                ConnectedComponentsReport(
+                    algorithm=ComponentAlgo("SCC"),
+                    total_components=record["total_components"],
+                    total_nodes=record["total_nodes"],
+                    largest_components=top_comps,
+                )
+            ]
 
     except Exception as error:
         logger.error(f"GDS Execution Error (SCC): {error}")
@@ -112,7 +123,9 @@ def measure_scc(session: Neo4jSession) -> Optional[ConnectedComponentsReport]:
 
     finally:
         try:
-            session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
+            session.run_query(
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+            )
         except Exception as cleanup_error:
             logger.error(f"Failed to drop SCC graph memory: {cleanup_error}")
 

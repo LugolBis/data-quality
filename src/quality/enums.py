@@ -16,3 +16,8 @@ class Constraint(Enum):
     EXISTENCE = "EXISTENCE"
     KEY = "KEY"
     TYPE = "TYPE"
+
+
+class ComponentAlgo(Enum):
+    WCC = "WCC"
+    SCC = "SCC"

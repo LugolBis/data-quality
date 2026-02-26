@@ -3,6 +3,7 @@ from typing import Any, Callable
 import streamlit as st
 
 from ui.pages import (
+    completeness,
     consistency,
     integrity,
     lisibility,
@@ -15,6 +16,7 @@ from ui.pages import (
 from ui.utils import _config_page
 
 _LAZY_FUNCS = {
+    "Completeness": completeness._LAZY_FUNCS,
     "Consistency": consistency._LAZY_FUNCS,
     "Integrity": integrity._LAZY_FUNCS,
     "Lisibility": lisibility._LAZY_FUNCS,
@@ -39,6 +41,7 @@ def main() -> None:
             ],
             "Data Quality analysis": [
                 st.Page(**_config_page(overview.render)),
+                st.Page(**_config_page(completeness.render)),
                 st.Page(**_config_page(consistency.render)),
                 st.Page(**_config_page(integrity.render)),
                 st.Page(**_config_page(lisibility.render)),
