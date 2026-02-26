@@ -56,4 +56,5 @@ def _run_all_analysis() -> None:
         for key in app_st[section]:
             app_st[key]()
 
+            # TODO! Add in each pages a new key : 'key_score' who contains the score_function used to compute the score
             # TODO! Display score here based on 'key_res' data
