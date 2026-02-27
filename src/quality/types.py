@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Set, Tuple
 
 from quality.enums import ComponentAlgo, Constraint, Degree, Entity
@@ -190,13 +190,15 @@ class QualityScore:
         return f"{(self.valid / self.total) * 100:.2f}%"
 
 
-@dataclass(slots=True, frozen=True, eq=False)
+@dataclass
 class ComponentDetail:
     component_id: int
     size: int
+    sample_nodes: list[str] = field(default_factory=list)
 
     def __repr__(self) -> str:
-        return f"Component ID: {self.component_id} -> {self.size} nodes"
+        samples_str = " | ".join(self.sample_nodes)
+        return f"Component {self.component_id} ({self.size} nodes) -> {samples_str}"
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -212,7 +214,8 @@ class IsolatedComponentsReport:
             f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
             f"\tisolated components:\n\t\t{details}"
         )
-    
+
+
 @dataclass(slots=True, frozen=True, eq=False)
 class CircularComponentsReport:
     algorithm: ComponentAlgo

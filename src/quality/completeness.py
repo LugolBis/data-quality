@@ -5,9 +5,9 @@ from neo4j import Record, Result
 from driver.neo4j_driver import Neo4jSession
 from quality.enums import ComponentAlgo
 from quality.types import (
-    CircularComponentsReport,
     ComponentDetail,
     IsolatedComponentsReport,
+    CircularComponentsReport,
 )
 from utils.utils import logger
 
@@ -38,9 +38,9 @@ def measure_wcc(
         query: str = (
             f"CALL gds.wcc.stream('{graph_name}') "
             "YIELD nodeId, componentId "
-            "WITH componentId, count(nodeId) AS size "
+            "WITH componentId, count(nodeId) AS size, collect(gds.util.asNode(nodeId))[0..3] AS sample_nodes "
             "ORDER BY size DESC "
-            "WITH collect({id: componentId, size: size}) AS all_components "
+            "WITH collect({id: componentId, size: size, samples: sample_nodes}) AS all_components "
             "RETURN size(all_components) AS total_components, "
             "       reduce(s = 0, c IN all_components | s + c.size) AS total_nodes, "
             f"       [c IN all_components WHERE c.size = {min_size}] AS filtered_components "
@@ -50,10 +50,27 @@ def measure_wcc(
         record: Optional[Record] = result.single()
 
         if record:
-            filtered_comps: list[ComponentDetail] = [
-                ComponentDetail(component_id=c["id"], size=c["size"])
-                for c in record["filtered_components"]
-            ]
+            filtered_comps: list[ComponentDetail] = []
+
+            for c in record["filtered_components"]:
+                samples: list[str] = []
+                for node in c["samples"]:
+                    labels_str = (
+                        "&".join(list(node.labels)) if node.labels else "UNLABELED"
+                    )
+                    name_str = str(
+                        node.get("name")
+                        or node.get("title")
+                        or node.get("id")
+                        or "<NoName>"
+                    )
+                    samples.append(f"(:{labels_str} {{name: '{name_str}'}})")
+
+                filtered_comps.append(
+                    ComponentDetail(
+                        component_id=c["id"], size=c["size"], sample_nodes=samples
+                    )
+                )
 
             return [
                 IsolatedComponentsReport(
@@ -105,9 +122,9 @@ def measure_scc(
         query: str = (
             f"CALL gds.scc.stream('{graph_name}') "
             "YIELD nodeId, componentId "
-            "WITH componentId, count(nodeId) AS size "
+            "WITH componentId, count(nodeId) AS size, collect(gds.util.asNode(nodeId))[0..3] AS sample_nodes "
             "ORDER BY size DESC "
-            "WITH collect({id: componentId, size: size}) AS all_components "
+            "WITH collect({id: componentId, size: size, samples: sample_nodes}) AS all_components "
             "RETURN size(all_components) AS total_components, "
             "       reduce(s = 0, c IN all_components | s + c.size) AS total_nodes, "
             f"       [c IN all_components WHERE c.size >= {min_size}] AS filtered_components "
@@ -117,10 +134,27 @@ def measure_scc(
         record: Optional[Record] = result.single()
 
         if record:
-            filtered_comps: list[ComponentDetail] = [
-                ComponentDetail(component_id=c["id"], size=c["size"])
-                for c in record["filtered_components"]
-            ]
+            filtered_comps: list[ComponentDetail] = []
+
+            for c in record["filtered_components"]:
+                samples: list[str] = []
+                for node in c["samples"]:
+                    labels_str = (
+                        "&".join(list(node.labels)) if node.labels else "UNLABELED"
+                    )
+                    name_str = str(
+                        node.get("name")
+                        or node.get("title")
+                        or node.get("id")
+                        or "<NoName>"
+                    )
+                    samples.append(f"(:{labels_str} {{name: '{name_str}'}})")
+
+                filtered_comps.append(
+                    ComponentDetail(
+                        component_id=c["id"], size=c["size"], sample_nodes=samples
+                    )
+                )
 
             return [
                 CircularComponentsReport(
