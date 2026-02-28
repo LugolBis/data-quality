@@ -38,7 +38,7 @@ def _static_analysis(
     :type button_label: str
     """
 
-    st.markdown(section_name)
+    st.markdown(f"#### {key} - {section_name}")
     st.markdown(description)
 
     _button(button_label, key)
@@ -80,7 +80,7 @@ def _dynamic_analysis(
     :type button_label: str
     """
 
-    st.markdown(section_name)
+    st.markdown(f"#### {key} - {section_name}")
     st.markdown(description)
 
     container = st.container()
@@ -102,12 +102,10 @@ def _static_score(
     if key_score in app_st:
         app_st[key_score]()
 
-    key_score_res: str = f"{key_score}_res"
-
     col1, col2 = st.columns(2)
 
     with col1:
-        _display_score(key_score_res)
+        _display_score(key)
 
     with col2:
         _button(
@@ -251,7 +249,8 @@ def _display_df(key_res: str) -> None:
             pass
 
 
-def _display_score(key_res: str) -> None:
+def _display_score(key: str) -> None:
+    key_res = f"{key}_score_res"
     match app_st[key_res]["state"]:
         case WidgetState.ERROR:
             st.exception(app_st[key_res]["data"])
@@ -261,7 +260,7 @@ def _display_score(key_res: str) -> None:
             data = app_st[key_res]["data"]
             if isinstance(data, float):
                 st.metric(
-                    label="Quality score :",
+                    label=f"{key} - Quality score :",
                     value=data,
                     format="percent",
                     border=True,

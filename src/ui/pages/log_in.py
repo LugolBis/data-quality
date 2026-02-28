@@ -1,22 +1,27 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
-from neo4j import Result
-from pandas import DataFrame
 from streamlit import session_state as app_st
 
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import logger
 
+if TYPE_CHECKING:
+    from neo4j import Result
+    from pandas import DataFrame
 
-def render():
+
+def render() -> None:
     _headers()
 
 
-def _headers():
+def _headers() -> None:
     st.title("Log in page")
     st.markdown(
-        "### Welcome on ***data-quality*** : a Data Quality tool designed for `Neo4j` database."
+        (
+            "### Welcome on ***data-quality*** : a Data Quality tool designed for"
+            "`Neo4j` database."
+        ),
     )
 
     _log_in()
@@ -113,7 +118,7 @@ def _create_neo4j_session() -> None:
         )
 
         result: Result = neo4j_session.run_query(
-            "SHOW DATABASES YIELD name RETURN name"
+            "SHOW DATABASES YIELD name RETURN name",
         )
         df: DataFrame = result.to_df()
 

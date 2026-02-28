@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
@@ -11,22 +11,27 @@ from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
 from ui.pages.integrity import _SIMILARITY_SLIDER
 from ui.utils import _lazy_func
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 _LAZY_FUNCS = {
-    "Odon": _lazy_func(
+    "ODON": _lazy_func(
         _analyze_call,
         func=detecter_outliers_numeriques,
-        key="Odon",
+        key="ODON",
         lazy_func_args={"z_score_threshold": "_outlier_z_score_threshold"},
         flatten=["outliers"],
     ),
-    "Omec": _lazy_func(
+    "OMEC": _lazy_func(
         _analyze_call,
         func=measure_eigenvector_centrality,
-        key="Omec",
+        key="OMEC",
         lazy_func_args={"epsilon": "_outlier_ecs"},
     ),
-    "Omacbl": _lazy_func(
-        _analyze_call, func=measure_average_centrality_by_label, key="Omacbl"
+    "OMACBL": _lazy_func(
+        _analyze_call,
+        func=measure_average_centrality_by_label,
+        key="OMACBL",
     ),
 }
 
@@ -58,9 +63,12 @@ def _numeric() -> None:
     )
 
     _dynamic_analysis(
-        "#### Detection of **Nodes** properties numerical outliers.",
-        "Calculate mean, standard deviation and confidence interval to detect numerical outliers.",
-        "Odon",
+        "Detection of **Nodes** properties numerical outliers.",
+        (
+            "Calculate mean, standard deviation and confidence interval"
+            " to detect numerical outliers."
+        ),
+        "ODON",
         lazy_renders=[lazy_render],
     )
 
@@ -75,16 +83,25 @@ def _outliers_centrality() -> None:
     )
 
     _dynamic_analysis(
-        "#### Detection of **Nodes** outliers based on their `Eigenvector Centrality` score.",
-        "The `Eigenvector Centrality` is a measure of the influence of a node in a connected network.",
-        "Omec",
+        (
+            "Detection of **Nodes** outliers based on their "
+            "`Eigenvector Centrality` score."
+        ),
+        (
+            "The `Eigenvector Centrality` is a measure of the influence of a node"
+            "in a connected network."
+        ),
+        "OMEC",
         lazy_renders=[lazy_render],
     )
 
 
 def _avg_centrality() -> None:
     _static_analysis(
-        "#### Analyze `Eigenvector Centrality` of **Nodes**.",
-        "Check the graph topology and calculate the average Eigenvector Centrality grouped by node labels.",
-        "Omacbl",
+        "Analyze `Eigenvector Centrality` of **Nodes**.",
+        (
+            "Check the graph topology and calculate the average Eigenvector Centrality"
+            " grouped by node labels."
+        ),
+        "OMACBL",
     )

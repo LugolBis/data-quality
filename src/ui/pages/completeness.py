@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
@@ -6,12 +6,21 @@ from quality.completeness import measure_scc, measure_wcc
 from ui.components import _analyze_call, _dynamic_analysis
 from ui.utils import _lazy_func
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 _LAZY_FUNCS = {
-    "Cms": _lazy_func(
-        _analyze_call, func=measure_scc, key="Cms", flatten=["largest_components"]
+    "CMS": _lazy_func(
+        _analyze_call,
+        func=measure_scc,
+        key="CMS",
+        flatten=["largest_components"],
     ),
-    "Cmw": _lazy_func(
-        _analyze_call, func=measure_wcc, key="Cmw", flatten=["largest_components"]
+    "CMW": _lazy_func(
+        _analyze_call,
+        func=measure_wcc,
+        key="CMW",
+        flatten=["largest_components"],
     ),
 }
 
@@ -39,9 +48,9 @@ def _render_scc() -> None:
     )
 
     _dynamic_analysis(
-        "#### Measure Strongly Connected Components (SCC) in the graph.",
+        "Measure Strongly Connected Components (SCC) in the graph.",
         "Useful for finding cyclic dependencies (loops) in directional relationships.",
-        "Cms",
+        "CMS",
         lazy_renders=[lazy_render],
     )
 
@@ -56,8 +65,8 @@ def _render_wcc() -> None:
     )
 
     _dynamic_analysis(
-        "#### Measure Weakly Connected Components (WCC) in the graph.",
+        "Measure Weakly Connected Components (WCC) in the graph.",
         "Useful for finding isolated islands/fragments of data.",
-        "Cmw",
+        "CMW",
         lazy_renders=[lazy_render],
     )

@@ -1,5 +1,8 @@
 from functools import partial
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _config_page(function: Callable[..., None]) -> dict[str, Any]:
@@ -24,7 +27,7 @@ def _config_page(function: Callable[..., None]) -> dict[str, Any]:
     }
 
 
-def _lazy_func(call: Callable[..., Any], *args, **kwargs) -> Callable[[], Any]:
+def _lazy_func(call: Callable[..., Any], *args, **kwargs) -> Callable[[], Any]:  # noqa: ANN002, ANN003
     """
     Wrap a Streamlit call into a lazy callable.
 

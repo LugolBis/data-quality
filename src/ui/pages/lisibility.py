@@ -6,9 +6,12 @@ from ui.components import _analyze_call, _button, _static_analysis
 from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {
-    "Ldnd": _lazy_func(_analyze_call, func=distr_node_degree, key="Ldnd"),
-    "Lcgd": _lazy_func(
-        _analyze_call, func=compute_graph_diameter, key="Lcgd", to_df=False
+    "LDND": _lazy_func(_analyze_call, func=distr_node_degree, key="LDND"),
+    "LCGD": _lazy_func(
+        _analyze_call,
+        func=compute_graph_diameter,
+        key="LCGD",
+        to_df=False,
     ),
 }
 
@@ -28,20 +31,20 @@ def _headers() -> None:
 
 def _node_degree() -> None:
     _static_analysis(
-        "#### Distribution of **Nodes** degree.",
+        "Distribution of **Nodes** degree.",
         "Compute statistics of the nodes degree.",
-        "Ldnd",
+        "LDND",
     )
 
 
 def _graph_diameter() -> None:
-    st.markdown("#### Graph diameter.")
+    st.markdown("Graph diameter.")
     st.markdown("Compute Graph diameter.")
 
     _button(
         "Analyse",
-        "Lcgd",
+        "LCGD",
     )
 
-    stored = app_st["Lcgd_res"]
+    stored = app_st["LCGD_res"]
     st.metric("Graph Diameter", stored["data"], border=True)

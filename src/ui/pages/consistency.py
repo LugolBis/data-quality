@@ -94,9 +94,9 @@ def _string_format() -> None:
     )
 
     _dynamic_analysis(
-        "#### Analysis string properties format.",
+        "Analysis string properties format.",
         "It check the entities who does'nt match the Regex pattern.",
-        "Cstrf",
+        "CSTRF",
         lazy_renders=[lazy_editor],
         button_label="Analyse string format",
     )
@@ -110,18 +110,18 @@ def _string_format() -> None:
 
 def _properties_type() -> None:
     _static_analysis(
-        "#### Analysis properties type.",
+        "Analysis properties type.",
         (
             "Check if there is any pair of **Node**/**Relationship** who has one "
             "property with different type."
         ),
-        "Ccpt",
+        "CCPT",
     )
 
 
 def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
     """Analyzes string format rules defined in the data editor."""
-    key_res = "Cstrf_res"
+    key_res = "CSTRF_res"
     df_edited = app_st.get(editor_key)
 
     if df_edited is None or len(df_edited["added_rows"]) == 0:
@@ -187,14 +187,14 @@ def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
 
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
-    "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt"),
-    "Ccpt_score": _lazy_func(
+    "CCPT": _lazy_func(_analyze_call, func=check_properties_type, key="CCPT"),
+    "CCPT_score": _lazy_func(
         _score_call,
         func=sum_percent,
-        key="Ccpt",
-        lazy_func_args={"df": "Ccpt_res"},
+        key="CCPT",
+        lazy_func_args={"df": "CCPT_res"},
     ),
-    "Cstrf": _lazy_func(
+    "CSTRF": _lazy_func(
         _run_string_format_analysis,
         editor_key="_string_format_editor",
     ),

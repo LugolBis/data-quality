@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
@@ -11,31 +11,34 @@ from quality.integrity import (
 from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
 from ui.utils import _lazy_func
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 _LAZY_FUNCS = {
-    "Iddn": _lazy_func(
+    "IDDN": _lazy_func(
         _analyze_call,
         func=detecter_doublons_node,
-        key="Iddn",
+        key="IDDN",
         lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
     ),
-    "Iddr": _lazy_func(
+    "IDDR": _lazy_func(
         _analyze_call,
         func=detecter_doublons_relationships,
-        key="Iddr",
+        key="IDDR",
         lazy_func_args={
-            "seuil_similarite": "_integrity_relationships_duplicates_treshold"
+            "seuil_similarite": "_integrity_relationships_duplicates_treshold",
         },
     ),
-    "Idnp": _lazy_func(
+    "IDNP": _lazy_func(
         _analyze_call,
         func=distr_nodes_properties,
-        key="Idnp",
+        key="IDNP",
         flatten=["properties"],
     ),
-    "Idrp": _lazy_func(
+    "IDRP": _lazy_func(
         _analyze_call,
         func=distr_relationships_properties,
-        key="Idrp",
+        key="IDRP",
         flatten=["properties"],
     ),
 }
@@ -92,9 +95,12 @@ def _nodes_duplicates() -> None:
     )
 
     _dynamic_analysis(
-        "#### Detection of duplicate **Nodes**.",
-        "Scan all nodes to find potential duplicates based on string property similarity using SequenceMatcher.",
-        "Iddn",
+        "Detection of duplicate **Nodes**.",
+        (
+            "Scan all nodes to find potential duplicates based on string property"
+            "similarity using SequenceMatcher."
+        ),
+        "IDDN",
         lazy_renders=[lazy_render],
     )
 
@@ -109,24 +115,33 @@ def _relationships_duplicates() -> None:
     )
 
     _dynamic_analysis(
-        "#### Detection of duplicate **Relationships**.",
-        "Scan all relationships to find potential duplicates based on string property similarity using SequenceMatcher.",
-        "Iddr",
+        "Detection of duplicate **Relationships**.",
+        (
+            "Scan all relationships to find potential duplicates based on string"
+            " property similarity using SequenceMatcher."
+        ),
+        "IDDR",
         lazy_renders=[lazy_render],
     )
 
 
 def _nodes_properties() -> None:
     _static_analysis(
-        "#### Analysis distribution of **Node** properties.",
-        "Analyze if nodes with the same label combination share the exact same set of property keys.",
-        "Idnp",
+        "Analysis distribution of **Node** properties.",
+        (
+            "Analyze if nodes with the same label combination share the exact same set"
+            "of property keys."
+        ),
+        "IDNP",
     )
 
 
 def _rel_properties() -> None:
     _static_analysis(
-        "#### Analysis distribution of **Relationship** properties.",
-        "Analyze if relationship with the same type share the exact same set of property keys.",
-        "Idrp",
+        "Analysis distribution of **Relationship** properties.",
+        (
+            "Analyze if relationship with the same type share the exact same set of"
+            " property keys."
+        ),
+        "IDRP",
     )

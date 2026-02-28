@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import streamlit as st
@@ -11,6 +11,9 @@ from ui.components import _button, _spinner_call
 from ui.enums import LoadMethod, WidgetState
 from ui.utils import _lazy_func
 from utils.utils import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def render() -> None:
@@ -28,7 +31,7 @@ def _main() -> None:
     key: str = "load_data_fn"
     key_res: str = f"{key}_res"
 
-    def clear_result():
+    def clear_result() -> None:
         app_st[key_res] = {"state": WidgetState.IDLE}
 
     method: LoadMethod = LoadMethod(
@@ -38,7 +41,7 @@ def _main() -> None:
             key="_select_load_method",
             help="Choose a method to perform a massive import.",
             on_change=clear_result,
-        )
+        ),
     )
 
     if method in (LoadMethod.DUMP, LoadMethod.SCRIPT):
@@ -87,8 +90,8 @@ def _main() -> None:
             pass
 
 
-def _from_csv() -> Tuple[Callable[..., Any], dict[str, Any]]:
-    func_args: dict[str, Any] = dict()
+def _from_csv() -> tuple[Callable[..., Any], dict[str, Any]]:
+    func_args: dict[str, Any] = dict()  # noqa: C408
     func_args["new_db_name"] = st.text_input("New database name :")
 
     col1, col2 = st.columns(2)
@@ -101,7 +104,8 @@ def _from_csv() -> Tuple[Callable[..., Any], dict[str, Any]]:
     col3, col4 = st.columns(2)
     with col3:
         func_args["overwrite_destination"] = st.checkbox(
-            "Overwrite destination", value=True
+            "Overwrite destination",
+            value=True,
         )
 
     with col4:
@@ -109,20 +113,22 @@ def _from_csv() -> Tuple[Callable[..., Any], dict[str, Any]]:
 
     func_args["nodes"] = _list_editor("Nodes files path", "_load_csv_nodes")
     func_args["relationships"] = _list_editor(
-        "Relationships files path", "_load_csv_relationships"
+        "Relationships files path",
+        "_load_csv_relationships",
     )
 
     return (load_from_csv, func_args)
 
 
-def _from_dump() -> Tuple[Callable[..., Any], dict[str, Any]]:
-    func_args: dict[str, Any] = dict()
+def _from_dump() -> tuple[Callable[..., Any], dict[str, Any]]:
+    func_args: dict[str, Any] = dict()  # noqa: C408
     func_args["rename"] = st.text_input("[Optional] Rename the database as :")
 
     col1, col2 = st.columns(2)
     with col1:
         func_args["overwrite_destination"] = st.checkbox(
-            "Overwrite destination", value=True
+            "Overwrite destination",
+            value=True,
         )
 
     with col2:
@@ -136,13 +142,14 @@ def _from_dump() -> Tuple[Callable[..., Any], dict[str, Any]]:
     return (load_from_dump, func_args)
 
 
-def _from_script() -> Tuple[Callable[..., Any], dict[str, Any]]:
-    func_args: dict[str, Any] = dict()
+def _from_script() -> tuple[Callable[..., Any], dict[str, Any]]:
+    func_args: dict[str, Any] = dict()  # noqa: C408
 
     func_args["new_db_name"] = st.text_input("[Optional] New database name :")
 
     func_args["overwrite_destination"] = st.checkbox(
-        "Overwrite destination", value=True
+        "Overwrite destination",
+        value=True,
     )
 
     if func_args["new_db_name"].strip() == "":
@@ -161,11 +168,7 @@ def _list_editor(label: str, key: str) -> list[str]:
         key=key,
     )
 
-    cleaned_list = (
-        df[label].dropna().astype(str).str.strip().loc[lambda x: x != ""].tolist()
-    )
-
-    return cleaned_list
+    return df[label].dropna().astype(str).str.strip().loc[lambda x: x != ""].tolist()
 
 
 def _display_load(result: LoadResult) -> None:
