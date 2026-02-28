@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import streamlit as st
 from streamlit import session_state as app_st
 
-from driver.neo4j_driver import Neo4jSession
-from ui.components import _button
+from ui.components import _button, _static_score
 from ui.utils import _lazy_func
+
+if TYPE_CHECKING:
+    from driver.neo4j_driver import Neo4jSession
 
 _SECTIONS: list[str] = [
     "Consistency",
@@ -35,7 +39,8 @@ def _body() -> None:
         app_st[key] = _lazy_func(_run_all_analysis)
 
     _cached_data()
-    _button("Analyze data quality", key)
+    _button("Run all analysis", key)
+    _render_scores()
 
 
 def _cached_data() -> None:
@@ -52,9 +57,31 @@ def _cached_data() -> None:
 
 def _run_all_analysis() -> None:
     for section in _SECTIONS:
-        st.markdown(f"#### {section}")
         for key in app_st[section]:
             app_st[key]()
 
             # TODO! Add in each pages a new key : 'key_score' who contains the score_function used to compute the score
-            # TODO! Display score here based on 'key_res' data
+
+
+def _render_scores() -> None:
+    empty = False
+
+    for section in _SECTIONS:
+        st.markdown(f"#### {section}")
+        for key in app_st[section]:
+            key_res = f"{key}_res"
+
+            if key_res in app_st:
+                key_score = f"{key}_score"
+                if key_score in app_st:
+                    _static_score(key)
+                else:
+                    st.warning("This score computation isn't yet implemented.")
+            else:
+                empty = True
+
+    if empty:
+        st.warning(
+            "Please run analysis functions to compute scores."
+            " You can do it with ease by click on the button `Run all analysis`.",
+        )
