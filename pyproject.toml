@@ -16,3 +16,8 @@ dependencies = [
 dev = [
     "pandas-stubs>=3.0.0.260204",
 ]
+
+[tool.ruff.lint]
+select=["ALL"]
+ignore=["D"]
+fixable=["ALL"]
