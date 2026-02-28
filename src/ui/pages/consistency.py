@@ -1,17 +1,27 @@
 import re
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
-from driver.neo4j_driver import Neo4jSession
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
+from quality.evaluate import sum_percent
 from quality.utils import _to_dataframe
-from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from ui.components import (
+    _analyze_call,
+    _dynamic_analysis,
+    _score_call,
+    _static_analysis,
+)
 from ui.enums import WidgetState
 from ui.utils import _lazy_func
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from driver.neo4j_driver import Neo4jSession
 
 
 def render() -> None:
@@ -37,7 +47,7 @@ def _string_format() -> None:
             "Ignore case",
             "Multiline",
             "Dotall",
-        ]
+        ],
     )
 
     lazy_editor = _lazy_func(
@@ -54,7 +64,7 @@ def _string_format() -> None:
             ),
             "Label(s) / Type": st.column_config.TextColumn(
                 "Label(s) / Type",
-                help="You can select multiple labels by separate them with a '&' like in Neo4j queries.",
+                help="You can select multiple labels by separate them with a '&'.",
                 required=True,
             ),
             "Properties": st.column_config.TextColumn(
@@ -85,29 +95,32 @@ def _string_format() -> None:
 
     _dynamic_analysis(
         "#### Analysis string properties format.",
-        "It check the entities who does'nt respect the format specified by the Regex pattern.",
+        "It check the entities who does'nt match the Regex pattern.",
         "Cstrf",
         lazy_renders=[lazy_editor],
         button_label="Analyse string format",
     )
 
     st.markdown(
-        "How it works : column `count` is the number of entities of the Label(s) / Type. "
-        "And the column `invalid` is the number of nodes with the property who's not NULL "
-        "and don't match the format specified by the Regex pattern."
+        "How it works: column `count` is the number of entities of the Label(s) / Type."
+        "The column `invalid` is the number of nodes with the property who's not NULL"
+        "and don't match the format specified by the Regex pattern.",
     )
 
 
 def _properties_type() -> None:
     _static_analysis(
         "#### Analysis properties type.",
-        "Check if there is any pair of **Node**/**Relationship** who has one property with different type.",
+        (
+            "Check if there is any pair of **Node**/**Relationship** who has one "
+            "property with different type."
+        ),
         "Ccpt",
     )
 
 
-def _run_string_format_analysis(editor_key: str) -> None:
-    """Analyse les formats de chaînes à partir des règles saisies dans le data editor."""
+def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
+    """Analyzes string format rules defined in the data editor."""
     key_res = "Cstrf_res"
     df_edited = app_st.get(editor_key)
 
@@ -153,7 +166,7 @@ def _run_string_format_analysis(editor_key: str) -> None:
                 analysis.extend(results)
         except re.error as e:
             errors.append(f"Line {idx + 1}: Invalid regex - {e}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
     if errors:
@@ -175,7 +188,14 @@ def _run_string_format_analysis(editor_key: str) -> None:
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
     "Ccpt": _lazy_func(_analyze_call, func=check_properties_type, key="Ccpt"),
+    "Ccpt_score": _lazy_func(
+        _score_call,
+        func=sum_percent,
+        key="Ccpt",
+        lazy_func_args={"df": "Ccpt_res"},
+    ),
     "Cstrf": _lazy_func(
-        _run_string_format_analysis, editor_key="_string_format_editor"
+        _run_string_format_analysis,
+        editor_key="_string_format_editor",
     ),
 }

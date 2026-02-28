@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
@@ -15,13 +15,16 @@ from ui.pages import (
 )
 from ui.utils import _config_page
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 _LAZY_FUNCS = {
-    "Completeness": completeness._LAZY_FUNCS,
-    "Consistency": consistency._LAZY_FUNCS,
-    "Integrity": integrity._LAZY_FUNCS,
-    "Lisibility": lisibility._LAZY_FUNCS,
-    "Outlier": outlier._LAZY_FUNCS,
-    "Property schema": property_schema._LAZY_FUNCS,
+    "Completeness": completeness._LAZY_FUNCS,  # noqa: SLF001
+    "Consistency": consistency._LAZY_FUNCS,  # noqa: SLF001
+    "Integrity": integrity._LAZY_FUNCS,  # noqa: SLF001
+    "Lisibility": lisibility._LAZY_FUNCS,  # noqa: SLF001
+    "Outlier": outlier._LAZY_FUNCS,  # noqa: SLF001
+    "Property schema": property_schema._LAZY_FUNCS,  # noqa: SLF001
 }
 
 
@@ -54,7 +57,7 @@ def main() -> None:
     pg.run()
 
 
-def _config_init_session(section: str, constant: dict[str, Callable[[], Any]]):
+def _config_init_session(section: str, constant: dict[str, Callable[[], Any]]) -> None:
     st.session_state[section] = list(constant.keys())
 
     for key, value in constant.items():
