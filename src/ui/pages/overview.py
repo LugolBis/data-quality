@@ -71,12 +71,8 @@ def _render_scores() -> None:
         for key in app_st[section]:
             key_res = f"{key}_res"
 
-            if key_res in app_st:
-                key_score = f"{key}_score"
-                if key_score in app_st:
-                    _static_score(key)
-                else:
-                    st.warning("This score computation isn't yet implemented.")
+            if key_res in app_st and not key.endswith("_score"):
+                _static_score(key)
             else:
                 empty = True
 

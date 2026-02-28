@@ -101,6 +101,9 @@ def _static_score(
     key_score: str = f"{key}_score"
     if key_score in app_st:
         app_st[key_score]()
+    else:
+        st.warning("This score computation isn't yet implemented.")
+        return
 
     col1, col2 = st.columns(2)
 
@@ -193,7 +196,7 @@ def _score_call(
 def _spinner_call(
     func: Callable[..., Any],
     key_res: str,
-    func_args: dict[str, Any] = {},
+    func_args: dict[str, Any] = dict(),  # noqa: B006, C408
     progress_message: str = "Work in progress...",
 ) -> None:
     try:

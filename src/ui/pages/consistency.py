@@ -7,7 +7,7 @@ from streamlit import session_state as app_st
 
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
-from quality.evaluate import sum_percent
+from quality.evaluate import invalid_ratio, sum_percent
 from quality.utils import _to_dataframe
 from ui.components import (
     _analyze_call,
@@ -197,5 +197,11 @@ _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
     "CSTRF": _lazy_func(
         _run_string_format_analysis,
         editor_key="_string_format_editor",
+    ),
+    "CSTRF_score": _lazy_func(
+        _score_call,
+        func=invalid_ratio,
+        key="CSTRF",
+        lazy_func_args={"df": "CSTRF_res"},
     ),
 }

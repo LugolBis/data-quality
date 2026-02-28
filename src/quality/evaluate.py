@@ -4,6 +4,15 @@ import numpy as np
 import pandas as pd
 
 
+def invalid_ratio(
+    df: pd.DataFrame | None, population: str = "count", invalid: str = "invalid"
+) -> float:
+    if df is None:
+        return 1.000
+    population = df[population].sum()
+    return (population - df[invalid].sum()) / population
+
+
 def sum_percent(
     df: pd.DataFrame | None,
     population: str = "count",
