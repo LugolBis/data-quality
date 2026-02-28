@@ -2,13 +2,19 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
+from quality.evaluate import lines_ratio
 from quality.integrity import (
     detecter_doublons_node,
     detecter_doublons_relationships,
     distr_nodes_properties,
     distr_relationships_properties,
 )
-from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from ui.components import (
+    _analyze_call,
+    _dynamic_analysis,
+    _score_call,
+    _static_analysis,
+)
 from ui.utils import _lazy_func
 
 if TYPE_CHECKING:
@@ -21,6 +27,12 @@ _LAZY_FUNCS = {
         key="IDDN",
         lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
     ),
+    "IDDN_score": _lazy_func(
+        _score_call,
+        func=lines_ratio,
+        key="IDDN",
+        lazy_func_args={"df": "IDDN_res", "df_cached": "nodes_stats"},
+    ),
     "IDDR": _lazy_func(
         _analyze_call,
         func=detecter_doublons_relationships,
@@ -28,6 +40,12 @@ _LAZY_FUNCS = {
         lazy_func_args={
             "seuil_similarite": "_integrity_relationships_duplicates_treshold",
         },
+    ),
+    "IDDR_score": _lazy_func(
+        _score_call,
+        func=lines_ratio,
+        key="IDDR",
+        lazy_func_args={"df": "IDDR_res", "df_cached": "rels_stats"},
     ),
     "IDNP": _lazy_func(
         _analyze_call,

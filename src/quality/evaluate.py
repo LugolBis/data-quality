@@ -5,12 +5,26 @@ import pandas as pd
 
 
 def invalid_ratio(
-    df: pd.DataFrame | None, population: str = "count", invalid: str = "invalid"
+    df: pd.DataFrame | None,
+    population: str = "count",
+    invalid: str = "invalid",
 ) -> float:
     if df is None:
         return 1.000
     population = df[population].sum()
     return (population - df[invalid].sum()) / population
+
+
+def lines_ratio(
+    df: pd.DataFrame | None,
+    df_cached: pd.DataFrame,
+    population: str = "count",
+) -> float:
+    if df is None:
+        return 1.00
+    size = len(df)
+    entities = df_cached[population].sum()
+    return size / ((entities * (entities - 1)) / 2)
 
 
 def sum_percent(
