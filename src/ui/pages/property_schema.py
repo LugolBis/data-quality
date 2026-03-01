@@ -26,15 +26,19 @@ def _headers() -> None:
 def _constraint() -> None:
     description: str = (
         "Scan the database to search schema constraint violations.\n"
-        "When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `count` is the number of distinct pair of entity who violate the constraint."
+        "When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `count` is the number"
+        " of distinct pair of entity who violate the constraint."
     )
 
-    _static_analysis("#### Analyse constraint integrity", description, "PSccv")
+    _static_analysis("Analyse constraint integrity", description, "PSccv")
 
 
 def _index() -> None:
     _static_analysis(
-        "#### Analyse index integrity",
-        "Check if there is any **Node**/**Relationship** who has a `NULL` value on an indexed property.",
+        "Analyse index integrity",
+        (
+            "Check if there is any **Node**/**Relationship** who has a `NULL` value"
+            " on an indexed property."
+        ),
         "Pciv",
     )

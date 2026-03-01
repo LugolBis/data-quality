@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
 
 _SECTIONS: list[str] = [
+    "Completeness",
     "Consistency",
     "Integrity",
     "Lisibility",
@@ -68,8 +69,6 @@ def _run_all_analysis() -> None:
         for key in app_st[section]:
             app_st[key]()
 
-            # TODO! Add in each pages a new key : 'key_score' who contains the score_function used to compute the score
-
 
 def _render_scores() -> None:
     empty = False
@@ -85,8 +84,23 @@ def _render_scores() -> None:
             else:
                 empty = True
 
+    st.markdown("#### Final Data Quality Score :")
     if empty:
         st.warning(
-            "Please run analysis functions to compute scores."
+            "Final score can't be computed due to missing scores."
+            " Please run analysis functions to compute scores."
             " You can do it with ease by click on the button `Run all analysis`.",
+        )
+    else:
+        score = 0
+        count = 0
+        for key, value in app_st.items():
+            if key.endswith("_score_res"):  # type: ignore
+                score += value["data"]
+                count += 1
+        st.metric(
+            label="Final Quality score :",
+            value=(score / count),
+            format="percent",
+            border=True,
         )
