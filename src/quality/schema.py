@@ -1,18 +1,22 @@
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from neo4j import Record, Result
 
-from driver.neo4j_driver import Neo4jSession
 from quality.enums import Constraint, Entity
 from quality.types import ConstraintViolation, IndexViolation
 from quality.utils import _build_match, _format_label
 from utils.utils import logger, some
 
+if TYPE_CHECKING:
+    from neo4j import Record, Result
 
-def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation]]:
+    from driver.neo4j_driver import Neo4jSession
+
+
+def check_index_violation(session: Neo4jSession) -> list[IndexViolation] | None:
     """
-    Check if there is any **Node**/**Relationship** who has a `NULL` value on an indexed property.
+    Check if there is any **Node**/**Relationship** who has a `NULL` value
+    on an indexed property.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
@@ -36,11 +40,11 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
     df_grouped: pd.DataFrame = pd.DataFrame(
         df_exploded.groupby(["entityType", "labelsOrTypes"], as_index=False)[
             "properties"
-        ].agg(set)
+        ].agg(set),
     )
 
     violations: list[IndexViolation] = []
-    for idx, row in df_grouped.iterrows():
+    for _idx, row in df_grouped.iterrows():
         entity: Entity = Entity(row["entityType"])
         label: str = row["labelsOrTypes"]
         properties: list[str] = list(row["properties"])
@@ -49,7 +53,8 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
             f"WITH {properties} AS requiredProps "
             f"{_build_match(entity, label)} "
             "RETURN COUNT(e) as count, "
-            "COUNT(CASE WHEN any(p IN requiredProps WHERE e[p] IS NULL) THEN 1 END) AS invalid "
+            "COUNT(CASE WHEN any(p IN requiredProps WHERE e[p] IS NULL) THEN 1 END) "
+            "AS invalid "
         )
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
@@ -60,21 +65,22 @@ def check_index_violation(session: Neo4jSession) -> Optional[list[IndexViolation
 
             if invalid > 0:
                 violations.append(
-                    IndexViolation(entity, label, count, invalid, properties)
+                    IndexViolation(entity, label, count, invalid, properties),
                 )
 
     if len(violations) > 0:
         return violations
-    else:
-        return None
+    return None
 
 
 def check_constraint_violation(
     session: Neo4jSession,
-) -> Optional[list[ConstraintViolation]]:
+) -> list[ConstraintViolation] | None:
     """
     Check if there is any **Node**/**Relationship** constraint who's violated.\n
-    !!! CAUTION !!! : When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `ConstraintViolation.count` is the number of distinct pair of entity who violate the constraint.
+    !!! CAUTION !!! : When it's `Constraint.UNIQUENESS` or `Constraint.KEY`,
+    `ConstraintViolation.count` is the number of distinct pair of entity
+    who violate the constraint.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
@@ -94,7 +100,7 @@ def check_constraint_violation(
     df["labelsOrTypes"] = df["labelsOrTypes"].apply(_format_label)
 
     violations: list[ConstraintViolation] = []
-    for idx, row in df.iterrows():
+    for _idx, row in df.iterrows():
         constraint: Constraint = Constraint(row["type"])
         entity: Entity = Entity(row["entityType"])
         label: str = row["labelsOrTypes"]
@@ -108,7 +114,8 @@ def check_constraint_violation(
                     f"{_build_match(entity, label, 'e1')} "
                     f"{_build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
-                    "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
+                    "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) "
+                    "AS is_valid "
                     "RETURN COUNT(*) AS count, "
                     "COUNT(CASE WHEN NOT is_valid THEN 1 END) AS invalid"
                 )
@@ -125,7 +132,8 @@ def check_constraint_violation(
                     f"WITH {properties} AS requiredProps"
                     f"{_build_match(entity, label)} "
                     "WITH e, "
-                    f"any(p IN requiredProps WHERE NOT valueType(e[p]) STARTS WITH '{row['propertyType']} ') AS is_invalid "
+                    "any(p IN requiredProps WHERE NOT valueType(e[p]) "
+                    f"STARTS WITH '{row['propertyType']} ') AS is_invalid "
                     "RETURN COUNT(*) AS count, "
                     "COUNT(CASE WHEN is_invalid THEN 1 END) as invalid"
                 )
@@ -136,17 +144,19 @@ def check_constraint_violation(
                     f"{_build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, "
-                    "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR valueType(e1[p]) <> valueType(e2[p])) AS is_invalid, "
+                    "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR "
+                    "valueType(e1[p]) <> valueType(e2[p])) AS is_invalid, "
                     "any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
                     "RETURN COUNT(*) AS count, "
-                    "COUNT(CASE WHEN (NOT is_valid) AND (is_invalid) THEN 1 END) AS invalid"
+                    "COUNT(CASE WHEN (NOT is_valid) AND (is_invalid) THEN 1 END) "
+                    "AS invalid"
                 )
             case default:
                 logger.error(f"Unknown <EntityType> : {default}")
                 continue
 
         result_label: Result = session.run_query(sub_query)  # type: ignore
-        first_row: Optional[Record] = result_label.single()
+        first_row: Record | None = result_label.single()
 
         if some(first_row):
             invalid: int = first_row["invalid"]
@@ -155,11 +165,15 @@ def check_constraint_violation(
             if invalid > 0:
                 violations.append(
                     ConstraintViolation(
-                        entity, label, count, invalid, constraint, properties
-                    )
+                        entity,
+                        label,
+                        count,
+                        invalid,
+                        constraint,
+                        properties,
+                    ),
                 )
 
     if len(violations) > 0:
         return violations
-    else:
-        return None
+    return None

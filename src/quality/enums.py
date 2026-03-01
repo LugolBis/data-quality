@@ -11,7 +11,7 @@ class Entity(Enum):
     RELATIONSHIP = "RELATIONSHIP"
 
 
-class Constraint(Enum):
+class Constraint(str, Enum):
     UNIQUENESS = "UNIQUENESS"
     EXISTENCE = "EXISTENCE"
     KEY = "KEY"

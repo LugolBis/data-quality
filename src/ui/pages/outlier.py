@@ -89,7 +89,7 @@ def _outliers_centrality() -> None:
         ),
         (
             "The `Eigenvector Centrality` is a measure of the influence of a node"
-            "in a connected network."
+            " in a connected network."
         ),
         "OMEC",
         lazy_renders=[lazy_render],
