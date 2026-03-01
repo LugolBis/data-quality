@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import streamlit as st
 from streamlit import session_state as app_st
 
+from quality.utils import _format_label
 from ui.components import _button, _static_score
 from ui.utils import _lazy_func
 
@@ -46,13 +47,13 @@ def _body() -> None:
 def _cached_data() -> None:
     session: Neo4jSession = app_st["db_session"]
 
-    if _KEY_NODE not in app_st:
-        query = "MATCH (n) UNWIND labels(n) AS label RETURN label, COUNT(*) AS count"
-        app_st[_KEY_NODE] = session.run_query(query).to_df()
+    query = "MATCH (n) RETURN labels(n) AS label, COUNT(*) AS count"
+    df = session.run_query(query).to_df()
+    df["label"] = df["label"].apply(_format_label)
+    app_st[_KEY_NODE] = df
 
-    if _KEY_RELATIONSHIPS not in app_st:
-        query = "MATCH ()-[r]->() RETURN type(r) as label, COUNT(*) AS count"
-        app_st[_KEY_RELATIONSHIPS] = session.run_query(query).to_df()
+    query = "MATCH ()-[r]->() RETURN type(r) AS label, COUNT(*) AS count"
+    app_st[_KEY_RELATIONSHIPS] = session.run_query(query).to_df()
 
 
 def _run_all_analysis() -> None:
