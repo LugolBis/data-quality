@@ -8,7 +8,7 @@ from quality.integrity import (
     distr_nodes_properties,
     distr_relationships_properties,
 )
-from scoring.integrity import pair_label_ratio
+from scoring.integrity import pair_label_ratio, weighted_hhi
 from ui.components import (
     _analyze_call,
     _dynamic_analysis,
@@ -53,11 +53,23 @@ _LAZY_FUNCS = {
         key="IDNP",
         flatten=["properties"],
     ),
+    "IDNP_score": _lazy_func(
+        _score_call,
+        func=weighted_hhi,
+        key="IDNP",
+        lazy_func_args={"df": "IDNP_res"},
+    ),
     "IDRP": _lazy_func(
         _analyze_call,
         func=distr_relationships_properties,
         key="IDRP",
         flatten=["properties"],
+    ),
+    "IDRP_score": _lazy_func(
+        _score_call,
+        func=weighted_hhi,
+        key="IDRP",
+        lazy_func_args={"df": "IDRP_res"},
     ),
 }
 

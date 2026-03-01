@@ -31,14 +31,14 @@ def pair_label_ratio(
     percent: pd.Series[Any] = (invalid / pairs).fillna(0.00)
 
     # We compute the weighted score based on invalid values
-    inverted_score = _weighted(df_cached, percent)
+    inverted_score = _weighted(df_cached, percent, group_by, population)
     return round(1.0 - inverted_score, 2)
 
 
 def weighted_hhi(
     df: pd.DataFrame | None,
-    group_by: str,
-    counted: str,
+    group_by: str = "label",
+    counted: str = "properties_count",
     population: str = "count",
 ) -> float:
     """
