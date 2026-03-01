@@ -1,6 +1,5 @@
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Set, Tuple
 
 from quality.enums import ComponentAlgo, Constraint, Degree, Entity
 
@@ -15,7 +14,7 @@ class MultiGraphEdges:
 @dataclass(slots=True, frozen=True, eq=False)
 class Statistics:
     count: int
-    limits: Tuple[float, float]
+    limits: tuple[float, float]
     sum_: float
     average: float
     median: float
@@ -93,7 +92,7 @@ class Violation(ABC):
 @dataclass(slots=True, frozen=True, eq=False)
 class PairPropertiesType(Violation):
     property: str
-    types: Set[Tuple[str, str]]
+    types: set[tuple[str, str]]
 
     def __repr__(self) -> str:
         return super().__repr__() + f" | {self.property}\n\t{self.types}"

@@ -11,15 +11,28 @@ def pair_label_ratio(
     df_cached: pd.DataFrame,
     group_by: str = "label",
     population: str = "count",
+    count_props: str = "count_props",
 ) -> float:
     if df is None:
         return 1.00
 
-    lines_per_label: pd.DataFrame = df.groupby(group_by).count()
-    # TODO! Count nodes per label
-    size = len(df)
-    entities = df_cached[population].sum()
-    return size / ((entities * (entities - 1)) / 2)
+    # Compute the max number of pairs for each label that could be found in `df`
+    # Formula used : ((N*(N-1))/2)*P where N is the number of nodes and P max number
+    #  of properties for each label
+    pairs: pd.Series[Any] = (
+        (df_cached[population] * (df_cached[population] - 1)) / 2
+    ) * df_cached[count_props]
+    pairs.index = df_cached[group_by]
+
+    # For each label it count the number of lines in duplicates dataframe
+    invalid: pd.Series[int] = df.groupby(group_by).size()
+
+    # For each label it compute the percent of invalid nodes
+    percent: pd.Series[Any] = (invalid / pairs).fillna(0.00)
+
+    # We compute the weighted score based on invalid values
+    inverted_score = _weighted(df_cached, percent)
+    return round(1.0 - inverted_score, 2)
 
 
 def weighted_hhi(

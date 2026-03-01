@@ -48,12 +48,18 @@ def _body() -> None:
 def _cached_data() -> None:
     session: Neo4jSession = app_st["db_session"]
 
-    query = "MATCH (n) RETURN labels(n) AS label, COUNT(*) AS count"
+    query = (
+        "MATCH (n) WITH labels(n) AS label, size(keys(n)) AS props  RETURN label,"
+        " COUNT(*) AS count, max(props) AS count_props"
+    )
     df = session.run_query(query).to_df()
     df["label"] = df["label"].apply(_format_label)
     app_st[_KEY_NODE] = df
 
-    query = "MATCH ()-[r]->() RETURN type(r) AS label, COUNT(*) AS count"
+    query = (
+        "MATCH ()-[r]->() WITH type(r) AS label, size(keys(r)) AS props RETURN label,"
+        " COUNT(*) AS count, max(props) AS count_props"
+    )
     app_st[_KEY_RELATIONSHIPS] = session.run_query(query).to_df()
 
 
