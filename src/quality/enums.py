@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Degree(Enum):
+class Degree(str, Enum):
     INCOMING = "INCOMING"
     OUTCOMING = "OUTCOMING"
 

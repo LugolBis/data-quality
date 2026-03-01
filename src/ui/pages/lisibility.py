@@ -2,11 +2,18 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from quality.lisibility import compute_graph_diameter, distr_node_degree
-from ui.components import _analyze_call, _button, _static_analysis
+from scoring.lisibility import nodes_degree
+from ui.components import _analyze_call, _button, _score_call, _static_analysis
 from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {
     "LDND": _lazy_func(_analyze_call, func=distr_node_degree, key="LDND"),
+    "LDND_score": _lazy_func(
+        _score_call,
+        func=nodes_degree,
+        key="LDND",
+        lazy_func_args={"df": "LDND_res"},
+    ),
     "LCGD": _lazy_func(
         _analyze_call,
         func=compute_graph_diameter,

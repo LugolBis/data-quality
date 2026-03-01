@@ -1,18 +1,21 @@
 import math
 from dataclasses import asdict
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from neo4j import Record, Result
 
-from driver.neo4j_driver import Neo4jSession
 from quality.enums import Degree
 from quality.types import MultiGraphEdges, NodeDegrees, Statistics
 from quality.utils import _compute_statistics, _format_label
 from utils.utils import logger, some
 
+if TYPE_CHECKING:
+    from neo4j import Record, Result
 
-def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
+    from driver.neo4j_driver import Neo4jSession
+
+
+def distr_node_degree(session: Neo4jSession) -> list[NodeDegrees] | None:
     """
     Compute statistics of the nodes degree.
 
@@ -32,11 +35,13 @@ def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
     result_in: Result = session.run_query(query.replace("$$", "(n)<-[r]-()"))
     result_out: Result = session.run_query(query.replace("$$", "(n)-[r]->()"))
 
-    degrees_in: Optional[list[NodeDegrees]] = _compute_node_degree(
-        result_in, Degree.INCOMING
+    degrees_in: list[NodeDegrees] | None = _compute_node_degree(
+        result_in,
+        Degree.INCOMING,
     )
-    degrees_out: Optional[list[NodeDegrees]] = _compute_node_degree(
-        result_out, Degree.OUTCOMING
+    degrees_out: list[NodeDegrees] | None = _compute_node_degree(
+        result_out,
+        Degree.OUTCOMING,
     )
 
     if some(degrees_in):
@@ -49,11 +54,10 @@ def distr_node_degree(session: Neo4jSession) -> Optional[list[NodeDegrees]]:
 
     if len(degrees) > 0:
         return degrees
-    else:
-        return None
+    return None
 
 
-def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdges]]:
+def check_multigraph_edges(session: Neo4jSession) -> list[MultiGraphEdges] | None:
     """
     Retrieves the information of **Nodes** and **Relationships** who form a *Multi Graph*.
 
@@ -86,8 +90,7 @@ def check_multigraph_edges(session: Neo4jSession) -> Optional[list[MultiGraphEdg
 
     if len(edges) > 0:
         return edges
-    else:
-        return None
+    return None
 
 
 def compute_graph_diameter(session: Neo4jSession) -> float:
@@ -116,8 +119,8 @@ def compute_graph_diameter(session: Neo4jSession) -> float:
     )
 
     try:
-        result: Result = session.run_query(query)  # type: ignore
-        row: Optional[Record] = result.single()
+        result: Result = session.run_query(query)
+        row: Record | None = result.single()
 
         if some(row):
             return row["diameter"]
@@ -147,7 +150,7 @@ def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
         logger.error(error)
 
 
-def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDegrees]]:
+def _compute_node_degree(result: Result, degree: Degree) -> list[NodeDegrees] | None:
     """
     Compute node degree.
 
@@ -162,24 +165,23 @@ def _compute_node_degree(result: Result, degree: Degree) -> Optional[list[NodeDe
     df["label"] = df["label"].apply(_format_label)
 
     df_aggregated: pd.DataFrame = pd.DataFrame(
-        df.groupby("label", as_index=False)["degree"].agg(list)
+        df.groupby("label", as_index=False)["degree"].agg(list),
     )
 
     del df
 
     degrees: list[NodeDegrees] = []
-    for idx, row in df_aggregated.iterrows():
+    for _idx, row in df_aggregated.iterrows():
         label: str = row["label"]
         values: list[int | float] = row["degree"]
 
-        statistics: Optional[Statistics] = _compute_statistics(values)
+        statistics: Statistics | None = _compute_statistics(values)
 
         if some(statistics):
             degrees.append(
-                NodeDegrees(**asdict(statistics), label=label, degree=degree)
+                NodeDegrees(**asdict(statistics), label=label, degree=degree),
             )
 
     if len(degrees) > 0:
         return degrees
-    else:
-        return None
+    return None
