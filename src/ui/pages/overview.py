@@ -5,6 +5,7 @@ from streamlit import session_state as app_st
 
 from quality.utils import _format_label
 from ui.components import _button, _static_score
+from ui.enums import WidgetState
 from ui.utils import _lazy_func
 
 if TYPE_CHECKING:
@@ -73,7 +74,8 @@ def _render_scores() -> None:
             key_res = f"{key}_res"
 
             if key_res in app_st and not key.endswith("_score"):
-                _static_score(key)
+                if app_st[key_res]["state"] != WidgetState.IDLE:
+                    _static_score(key)
             else:
                 empty = True
 

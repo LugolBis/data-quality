@@ -99,6 +99,7 @@ def _static_score(
     button_label: str = "Refresh",
 ) -> None:
     key_score: str = f"{key}_score"
+
     if key_score in app_st:
         app_st[key_score]()
     else:
