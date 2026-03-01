@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
-from quality.evaluate import lines_ratio
 from quality.integrity import (
     detecter_doublons_node,
     detecter_doublons_relationships,
     distr_nodes_properties,
     distr_relationships_properties,
 )
+from scoring.integrity import pair_label_ratio
 from ui.components import (
     _analyze_call,
     _dynamic_analysis,
@@ -29,7 +29,7 @@ _LAZY_FUNCS = {
     ),
     "IDDN_score": _lazy_func(
         _score_call,
-        func=lines_ratio,
+        func=pair_label_ratio,
         key="IDDN",
         lazy_func_args={"df": "IDDN_res", "df_cached": "nodes_stats"},
     ),
@@ -43,7 +43,7 @@ _LAZY_FUNCS = {
     ),
     "IDDR_score": _lazy_func(
         _score_call,
-        func=lines_ratio,
+        func=pair_label_ratio,
         key="IDDR",
         lazy_func_args={"df": "IDDR_res", "df_cached": "rels_stats"},
     ),

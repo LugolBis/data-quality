@@ -7,8 +7,8 @@ from streamlit import session_state as app_st
 
 from quality.consistency import check_properties_type, check_string_format
 from quality.enums import Entity
-from quality.evaluate import invalid_ratio, sum_percent
 from quality.utils import _to_dataframe
+from scoring.consistency import invalid_ratio, sum_percent
 from ui.components import (
     _analyze_call,
     _dynamic_analysis,

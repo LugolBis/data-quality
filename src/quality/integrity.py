@@ -1,25 +1,26 @@
 from collections import defaultdict
 from difflib import SequenceMatcher
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
-import pandas as pd
-from neo4j import Result
-
-from driver.neo4j_driver import Neo4jSession
 from quality.enums import Entity
 from quality.types import EntityProperties, EntityStats, TextSimilarity
 from quality.utils import _format_label
 from utils.utils import logger
 
+if TYPE_CHECKING:
+    import pandas as pd
+    from neo4j import Result
 
-def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]:
+    from driver.neo4j_driver import Neo4jSession
+
+
+def distr_nodes_properties(session: Neo4jSession) -> list[EntityStats] | None:
     """
     [Schema Integrity] Analyze if nodes with the same label combination
     share the exact same set of property keys.
 
     :param self: The object itself.
     """
-    # print("\n1. Analyse de l'intégrité du schéma (Schema Integrity)...")
 
     query: str = (
         "MATCH (n) "
@@ -38,9 +39,6 @@ def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]
         logger.error(error)
         return None
 
-    # print("\nRAPPORT DE PROPRIÉTÉS (SCHEMA VIOLATION):")
-    # print("=" * 60)
-
     analysis: list[EntityStats] = []
 
     for label_tuple in labels_uniques:
@@ -50,17 +48,14 @@ def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]
 
         properties: list[EntityProperties] = []
 
-        # print(f"\n{label_str} (Total: {total_nodes})")
-
         groupe_sorted: pd.DataFrame = groupe.sort_values(by="Nombre", ascending=False)
 
-        for index, row in groupe_sorted.iterrows():
+        for _index, row in groupe_sorted.iterrows():
             props: list[str] = list(row["Property_Keys_Set"])
             count: int = int(row["Nombre"])
             percent: float = float((count / total_nodes) * 100)
 
             properties.append(EntityProperties(props, count, percent))
-            # print(f"   -> {props} : {count} ({percent:.1f}%)")
 
         analysis.append(
             EntityStats(
@@ -68,16 +63,15 @@ def distr_nodes_properties(session: Neo4jSession) -> Optional[list[EntityStats]]
                 label=label_str,
                 count=total_nodes,
                 properties=properties,
-            )
+            ),
         )
 
-    # print("\n" + "=" * 60)
     return analysis
 
 
 def distr_relationships_properties(
     session: Neo4jSession,
-) -> Optional[list[EntityStats]]:
+) -> list[EntityStats] | None:
     """
     [Relationship Schema Integrity]
     Analyze if relationships of the same TYPE share the exact same set of property keys.
@@ -109,7 +103,7 @@ def distr_relationships_properties(
         properties: list[EntityProperties] = []
         groupe_sorted = groupe.sort_values(by="Nombre", ascending=False)
 
-        for index, row in groupe_sorted.iterrows():
+        for _index, row in groupe_sorted.iterrows():
             props: list[str] = list(row["Property_Keys_Set"])
             count: int = int(row["Nombre"])
             percent: float = float((count / total) * 100)
@@ -122,15 +116,16 @@ def distr_relationships_properties(
                 label=r_type,
                 count=total,
                 properties=properties,
-            )
+            ),
         )
 
     return analysis
 
 
 def detecter_doublons_node(
-    session: Neo4jSession, seuil_similarite: float = 0.8
-) -> Optional[list[TextSimilarity]]:
+    session: Neo4jSession,
+    seuil_similarite: float = 0.8,
+) -> list[TextSimilarity] | None:
     """
     [Duplicate Detection] Scan all nodes to find potential duplicates based
     on string property similarity using SequenceMatcher.
@@ -138,7 +133,6 @@ def detecter_doublons_node(
     :param seuil_similarite: Similarity threshold between 0 and 1.
     :type seuil_similarite: float
     """
-    # print(f"\n2. Recherche de doublons (Similarity >= {seuil_similarite})...")
 
     query = (
         "MATCH (n) "
@@ -152,13 +146,10 @@ def detecter_doublons_node(
 
     groups = defaultdict(list)
     for node in nodes:
-        label_key = tuple(sorted(node["Labels"]))
-        groups[label_key].append(node)
+        label_str = _format_label(node["Labels"])
+        groups[label_str].append(node)
 
-    # print(f"   -> {len(nodes)} noeuds chargés, répartis en {len(groups)} groupes de labels.")
-
-    for label_key, group_nodes in groups.items():
-        label_str = _format_label(label_key)
+    for label_str, group_nodes in groups.items():
         n_count = len(group_nodes)
 
         if n_count < 2:
@@ -196,29 +187,19 @@ def detecter_doublons_node(
                                     property=key,
                                     first_value=val1,
                                     second_value=val2,
-                                )
+                                ),
                             )
 
     if len(detected) == 0:
-        # print("\nAucun doublon détecté (No duplicates found).")
         return None
-    else:
-        """
-        print(f"\nDOUBLONS POTENTIELS DÉTECTÉS (SIMILARITY >= {seuil_similarite}):")
-        df_doublons = pd.DataFrame(detected)
-        df_doublons = df_doublons.sort_values(by="Similarity", ascending=False)
 
-        for idx, row in df_doublons.iterrows():
-            print(f"   [{row['Similarity']}] {row['Labels']} sur '{row['Property']}':")
-            print(f'       "{row["Value_1"]}"  <-->  "{row["Value_2"]}"')
-        """
-
-        return sorted(detected, key=lambda x: x.similarity, reverse=True)
+    return sorted(detected, key=lambda x: x.similarity, reverse=True)
 
 
 def detecter_doublons_relationships(
-    session: Neo4jSession, seuil_similarite: float = 0.8
-) -> Optional[list[TextSimilarity]]:
+    session: Neo4jSession,
+    seuil_similarite: float = 0.8,
+) -> list[TextSimilarity] | None:
     """
     [Relationship Duplicate Detection]
     Scan all relationships to find potential duplicates based
@@ -280,10 +261,9 @@ def detecter_doublons_relationships(
                                     property=key,
                                     first_value=val1,
                                     second_value=val2,
-                                )
+                                ),
                             )
 
     if len(detected) == 0:
         return None
-    else:
-        return sorted(detected, key=lambda x: x.similarity, reverse=True)
+    return sorted(detected, key=lambda x: x.similarity, reverse=True)
