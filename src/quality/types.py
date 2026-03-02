@@ -228,3 +228,9 @@ class CircularComponentsReport:
             f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
             f"\tcircular components:\n\t\t{details}"
         )
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class Eccentricity:
+    diameter: float
+    radius: float

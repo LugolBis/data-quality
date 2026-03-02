@@ -1,8 +1,10 @@
+import math
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
+from quality.types import Eccentricity
 from scoring.utils import _weighted
 
 
@@ -55,3 +57,11 @@ def nodes_degree(
 
     # Step 5 : Compute Weighted score
     return _weighted(df_c, score_label, group_by="label", population="count")
+
+
+def eccentricity(
+    eccentricity: Eccentricity,
+) -> float:
+    if math.isnan(eccentricity.diameter):
+        return 0.00
+    return 2 * (eccentricity.radius / eccentricity.diameter) - 1.00

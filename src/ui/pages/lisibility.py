@@ -1,8 +1,8 @@
 import streamlit as st
 from streamlit import session_state as app_st
 
-from quality.lisibility import compute_graph_diameter, distr_node_degree
-from scoring.lisibility import nodes_degree
+from quality.lisibility import compute_graph_eccentricity, distr_node_degree
+from scoring.lisibility import eccentricity, nodes_degree
 from ui.components import _analyze_call, _button, _score_call, _static_analysis
 from ui.utils import _lazy_func
 
@@ -16,9 +16,15 @@ _LAZY_FUNCS = {
     ),
     "LCGD": _lazy_func(
         _analyze_call,
-        func=compute_graph_diameter,
+        func=compute_graph_eccentricity,
         key="LCGD",
         to_df=False,
+    ),
+    "LCGD_score": _lazy_func(
+        _score_call,
+        func=eccentricity,
+        key="LCGD",
+        lazy_func_args={"eccentricity": "LCGD_res"},
     ),
 }
 
@@ -45,8 +51,8 @@ def _node_degree() -> None:
 
 
 def _graph_diameter() -> None:
-    st.markdown("Graph diameter.")
-    st.markdown("Compute Graph diameter.")
+    st.markdown("Analyse Graph eccentricity.")
+    st.markdown("Compute Graph diameter and radius.")
 
     _button(
         "Analyse",
@@ -54,4 +60,19 @@ def _graph_diameter() -> None:
     )
 
     stored = app_st["LCGD_res"]
-    st.metric("Graph Diameter", stored["data"], border=True)
+
+    column1, column2 = st.columns(2)
+
+    with column1:
+        st.metric(
+            label="Graph Diameter :",
+            value=stored["data"].diameter,
+            border=True,
+        )
+
+    with column2:
+        st.metric(
+            label="Graph Radius :",
+            value=stored["data"].radius,
+            border=True,
+        )

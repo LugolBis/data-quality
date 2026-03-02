@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from quality.enums import Degree
-from quality.types import MultiGraphEdges, NodeDegrees, Statistics
+from quality.types import Eccentricity, MultiGraphEdges, NodeDegrees, Statistics
 from quality.utils import _compute_statistics, _format_label
 from utils.utils import logger, some
 
@@ -81,7 +81,7 @@ def check_multigraph_edges(session: Neo4jSession) -> list[MultiGraphEdges] | Non
     df["labels_to"] = df["labels_to"].apply(_format_label)
 
     edges: list[MultiGraphEdges] = []
-    for idx, row in df.iterrows():
+    for _idx, row in df.iterrows():
         label_from: str = row["labels_from"]
         label_to: str = row["labels_to"]
         relationships: list[str] = row["relationships"]
@@ -93,16 +93,16 @@ def check_multigraph_edges(session: Neo4jSession) -> list[MultiGraphEdges] | Non
     return None
 
 
-def compute_graph_diameter(session: Neo4jSession) -> float:
+def compute_graph_eccentricity(session: Neo4jSession) -> Eccentricity:
     """
-    Compute Graph diameter.
+    Compute Graph eccentricity.
 
     :param session: A `Neo4jSession` to query the database.
     :type session: Neo4jSession
     :param gds_graph_name: Name for the GDS graph.
     :type gds_graph_name: str
-    :return: The graph diameter or `NaN` value if the computations failed.
-    :rtype: float
+    :return: The graph diameter and radius or `NaN` value if the computations failed.
+    :rtype: tuple[float, float]
     """
     gds_graph_name: str = "analysis_graph_diameter"
     _create_gds_graph(session, gds_graph_name)
@@ -115,7 +115,7 @@ def compute_graph_diameter(session: Neo4jSession) -> float:
         ") YIELD totalCost "
         "WITH n, MAX(totalCost) AS distant "
         "WHERE distant > 0 "
-        "RETURN max(distant) as diameter"
+        "RETURN max(distant) as diameter, min(distant) as radius"
     )
 
     try:
@@ -123,11 +123,11 @@ def compute_graph_diameter(session: Neo4jSession) -> float:
         row: Record | None = result.single()
 
         if some(row):
-            return row["diameter"]
+            return Eccentricity(diameter=row["diameter"], radius=row["radius"])
     except Exception as error:
         logger.error(error)
 
-    return math.nan
+    return Eccentricity(math.nan, math.nan)
 
 
 def _create_gds_graph(session: Neo4jSession, gds_graph_name: str) -> None:
