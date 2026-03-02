@@ -1,7 +1,7 @@
 import streamlit as st
 
 from quality.schema import check_constraint_violation, check_index_violation
-from scoring.schema import constraint_score
+from scoring.schema import constraint_score, index_score
 from ui.components import _analyze_call, _score_call, _static_analysis
 from ui.utils import _lazy_func
 
@@ -13,7 +13,17 @@ _LAZY_FUNCS = {
         key="PSCCV",
         lazy_func_args={"df": "PSCCV_res"},
     ),
-    "PCIV": _lazy_func(_analyze_call, func=check_index_violation, key="PCIV"),
+    "PSCIV": _lazy_func(_analyze_call, func=check_index_violation, key="PSCIV"),
+    "PSCIV_score": _lazy_func(
+        _score_call,
+        func=index_score,
+        key="PSCIV",
+        lazy_func_args={
+            "df": "PSCIV_res",
+            "df_cached_nodes": "nodes_stats",
+            "df_cached_rels": "rels_stats",
+        },
+    ),
 }
 
 
@@ -47,5 +57,5 @@ def _index() -> None:
             "Check if there is any **Node**/**Relationship** who has a `NULL` value"
             " on an indexed property."
         ),
-        "PCIV",
+        "PSCIV",
     )
