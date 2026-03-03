@@ -234,3 +234,28 @@ class CircularComponentsReport:
 class Eccentricity:
     diameter: float
     radius: float
+
+@dataclass
+class AnomalyDetail:
+    entity_type: str
+    similarity: float
+    id1: str
+    labels1: str
+    id2: str
+    labels2: str
+
+    def __repr__(self) -> str:
+        return (f"[{self.entity_type}] Sim: {self.similarity:.4f} | "
+                f"('{self.labels1}' id:{self.id1}) <---> ('{self.labels2}' id:{self.id2})")
+
+@dataclass
+class FeatureMismatchReport:
+    threshold: float
+    total_anomalies: int
+    anomalies: list[AnomalyDetail]
+
+    def __repr__(self) -> str:
+        details = "\n".join([str(a) for a in self.anomalies])
+        return (f"FEATURE & LABEL MISMATCH REPORT (Similarity >= {self.threshold})\n"
+                f"Total Anomalies Found: {self.total_anomalies}\n"
+                f"Details:\n{details}")

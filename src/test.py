@@ -9,6 +9,7 @@ import tests.lisibility as lisibility
 import tests.schema as schema
 import tests.outliers as outliers
 import tests.completeness as completeness
+import tests.label as label
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import some
 
@@ -28,3 +29,4 @@ if __name__ == "__main__":
             lisibility.main(session)
             outliers.main(session)
             completeness.main(session)  
+            label.main(session)
