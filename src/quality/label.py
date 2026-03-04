@@ -66,8 +66,8 @@ def detect_label_anomalies_by_features(
           AND elementId(n1) < elementId(n2)
         
         WITH n1, n2, similarity,
-             CASE WHEN n1.__entity = 'NODE' THEN [l IN labels(n1) WHERE l <> '__RelationshipNode__'] ELSE [n1.__original_type] END AS l1,
-             CASE WHEN n2.__entity = 'NODE' THEN [l IN labels(n2) WHERE l <> '__RelationshipNode__'] ELSE [n2.__original_type] END AS l2
+             CASE WHEN n1.__entity = 'NODE' THEN labels(n1) ELSE [n1.__original_type] END AS l1,
+             CASE WHEN n2.__entity = 'NODE' THEN labels(n2) ELSE [n2.__original_type] END AS l2
         
         RETURN n1.__entity AS entity_type,
                l1 AS labels1, l2 AS labels2,
