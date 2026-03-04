@@ -38,7 +38,10 @@ class EntityProperties:
     percent: float
 
     def __repr__(self) -> str:
-        return f"[{', '.join(self.names)}] |-> count={self.count} | percent={self.percent:.1f}%"
+        return (
+            f"[{', '.join(self.names)}] |-> count={self.count} | "
+            f"percent={self.percent:.1f}%"
+        )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -51,9 +54,15 @@ class EntityStats:
     def __repr__(self) -> str:
         match self.entity:
             case Entity.NODE:
-                return f"\n({self.label}) | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
+                return (
+                    f"\n({self.label}) | count={self.count} :\n\t"
+                    f"{'\n\t'.join([node.__repr__() for node in self.properties])}"
+                )
             case Entity.RELATIONSHIP:
-                return f"\n[{self.label}] | count={self.count} :\n\t{'\n\t'.join([node.__repr__() for node in self.properties])}"
+                return (
+                    f"\n[{self.label}] | count={self.count} :\n\t"
+                    f"{'\n\t'.join([node.__repr__() for node in self.properties])}"
+                )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -66,7 +75,10 @@ class TextSimilarity:
     second_value: str
 
     def __repr__(self) -> str:
-        return f"[{self.similarity:.2f}] | {self.label} -> {self.property}\n\t'{self.first_value}' <--> '{self.second_value}'"
+        return (
+            f"[{self.similarity:.2f}] | {self.label} -> {self.property}\n\t"
+            f"'{self.first_value}' <--> '{self.second_value}'"
+        )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -86,7 +98,10 @@ class Violation(ABC):
             case Entity.RELATIONSHIP:
                 return f"[{self.label}] | count={self.count} -> {self.get_percent()}%"
             case default:
-                return f"Unknown entity : {default} - {self.label}) | count={self.count} -> {self.get_percent()}%"
+                return (
+                    f"Unknown entity : {default} - {self.label}) | count={self.count}"
+                    f" -> {self.get_percent()}%"
+                )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -171,7 +186,10 @@ class LabelCentralityStats:
     max_score: float
 
     def __repr__(self) -> str:
-        return f"(:{self.label}) | count={self.count} -> Avg Score: {self.avg_score:.4f} (Max: {self.max_score:.4f})"
+        return (
+            f"(:{self.label}) | count={self.count} -> Avg Score: {self.avg_score:.4f} "
+            f"(Max: {self.max_score:.4f})"
+        )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -210,7 +228,8 @@ class IsolatedComponentsReport:
     def __repr__(self) -> str:
         details: str = "\n\t\t".join([str(c) for c in self.largest_components])
         return (
-            f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
+            f"[{self.algorithm}] | Total Components: {self.total_components} | "
+            f"Total Nodes: {self.total_nodes}\n"
             f"\tisolated components:\n\t\t{details}"
         )
 
@@ -225,7 +244,8 @@ class CircularComponentsReport:
     def __repr__(self) -> str:
         details: str = "\n\t\t".join([str(c) for c in self.largest_components])
         return (
-            f"[{self.algorithm}] | Total Components: {self.total_components} | Total Nodes: {self.total_nodes}\n"
+            f"[{self.algorithm}] | Total Components: {self.total_components} | "
+            f"Total Nodes: {self.total_nodes}\n"
             f"\tcircular components:\n\t\t{details}"
         )
 
@@ -235,7 +255,8 @@ class Eccentricity:
     diameter: float
     radius: float
 
-@dataclass
+
+@dataclass(slots=True, frozen=True, eq=False)
 class AnomalyDetail:
     entity_type: str
     similarity: float
@@ -245,10 +266,13 @@ class AnomalyDetail:
     labels2: str
 
     def __repr__(self) -> str:
-        return (f"[{self.entity_type}] Sim: {self.similarity:.4f} | "
-                f"('{self.labels1}' id:{self.id1}) <---> ('{self.labels2}' id:{self.id2})")
+        return (
+            f"[{self.entity_type}] Sim: {self.similarity:.4f} | "
+            f"('{self.labels1}' id:{self.id1}) <---> ('{self.labels2}' id:{self.id2})"
+        )
 
-@dataclass
+
+@dataclass(slots=True, frozen=True, eq=False)
 class FeatureMismatchReport:
     threshold: float
     total_anomalies: int
@@ -256,6 +280,8 @@ class FeatureMismatchReport:
 
     def __repr__(self) -> str:
         details = "\n".join([str(a) for a in self.anomalies])
-        return (f"FEATURE & LABEL MISMATCH REPORT (Similarity >= {self.threshold})\n"
-                f"Total Anomalies Found: {self.total_anomalies}\n"
-                f"Details:\n{details}")
+        return (
+            f"FEATURE & LABEL MISMATCH REPORT (Similarity >= {self.threshold})\n"
+            f"Total Anomalies Found: {self.total_anomalies}\n"
+            f"Details:\n{details}"
+        )
