@@ -1,8 +1,10 @@
 import json
+import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
+from soda_core.contracts import verify_contract_locally
 
 from utils.utils import logger
 
@@ -57,7 +59,7 @@ def _generate_config(
     }
 
 
-def _generate_contract(ds_name: str, table_metadata: dict) -> dict:
+def _generate_contract(ds_name: str, table_metadata: dict) -> dict:  # noqa: C901
     table_name = table_metadata["table_name"]
 
     contract = {
@@ -65,7 +67,9 @@ def _generate_contract(ds_name: str, table_metadata: dict) -> dict:
         "columns": [],
     }
 
-    for column in table_metadata["columns"]:
+    composed_primary_key: list[str] = []
+    index_primary_key: int | None = None
+    for index, column in enumerate(table_metadata["columns"]):
         column_def = {
             "name": column["column_name"],
             "data_type": _map_postgres_type(column["data_type"]),
@@ -83,7 +87,9 @@ def _generate_contract(ds_name: str, table_metadata: dict) -> dict:
         if column.get("primary_key"):
             if not missing:
                 column_def["checks"].append({"missing": {}})
-            column_def["checks"].append({"duplicate": {}})
+            if index_primary_key is None:
+                index_primary_key = index
+            composed_primary_key.append(column_def["name"])
 
         # FOREIGN KEY constraint
         if column.get("foreign_key"):
@@ -104,15 +110,20 @@ def _generate_contract(ds_name: str, table_metadata: dict) -> dict:
 
         contract["columns"].append(column_def)
 
+    if len(composed_primary_key) == 1:
+        contract["columns"][index_primary_key]["checks"].append({"duplicate": {}})
+    elif len(composed_primary_key) > 1:
+        contract["checks"] = [{"duplicate": {"columns": composed_primary_key}}]
+
     return contract
 
 
-def main(
+def scoring(
     session: PostgresSession,
     output_dir: str,
-) -> None:
-    conf = session.get_config()
-    dbname = conf["dbname"]
+) -> float:
+    conf: dict[str, str] = session.get_config()
+    dbname: str = conf["dbname"]
 
     with PG_META_SCRIPT.open("r") as fs:
         meta_query: str = fs.read()
@@ -124,12 +135,13 @@ def main(
             metadata = row[0]
         else:
             logger.error(f"Invalid row : {row}")
-            return
+            return math.nan
 
-    output_path = Path(output_dir).joinpath(dbname)
+    output_path: Path = Path(output_dir).joinpath(dbname)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    with Path(output_path.joinpath(f"{dbname}_config.yml")).open("w") as fd:
+    ds_conf_path: Path = output_path.joinpath("ds_config.yml")
+    with ds_conf_path.open("w") as fd:
         yaml.dump(
             _generate_config(
                 host=conf["host"],
@@ -141,12 +153,31 @@ def main(
             sort_keys=False,
         )
 
+    weighted_score: float = 0.0
+    total_rows: int = 0
     for table in metadata:
         contract = _generate_contract(f"pg_{conf['dbname']}", table)
 
-        file_path = output_path.joinpath(f"{table['table_name']}_contract.yml")
+        contract_path = output_path.joinpath(f"{table['table_name']}_contract.yml")
 
-        with Path(file_path).open("w") as fd:
+        with Path(contract_path).open("w") as fd:
             yaml.dump(contract, fd, sort_keys=False)
 
-        logger.info(f"Generated: {file_path}")
+        logger.info(f"Generated: {contract_path}")
+
+        rows_count: int = table["rows_count"]
+        if rows_count > 0:
+            verification_result = verify_contract_locally(
+                data_source_file_path=str(ds_conf_path),
+                contract_file_path=str(contract_path),
+            )
+
+            weighted_score += (
+                verification_result.number_of_checks_passed
+                / verification_result.number_of_checks
+            ) * rows_count
+            total_rows += rows_count
+
+    if total_rows > 0:
+        return round(weighted_score / total_rows, 2)
+    return 1.0

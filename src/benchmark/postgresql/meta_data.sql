@@ -33,13 +33,17 @@ WITH tables_info AS (
                             JOIN pg_attribute att ON att.attrelid = cl.oid AND att.attnum = ANY(con.conkey)
                             JOIN pg_class fr ON con.confrelid = fr.oid
                             JOIN pg_attribute fratt ON fratt.attrelid = fr.oid AND fratt.attnum = ANY(con.confkey)
-                            WHERE cl.relname = c.table_name AND con.contype = 'f' AND att.attname = cols.column_name
+                            WHERE cl.relname = c.table_name 
+                              AND con.contype = 'f' 
+                              AND att.attname = cols.column_name
                         )
                     )
                 )
                 FROM information_schema.columns cols
-                WHERE cols.table_name = c.table_name AND cols.table_schema = 'public'
-            )
+                WHERE cols.table_name = c.table_name 
+                  AND cols.table_schema = 'public'
+            ),
+            'rows_count', pgc.reltuples::bigint
         )
         ORDER BY pgc.oid
     ) AS tables_metadata

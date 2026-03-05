@@ -1,4 +1,4 @@
-from benchmark.soda import main
+from benchmark.soda import scoring
 from driver.postgres import PostgresSession
 from utils.utils import some
 
@@ -20,6 +20,7 @@ if __name__ == "__main__":
             password = ""
 
         with PostgresSession(dbname, user, password, host, port) as session:
-            main(session, "Data/soda")
+            quality_score = scoring(session, "Data/soda")
+        print(f"Data Quality Score : {quality_score * 100}%")  # noqa: T201
     else:
-        print("Inconsistant PostgreSQL config.")
+        print("Inconsistant PostgreSQL config.")  # noqa: T201
