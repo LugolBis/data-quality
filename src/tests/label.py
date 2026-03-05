@@ -7,8 +7,10 @@ from utils.utils import some
 
 
 def main(session: Neo4jSession) -> None:
-    mismatch_reports: Optional[list[FeatureMismatchReport]] = detect_label_anomalies_by_features(
-        session, similarity_threshold=0.90
+    mismatch_reports: Optional[list[FeatureMismatchReport]] = (
+        detect_label_anomalies_by_features(
+            session, similarity_threshold=0.90, property_ratio=0.5
+        )
     )
 
     if some(mismatch_reports):
@@ -16,4 +18,6 @@ def main(session: Neo4jSession) -> None:
         for report in mismatch_reports:
             print(report)
     else:
-        print("\nNO ANOMALIES DETECTED: All entities have consistent labels with their features.")
+        print(
+            "\nNO ANOMALIES DETECTED: All entities have consistent labels with their features."
+        )
