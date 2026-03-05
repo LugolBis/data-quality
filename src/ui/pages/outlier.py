@@ -7,7 +7,13 @@ from quality.outlier import (
     measure_average_centrality_by_label,
     measure_eigenvector_centrality,
 )
-from ui.components import _analyze_call, _dynamic_analysis, _static_analysis
+from scoring.outlier import numerical_outlier_ratio
+from ui.components import (
+    _analyze_call,
+    _dynamic_analysis,
+    _score_call,
+    _static_analysis,
+)
 from ui.pages.integrity import _SIMILARITY_SLIDER
 from ui.utils import _lazy_func
 
@@ -22,16 +28,34 @@ _LAZY_FUNCS = {
         lazy_func_args={"z_score_threshold": "_outlier_z_score_threshold"},
         flatten=["outliers"],
     ),
+    "ODON_score": _lazy_func(
+        _score_call,
+        func=numerical_outlier_ratio,
+        key="ODON",
+        lazy_func_args={"df": "ODON_res", "df_cached": "nodes_stats"},
+    ),
     "OMEC": _lazy_func(
         _analyze_call,
         func=measure_eigenvector_centrality,
         key="OMEC",
         lazy_func_args={"epsilon": "_outlier_ecs"},
     ),
+    "OMEC_score": _lazy_func(
+        _score_call,
+        func=numerical_outlier_ratio,
+        key="OMEC",
+        lazy_func_args={"df": "OMEC_res", "df_cached": "nodes_stats"},
+    ),
     "OMACBL": _lazy_func(
         _analyze_call,
         func=measure_average_centrality_by_label,
         key="OMACBL",
+    ),
+    "OMACBL_score": _lazy_func(
+        _score_call,
+        func=numerical_outlier_ratio,
+        key="OMACBL",
+        lazy_func_args={"df": "OMACBL_res", "df_cached": "nodes_stats"},
     ),
 }
 

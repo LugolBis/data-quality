@@ -40,10 +40,10 @@ def numerical_outlier_ratio(
     percent: pd.Series[Any] = (invalid / total_pop).fillna(0.00).clip(upper=1.0)
 
     inverted_score = _weighted(
-        df_cached, 
-        score_label=percent, 
-        group_by=group_by, 
-        population=population
+        df_cached,
+        score_label=percent,
+        group_by=group_by,
+        population=population,
     )
-    
+
     return round(1.0 - inverted_score, 2)
