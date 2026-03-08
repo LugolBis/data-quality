@@ -97,14 +97,14 @@ def _dynamic_analysis(
 def _static_score(
     key: str,
     button_label: str = "Refresh",
-) -> None:
+) -> bool | None:
     key_score: str = f"{key}_score"
 
     if key_score in app_st:
         app_st[key_score]()
     else:
         st.warning("This score computation isn't yet implemented.")
-        return
+        return True
 
     col1, col2 = st.columns(2)
 
@@ -116,6 +116,7 @@ def _static_score(
             button_label,
             key_score,
         )
+    return None
 
 
 def _analyze_call(  # noqa: PLR0913

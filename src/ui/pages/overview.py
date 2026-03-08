@@ -15,6 +15,7 @@ _SECTIONS: list[str] = [
     "Completeness",
     "Consistency",
     "Integrity",
+    "Labeling",
     "Lisibility",
     "Outlier",
     "Property schema",
@@ -76,11 +77,14 @@ def _render_scores() -> None:
     for section in _SECTIONS:
         st.markdown(f"#### {section}")
         for key in app_st[section]:
+            if key.endswith("_score"):
+                continue
+
             key_res = f"{key}_res"
 
-            if key_res in app_st and not key.endswith("_score"):
+            if key_res in app_st:
                 if app_st[key_res]["state"] != WidgetState.IDLE:
-                    _static_score(key)
+                    empty = _static_score(key) is None
             else:
                 empty = True
 

@@ -6,6 +6,7 @@ from ui.pages import (
     completeness,
     consistency,
     integrity,
+    labeling,
     lisibility,
     load_data,
     log_in,
@@ -22,6 +23,7 @@ _LAZY_FUNCS = {
     "Completeness": completeness._LAZY_FUNCS,  # noqa: SLF001
     "Consistency": consistency._LAZY_FUNCS,  # noqa: SLF001
     "Integrity": integrity._LAZY_FUNCS,  # noqa: SLF001
+    "Labeling": labeling._LAZY_FUNCS,  # noqa: SLF001
     "Lisibility": lisibility._LAZY_FUNCS,  # noqa: SLF001
     "Outlier": outlier._LAZY_FUNCS,  # noqa: SLF001
     "Property schema": property_schema._LAZY_FUNCS,  # noqa: SLF001
@@ -47,6 +49,7 @@ def main() -> None:
                 st.Page(**_config_page(completeness.render)),
                 st.Page(**_config_page(consistency.render)),
                 st.Page(**_config_page(integrity.render)),
+                st.Page(**_config_page(labeling.render)),
                 st.Page(**_config_page(lisibility.render)),
                 st.Page(**_config_page(outlier.render)),
                 st.Page(**_config_page(property_schema.render)),

@@ -1,15 +1,19 @@
-from typing import Optional
-from neo4j import Record, Result
-from driver.neo4j_driver import Neo4jSession
+from typing import TYPE_CHECKING
+
 from quality.types import AnomalyDetail, FeatureMismatchReport
 from utils.utils import logger
+
+if TYPE_CHECKING:
+    from neo4j import Result
+
+    from driver.neo4j_driver import Neo4jSession
 
 
 def detect_label_anomalies_by_features(
     session: Neo4jSession,
     similarity_threshold: float = 0.85,
     property_ratio: float = 0.5,
-) -> Optional[list[FeatureMismatchReport]]:
+) -> list[FeatureMismatchReport] | None:
     """
     Transform relationships into nodes, extract topological + property features (FastRP),
     and use KNN to find nodes with highly similar features but DIFFERENT labels.
@@ -17,7 +21,8 @@ def detect_label_anomalies_by_features(
 
     :param session: Neo4jSession instance.
     :param similarity_threshold: Minimum KNN similarity to be considered a match.
-    :param property_ratio: How much weight to give node properties vs. graph topology in FastRP.
+    :param property_ratio: How much weight to give node properties vs. graph topology
+    in FastRP.
     :return: A report of mismatched entities.
     """
     graph_name = "feature_comparison_graph"
@@ -43,12 +48,12 @@ def detect_label_anomalies_by_features(
             logger.info(f"Detected numeric properties for FastRP: {numeric_properties}")
         else:
             logger.info(
-                "No numeric properties detected. Falling back to topology-only FastRP."
+                "No numeric properties detected. Falling back to topology-only FastRP.",
             )
 
         session.run_query(
             "MATCH (n) WHERE NOT '__RelationshipNode__' IN labels(n) "
-            "SET n.__entity = 'NODE'"
+            "SET n.__entity = 'NODE'",
         )
 
         session.run_query(
@@ -60,7 +65,7 @@ def detect_label_anomalies_by_features(
             "    __rel_id: elementId(r) "
             "}) "
             "CREATE (a)-[:__TEMP_OUT__]->(rn) "
-            "CREATE (rn)-[:__TEMP_IN__]->(b)"
+            "CREATE (rn)-[:__TEMP_IN__]->(b)",
         )
 
         session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
@@ -68,12 +73,12 @@ def detect_label_anomalies_by_features(
         projection_config_str = ""
         if numeric_properties:
             props_dict_str = ", ".join(
-                [f"{p}: {{defaultValue: 0.0}}" for p in numeric_properties]
+                [f"{p}: {{defaultValue: 0.0}}" for p in numeric_properties],
             )
             projection_config_str = f", {{ nodeProperties: {{{props_dict_str}}} }}"
 
         session.run_query(
-            f"CALL gds.graph.project('{graph_name}', '*', ['__TEMP_OUT__', '__TEMP_IN__'] {projection_config_str}) YIELD graphName"
+            f"CALL gds.graph.project('{graph_name}', '*', ['__TEMP_OUT__', '__TEMP_IN__'] {projection_config_str}) YIELD graphName",  # noqa: E501  # ty:ignore[invalid-argument-type]
         )
 
         fastrp_config_lines = [
@@ -94,7 +99,7 @@ def detect_label_anomalies_by_features(
         session.run_query(f"""
             CALL gds.fastRP.mutate('{graph_name}', {fastrp_config_cypher}) 
             YIELD nodePropertiesWritten
-        """)
+        """)  # ty:ignore[invalid-argument-type]
 
         knn_query = f"""
         CALL gds.knn.stream('{graph_name}', {{
@@ -120,7 +125,7 @@ def detect_label_anomalies_by_features(
                similarity
         ORDER BY similarity DESC
         """
-        result: Result = session.run_query(knn_query)
+        result: Result = session.run_query(knn_query)  # ty:ignore[invalid-argument-type]
 
         for record in result:
             entity_type = record["entity_type"]
@@ -150,7 +155,7 @@ def detect_label_anomalies_by_features(
                     labels1=labels1_str,
                     id2=id2,
                     labels2=labels2_str,
-                )
+                ),
             )
 
     except Exception as error:
@@ -160,13 +165,13 @@ def detect_label_anomalies_by_features(
     finally:
         try:
             session.run_query(
-                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName",
             )
 
             session.run_query("MATCH (rn:__RelationshipNode__) DETACH DELETE rn")
 
             session.run_query(
-                "MATCH (n) WHERE n.__entity IS NOT NULL REMOVE n.__entity"
+                "MATCH (n) WHERE n.__entity IS NOT NULL REMOVE n.__entity",
             )
         except Exception as cleanup_error:
             logger.error(f"Failed during cleanup: {cleanup_error}")
@@ -177,7 +182,6 @@ def detect_label_anomalies_by_features(
                 threshold=similarity_threshold,
                 total_anomalies=len(anomalies_list),
                 anomalies=anomalies_list,
-            )
+            ),
         ]
-    else:
-        return None
+    return None

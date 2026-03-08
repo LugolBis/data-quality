@@ -111,7 +111,7 @@ def _generate_contract(ds_name: str, table_metadata: dict) -> dict:  # noqa: C90
         contract["columns"].append(column_def)
 
     if len(composed_primary_key) == 1:
-        contract["columns"][index_primary_key]["checks"].append({"duplicate": {}})
+        contract["columns"][index_primary_key]["checks"].append({"duplicate": {}})  # ty:ignore[invalid-argument-type]
     elif len(composed_primary_key) > 1:
         contract["checks"] = [{"duplicate": {"columns": composed_primary_key}}]
 
