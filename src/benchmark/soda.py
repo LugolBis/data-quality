@@ -21,8 +21,8 @@ TYPE_MAPPING: dict[str, str] = {
     "bytea": "binary",
 }
 
-BASE_DIR: Path = Path(__file__).resolve().parent
-PG_META_SCRIPT: Path = BASE_DIR.joinpath(
+_BASE_DIR: Path = Path(__file__).resolve().parent
+_PG_META_SCRIPT: Path = _BASE_DIR.joinpath(
     "postgresql/meta_data.sql",
 )
 
@@ -125,7 +125,7 @@ def scoring(
     conf: dict[str, str] = session.get_config()
     dbname: str = conf["dbname"]
 
-    with PG_META_SCRIPT.open("r") as fs:
+    with _PG_META_SCRIPT.open("r") as fs:
         meta_query: str = fs.read()
         row: tuple[Any, ...] = session.query(meta_query)[0]
 

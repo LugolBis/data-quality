@@ -1,5 +1,5 @@
 import subprocess
-from typing import Optional, TypeGuard, TypeVar
+from typing import TypeGuard, TypeVar
 
 from loguru import logger
 
@@ -16,9 +16,10 @@ logger.add(
 )
 
 
-def some(option: Optional[T]) -> TypeGuard[T]:
+def some[T](option: T | None) -> TypeGuard[T]:
     """
-    Provide a concise and safe way to to check the `option` took in input isn't a 'None' value.
+    Provide a concise and safe way to to check the `option` took in input isn't a
+    'None' value.
 
     :param option: An optional value, which can be a `None` or an object of type `T`
     :type option: Optional[T]
@@ -28,7 +29,7 @@ def some(option: Optional[T]) -> TypeGuard[T]:
     return option is not None
 
 
-def safe_exec(command: list[str]) -> bool:
+def safe_exec(command: list[str], output: bool = False) -> bool:  # noqa: FBT001, FBT002
     """
     Provide a safe way to execute a terminal command.
 
@@ -39,9 +40,15 @@ def safe_exec(command: list[str]) -> bool:
     """
 
     try:
-        result: subprocess.CompletedProcess[str] = subprocess.run(
-            command, capture_output=True, text=True
+        result: subprocess.CompletedProcess[str] = subprocess.run(  # noqa: S603
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
         )
+
+        if output:
+            print(result.stdout)
 
         if result.returncode != 0:
             logger.error(result.stderr)

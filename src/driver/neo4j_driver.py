@@ -78,6 +78,9 @@ class Neo4jSession:
             cloned_database,
         )
 
+    def get_database(self) -> str:
+        return self._database
+
     def get_home_folder(self) -> Path | None:
         """
         Use it to retrieve the absolute file path of the home database folder of
