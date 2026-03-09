@@ -1,11 +1,13 @@
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 
-from quality.types import Eccentricity
 from scoring.utils import _weighted
+
+if TYPE_CHECKING:
+    from quality.types import Eccentricity
 
 
 def nodes_degree(
@@ -64,4 +66,4 @@ def eccentricity(
 ) -> float:
     if math.isnan(eccentricity.diameter):
         return 0.00
-    return 2 * (eccentricity.radius / eccentricity.diameter) - 1.00
+    return abs(2 * (eccentricity.radius / eccentricity.diameter) - 1.00)
