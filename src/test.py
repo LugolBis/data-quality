@@ -9,8 +9,8 @@ import tests.lisibility as lisibility
 import tests.schema as schema
 import tests.outliers as outliers
 import tests.completeness as completeness
-import tests.label as label
-import tests.label_sage as label_sage
+import tests.labeling as label
+import tests.labeling_sage as label_sage
 from driver.neo4j_driver import Neo4jSession
 from utils.utils import some
 
