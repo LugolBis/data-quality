@@ -1,36 +1,40 @@
 import os
-from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from driver.neo4j_driver import Neo4jSession
 from load.enums import LoadResult
 from load.utils import _create_database, _load_with_admin
 from utils.utils import logger, safe_exec, some
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 def load_from_script(
     session: Neo4jSession,
     script_path: Path,
-    new_db_name: Optional[str] = None,
-    overwrite_destination: bool = True,
+    new_db_name: str | None = None,
+    overwrite_destination: bool = True,  # noqa: FBT001, FBT002
 ) -> LoadResult:
     """
     Load a database from a **Cypher script** using `cypher-shell`.\n
 
-    :param session: An active Neo4j session with sufficient privileges to create a new database
-                    and execute the `dbms.listConfig()` procedure.
+    :param session: An active Neo4j session with sufficient privileges to create a new
+    database and execute the `dbms.listConfig()` procedure.
     :type session: Neo4jSession
     :param script_path: The absolute path of a cypher script.
     :type script_path: Path
-    :param new_db_name: The optional name of the database if it's different from the `session` database.
+    :param new_db_name: The optional name of the database if it's different from the
+    `session` database.
     :type new_db_name: Optional[str]
-    :param overwrite_destination: Remove all the **nodes** and **relationships**, but don't remove APOC procedures/functions/constraints.
+    :param overwrite_destination: Remove all the **nodes** and **relationships**,
+    but don't remove APOC procedures/functions/constraints.
     :type overwrite_destination: bool
     :return: The result of the load operation.
     :rtype: LoadResult
     """
 
-    DELETE_QUERY = "MATCH (n) DETACH DELETE n;"
+    delete_query = "MATCH (n) DETACH DELETE n;"
     command: list[str]
 
     if some(new_db_name):
@@ -38,47 +42,47 @@ def load_from_script(
 
         with Neo4jSession.clone(session, new_db_name) as session_t:
             if overwrite_destination:
-                session_t.run_query(DELETE_QUERY)
+                session_t.run_query(delete_query)
             command = session_t.get_cypher_shell_command(script_path)
     else:
         if overwrite_destination:
-            session.run_query(DELETE_QUERY)
+            session.run_query(delete_query)
         command = session.get_cypher_shell_command(script_path)
 
-    db_folder: Optional[Path] = session.get_home_folder()
+    db_folder: Path | None = session.get_home_folder()
 
     if some(db_folder):
         os.chdir(db_folder)
 
         if safe_exec(command):
             return LoadResult.LOAD_SUCCESS
-        else:
-            logger.error(f"Failed to execute the command : {' '.join(command)}")
-            return LoadResult.LOAD_FAILED
-    else:
-        return LoadResult.NO_DB_HOME
+        logger.error(f"Failed to execute the command : {' '.join(command)}")
+        return LoadResult.LOAD_FAILED
+    return LoadResult.NO_DB_HOME
 
 
 def load_from_dump(
     session: Neo4jSession,
     dump_file_path: Path,
-    rename: Optional[str] = None,
-    overwrite_destination: bool = True,
-    verbose: bool = True,
+    rename: str | None = None,
+    overwrite_destination: bool = True,  # noqa: FBT001, FBT002
+    verbose: bool = True,  # noqa: FBT001, FBT002
 ) -> LoadResult:
     """
     Load a **.dump** file into a Neo4j database.
 
-    :param session: An active Neo4j session with sufficient privileges to create a new database
-                    and execute the `dbms.listConfig()` procedure.
+    :param session: An active Neo4j session with sufficient privileges to create a new
+    database and execute the `dbms.listConfig()` procedure.
     :type session: Neo4jSession
     :param dump_file_path: Absolute file path to the the **.dump** file.
     :type dump_file_path: Path
     :param rename: To choose a database name different from that of the **.dump** file.
     :type rename: Optional[str]
-    :param overwrite_destination: If `True` (default), overwrite the target database if it already exists.
+    :param overwrite_destination: If `True` (default), overwrite the target database if
+     it already exists.
     :type overwrite_destination: bool
-    :param verbose: If `True` (default), enable detailed output when running the `neo4j-admin` command.
+    :param verbose: If `True` (default), enable detailed output when running the
+    `neo4j-admin` command.
     :type verbose: bool
     :return: The result of the load operation.
     :rtype: LoadResult
@@ -87,14 +91,14 @@ def load_from_dump(
     new_db_name: str
 
     if some(rename):
-        os.rename(dump_file_path, os.path.join(dump_folder, f"{rename}.dump"))
+        dump_file_path.rename(dump_folder.joinpath(f"{rename}.dump"))
         new_db_name = rename
     else:
         new_db_name = dump_file_path.name.removesuffix(".dump")
 
     _create_database(session, new_db_name)
 
-    db_folder: Optional[Path] = session.get_home_folder()
+    db_folder: Path | None = session.get_home_folder()
 
     if some(db_folder):
         command: list[str] = [
@@ -114,43 +118,47 @@ def load_from_dump(
         session.close()
 
         return _load_with_admin(command, db_folder, new_db_name, recovery=False)
-    else:
-        return LoadResult.NO_DB_HOME
+    return LoadResult.NO_DB_HOME
 
 
-def load_from_csv(
+def load_from_csv(  # noqa: PLR0913
     session: Neo4jSession,
     nodes: list[str],
     relationships: list[str],
     new_db_name: str,
     delimiter: str = ",",
     array_delimiter: str = ";",
-    overwrite_destination: bool = True,
-    verbose: bool = True,
+    overwrite_destination: bool = True,  # noqa: FBT001, FBT002
+    verbose: bool = True,  # noqa: FBT001, FBT002
 ) -> LoadResult:
     """
     Load **CSV** files into a Neo4j database.
 
     !!! CAUTION: The Neo4j instance is stopped and restarted during the process.
-    The provided `session` will therefore no longer be valid after this function completes.
+    The provided `session` will therefore no longer be valid after this function
+    completes.
 
-    :param session: An active Neo4j session with sufficient privileges to create a new database
-                    and execute the `dbms.listConfig()` procedure.
+    :param session: An active Neo4j session with sufficient privileges to create a new
+    database and execute the `dbms.listConfig()` procedure.
     :type session: Neo4jSession
     :param nodes: A list of absolute paths to CSV files containing node data.
     :type nodes: list[str]
-    :param relationships: A list of absolute paths to CSV files containing relationship data.
+    :param relationships: A list of absolute paths to CSV files containing relationship
+     data.
     :type relationships: list[str]
     :param new_db_name: The target database used to perform the import.
                         It may or may not already exist.
     :type new_db_name: str
-    :param delimiter: The delimiter used to separate header fields and values in the CSV files.
+    :param delimiter: The delimiter used to separate header fields and values in the
+    CSV files.
     :type delimiter: str
     :param array_delimiter: The delimiter used for array values within CSV fields.
     :type array_delimiter: str
-    :param overwrite_destination: If `True` (default), overwrite the target database if it already exists.
+    :param overwrite_destination: If `True` (default), overwrite the target database if
+    it already exists.
     :type overwrite_destination: bool
-    :param verbose: If `True` (default), enable detailed output when running the `neo4j-admin` command.
+    :param verbose: If `True` (default), enable detailed output when running the
+    `neo4j-admin` command.
     :type verbose: bool
     :return: The result of the load operation.
     :rtype: LoadResult
@@ -158,7 +166,7 @@ def load_from_csv(
 
     _create_database(session, new_db_name)
 
-    db_folder: Optional[Path] = session.get_home_folder()
+    db_folder: Path | None = session.get_home_folder()
 
     if some(db_folder):
         command: list[str] = [
@@ -186,5 +194,4 @@ def load_from_csv(
         session.close()
 
         return _load_with_admin(command, db_folder, new_db_name, recovery=True)
-    else:
-        return LoadResult.NO_DB_HOME
+    return LoadResult.NO_DB_HOME

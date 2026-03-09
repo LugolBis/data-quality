@@ -1,19 +1,28 @@
 import os
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from driver.neo4j_driver import Neo4jSession
 from load.enums import LoadResult, _InstanceAction
 from utils.utils import logger, safe_exec
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from driver.neo4j_driver import Neo4jSession
+
 
 def _load_with_admin(
-    command: list[str], db_folder: Path, new_db_name: str, recovery: bool = True
+    command: list[str],
+    db_folder: Path,
+    new_db_name: str,
+    recovery: bool = True,  # noqa: FBT001, FBT002
 ) -> LoadResult:
     """
-    Execute the `neo4j-admin` command took in input with `command` to be executed from the home folder of the database (`db_folder`).
+    Execute the `neo4j-admin` command took in input with `command` to be executed from
+    the home folder of the database (`db_folder`).
 
-    Note : `recovery` parameter permite you to choose if the failure of your command need to recovery the database.
+    Note : `recovery` parameter permite you to choose if the failure of your command
+    need to recovery the database.
 
     :param command: The `neo4j-admin` shell command.
     :type command: list[str]
@@ -35,23 +44,22 @@ def _load_with_admin(
                 if _alter_instance(db_folder, _InstanceAction.START)
                 else LoadResult.START_FAILED
             )
-        else:
-            logger.error(f"Failed to execute the command : {' '.join(command)}")
-            if recovery:
-                return (
-                    LoadResult.RECOVERY_SUCCESS
-                    if _recovery_database(db_folder, new_db_name)
-                    else LoadResult.RECOVERY_FAILED
-                )
-            else:
-                return LoadResult.RECOVERY_SUCCESS
-    else:
-        logger.error("Failed to stop the Neo4j instance.")
-        return LoadResult.STOP_FAILED
+        logger.error(f"Failed to execute the command : {' '.join(command)}")
+        if recovery:
+            return (
+                LoadResult.RECOVERY_SUCCESS
+                if _recovery_database(db_folder, new_db_name)
+                else LoadResult.RECOVERY_FAILED
+            )
+        return LoadResult.RECOVERY_SUCCESS
+    logger.error("Failed to stop the Neo4j instance.")
+    return LoadResult.STOP_FAILED
 
 
 def _create_database(
-    session: Neo4jSession, new_db_name: str, timeout: int = 60
+    session: Neo4jSession,
+    new_db_name: str,
+    timeout: int = 60,
 ) -> None:
     """
     Create a new database called `new_db_name`.\n
@@ -69,7 +77,8 @@ def _create_database(
 
         while timeout > 0:
             result = session.run_query(
-                "SHOW DATABASE $db_name", {"db_name": new_db_name}
+                "SHOW DATABASE $db_name",
+                {"db_name": new_db_name},
             )
             record = result.single()
 
@@ -78,8 +87,8 @@ def _create_database(
 
             time.sleep(1)
             timeout -= 1
-    except Exception as _:
-        pass
+    except Exception as e:
+        logger.error(e)
 
 
 def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
@@ -93,7 +102,7 @@ def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
     :return: If the bash command success.
     :rtype: bool
     """
-    neo4j_exec: str = os.path.join(db_home_folder, "bin", "neo4j")
+    neo4j_exec: str = os.path.join(db_home_folder, "bin", "neo4j")  # noqa: PTH118
     command: list[str] = [neo4j_exec]
 
     match action:
@@ -115,7 +124,8 @@ def _alter_instance(db_home_folder: Path, action: _InstanceAction) -> bool:
 def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
     """
     Process an empty import to the database to recovery it.\n
-    Note : Use it to recovery your database after a failed import and assert the *Neo4j* instance is stopped before call this function.
+    Note : Use it to recovery your database after a failed import and assert the
+    *Neo4j* instance is stopped before call this function.
 
     :param db_home_folder: Absolute path of the Neo4j instance's home folder.
     :type db_home_folder: Path
@@ -125,7 +135,7 @@ def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
     :rtype: bool
     """
     os.chdir(db_home_folder)
-    path: str = os.path.join(db_home_folder, "import", "RECOVERY.csv")
+    path: Path = db_home_folder / "import" / "RECOVERY.csv"
 
     command: list[str] = [
         "./bin/neo4j-admin",
@@ -139,13 +149,13 @@ def _recovery_database(db_home_folder: Path, db_name: str) -> bool:
         "--overwrite-destination",
     ]
 
-    with open(path, "w") as fd:
+    with path.open("w") as fd:
         fd.write(":ID;:LABEL")
 
     result: bool = safe_exec(command)
     if not result:
         logger.error(f"Failed to execute the command : {' '.join(command)}")
 
-    os.remove(path)
+    path.unlink()
 
     return result
