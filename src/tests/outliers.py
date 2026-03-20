@@ -1,28 +1,31 @@
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from driver.neo4j_driver import Neo4jSession
-from quality.outlier import (
+from profiling.outlier import (
     detecter_outliers_numeriques,
-    measure_eigenvector_centrality,
     measure_average_centrality_by_label,
+    measure_eigenvector_centrality,
 )
-from quality.types import NumericalOutlier, CentralityScore, LabelCentralityStats
 from utils.utils import some
+
+if TYPE_CHECKING:
+    from driver.neo4j_driver import Neo4jSession
+    from quality.types import CentralityScore, LabelCentralityStats, NumericalOutlier
 
 
 def main(session: Neo4jSession) -> None:
     """
     Exécute les analyses avancées : détection d'outliers numériques
     """
-    outliers_numeriques: Optional[list[NumericalOutlier]] = (
-        detecter_outliers_numeriques(session, z_score_threshold=1.96)
+    outliers_numeriques: list[NumericalOutlier] | None = detecter_outliers_numeriques(
+        session,
+        z_score_threshold=1.96,
     )
 
-    centralite_eigenvector: Optional[list[CentralityScore]] = (
+    centralite_eigenvector: list[CentralityScore] | None = (
         measure_eigenvector_centrality(session, epsilon=0.5)
     )
 
-    centralite_moyenne_par_label: Optional[list[LabelCentralityStats]] = (
+    centralite_moyenne_par_label: list[LabelCentralityStats] | None = (
         measure_average_centrality_by_label(session)
     )
 

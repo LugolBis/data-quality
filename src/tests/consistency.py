@@ -1,19 +1,28 @@
 import re
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from driver.neo4j_driver import Neo4jSession
-from quality.consistency import check_properties_type, check_string_format
-from quality.enums import Entity
-from quality.types import PairPropertiesType, TextFormat
+from models.enums import Entity
+from profiling.consistency import check_properties_type
+from quality.consistency import check_string_format
 from utils.utils import some
+
+if TYPE_CHECKING:
+    from driver.neo4j_driver import Neo4jSession
+    from models.types import PairPropertiesType
+    from quality.types import TextFormat
 
 
 def main(session: Neo4jSession) -> None:
-    formats: Optional[list[TextFormat]] = check_string_format(
-        session, Entity.NODE, "Person", ["name"], re.compile("Jo.*"), True
+    formats: list[TextFormat] | None = check_string_format(
+        session,
+        Entity.NODE,
+        "Person",
+        ["name"],
+        re.compile("Jo.*"),
+        True,
     )
 
-    types: Optional[list[PairPropertiesType]] = check_properties_type(session)
+    types: list[PairPropertiesType] | None = check_properties_type(session)
 
     if some(formats):
         print("\n".join([ft.__repr__() for ft in formats]))

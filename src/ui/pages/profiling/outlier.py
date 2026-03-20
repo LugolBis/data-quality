@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
-from quality.outlier import (
+from profiling.outlier import (
     detecter_outliers_numeriques,
     measure_average_centrality_by_label,
     measure_eigenvector_centrality,
@@ -14,8 +14,7 @@ from ui.components import (
     _score_call,
     _static_analysis,
 )
-from ui.pages.integrity import _SIMILARITY_SLIDER
-from ui.utils import _lazy_func
+from ui.utils import _SIMILARITY_SLIDER, _THRESHOLD_SLIDER, _lazy_func
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -59,8 +58,6 @@ _LAZY_FUNCS = {
     ),
 }
 
-_THRESHOLD_SLIDER = tuple(round(0.05 * x, 2) for x in range(-60, 61))
-
 
 def render() -> None:
     _headers()
@@ -74,7 +71,7 @@ def render() -> None:
 
 def _headers() -> None:
     st.title("Outliers")
-    st.markdown("#### Analysis of outliers property values.")
+    st.markdown("#### Profiling of outliers property values.")
 
 
 def _numeric() -> None:

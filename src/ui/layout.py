@@ -1,67 +1,96 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import streamlit as st
 
-from ui.pages import (
-    completeness,
-    consistency,
-    integrity,
-    labeling,
-    lisibility,
-    load_data,
-    log_in,
-    outlier,
-    overview,
-    property_schema,
+from ui.pages import load_data, log_in
+from ui.pages.profiling import (
+    completeness as pf_completeness,
 )
+from ui.pages.profiling import (
+    consistency as pf_consistency,
+)
+from ui.pages.profiling import (
+    integrity as pf_integrity,
+)
+from ui.pages.profiling import (
+    labeling as pf_labeling,
+)
+from ui.pages.profiling import (
+    lisibility as pf_lisibility,
+)
+from ui.pages.profiling import (
+    outlier as pf_outlier,
+)
+from ui.pages.quality import (
+    consistency as ql_consistency,
+)
+from ui.pages.quality import (
+    integrity as ql_integrity,
+)
+from ui.pages.quality import schema as ql_schema
 from ui.utils import _config_page
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-_LAZY_FUNCS = {
-    "Completeness": completeness._LAZY_FUNCS,  # noqa: SLF001
-    "Consistency": consistency._LAZY_FUNCS,  # noqa: SLF001
-    "Integrity": integrity._LAZY_FUNCS,  # noqa: SLF001
-    "Labeling": labeling._LAZY_FUNCS,  # noqa: SLF001
-    "Lisibility": lisibility._LAZY_FUNCS,  # noqa: SLF001
-    "Outlier": outlier._LAZY_FUNCS,  # noqa: SLF001
-    "Property schema": property_schema._LAZY_FUNCS,  # noqa: SLF001
+_SECTIONS = {
+    "Database management": {
+        "Log in": log_in,
+        "Load data": load_data,
+    },
+    "Data Profiling": {
+        "Completeness": pf_completeness,
+        "Consistency": pf_consistency,
+        "Integrity": pf_integrity,
+        "Labeling": pf_labeling,
+        "Lisibility": pf_lisibility,
+        "Outlier": pf_outlier,
+    },
+    "Data Quality": {
+        "Consistency": ql_consistency,
+        "Integrity": ql_integrity,
+        "Schema": ql_schema,
+    },
 }
+
+from ui.pages import overview  # noqa: E402
+
+
+def _get_pages(section: str, mods: dict[str, Any], code: int) -> list[Any]:
+    res = []
+    for title, mod in mods.items():
+        res.append(st.Page(**_config_page(section, title, mod.render)))
+
+        if code > 0:
+            _config_init_session(mod)
+
+            if code > 1:
+                _config_section(title, mod)
+
+    if code > 1:
+        return [
+            st.Page(**_config_page("Data Quality", "Overview", overview.render)),
+            *res,
+        ]
+    return res
+
+
+def _config_init_session(mod: Any) -> None:  # noqa: ANN401
+    for key, value in mod._LAZY_FUNCS.items():  # noqa: SLF001
+        st.session_state[key] = value
+
+
+def _config_section(title: str, mod: Any) -> None:  # noqa: ANN401
+    st.session_state[title] = list(mod._LAZY_FUNCS.keys())  # noqa: SLF001
 
 
 def main() -> None:
-    for key, value in _LAZY_FUNCS.items():
-        _config_init_session(key, value)
+    pages: dict[str, Any] = {}
+    for code, (section, mods) in enumerate(_SECTIONS.items()):
+        pages[section] = _get_pages(section, mods, code)
 
-    pages: list[Any] | dict[str, Any]
-
+    displayed_pages: list[Any] | dict[str, Any]
     if not st.session_state.get("is_connected", False):
-        pages = [st.Page(**_config_page(log_in.render))]
+        displayed_pages = [st.Page(**_config_page("", "Log in", log_in.render))]
     else:
-        pages = {
-            "Database management": [
-                st.Page(**_config_page(log_in.render)),
-                st.Page(**_config_page(load_data.render)),
-            ],
-            "Data Quality analysis": [
-                st.Page(**_config_page(overview.render)),
-                st.Page(**_config_page(completeness.render)),
-                st.Page(**_config_page(consistency.render)),
-                st.Page(**_config_page(integrity.render)),
-                st.Page(**_config_page(labeling.render)),
-                st.Page(**_config_page(lisibility.render)),
-                st.Page(**_config_page(outlier.render)),
-                st.Page(**_config_page(property_schema.render)),
-            ],
-        }
+        displayed_pages = pages
 
-    pg = st.navigation(pages)
+    pg = st.navigation(displayed_pages)
     pg.run()
-
-
-def _config_init_session(section: str, constant: dict[str, Callable[[], Any]]) -> None:
-    st.session_state[section] = list(constant.keys())
-
-    for key, value in constant.items():
-        st.session_state[key] = value

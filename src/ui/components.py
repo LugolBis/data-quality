@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
-from quality.utils import _to_dataframe
+from models.utils import to_dataframe
 from ui.enums import WidgetState
 from utils.utils import some
 
@@ -147,7 +147,7 @@ def _analyze_call(  # noqa: PLR0913
 
         if some(results):
             if to_df:
-                df = _to_dataframe(objects=results, flatten=flatten)
+                df = to_dataframe(objects=results, flatten=flatten)
 
                 if some(df):
                     app_st[key_res] = {"state": WidgetState.SUCCESS, "data": df}

@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from quality.enums import Degree
-from quality.types import Eccentricity, MultiGraphEdges, NodeDegrees, Statistics
-from quality.utils import _compute_statistics, _format_label
+from models.enums import Degree
+from models.utils import format_label
+from profiling.types import Eccentricity, MultiGraphEdges, NodeDegrees, Statistics
+from profiling.utils import _compute_statistics
 from utils.utils import logger, some
 
 if TYPE_CHECKING:
@@ -77,8 +78,8 @@ def check_multigraph_edges(session: Neo4jSession) -> list[MultiGraphEdges] | Non
     result: Result = session.run_query(query)
     df: pd.DataFrame = result.to_df()
 
-    df["labels_from"] = df["labels_from"].apply(_format_label)
-    df["labels_to"] = df["labels_to"].apply(_format_label)
+    df["labels_from"] = df["labels_from"].apply(format_label)
+    df["labels_to"] = df["labels_to"].apply(format_label)
 
     edges: list[MultiGraphEdges] = []
     for _idx, row in df.iterrows():
@@ -162,7 +163,7 @@ def _compute_node_degree(result: Result, degree: Degree) -> list[NodeDegrees] | 
     :rtype: list[NodeDegrees] | None
     """
     df: pd.DataFrame = result.to_df()
-    df["label"] = df["label"].apply(_format_label)
+    df["label"] = df["label"].apply(format_label)
 
     df_aggregated: pd.DataFrame = pd.DataFrame(
         df.groupby("label", as_index=False)["degree"].agg(list),

@@ -1,27 +1,33 @@
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from driver.neo4j_driver import Neo4jSession
+from profiling.integrity import distr_nodes_properties, distr_relationships_properties
 from quality.integrity import (
-    distr_nodes_properties,
-    distr_relationships_properties,
     detecter_doublons_node,
     detecter_doublons_relationships,
 )
-from quality.types import EntityStats, TextSimilarity
 from utils.utils import some
+
+if TYPE_CHECKING:
+    from driver.neo4j_driver import Neo4jSession
+    from profiling.types import EntityStats
+    from quality.types import TextSimilarity
 
 
 def main(session: Neo4jSession) -> None:
-    properties: Optional[list[EntityStats]] = distr_nodes_properties(session)
+    properties: list[EntityStats] | None = distr_nodes_properties(session)
 
-    similarities_node: Optional[list[TextSimilarity]] = detecter_doublons_node(
-        session, seuil_similarite=0.9
+    similarities_node: list[TextSimilarity] | None = detecter_doublons_node(
+        session,
+        seuil_similarite=0.9,
     )
-    
-    relationships: Optional[list[EntityStats]] = distr_relationships_properties(session)
 
-    similarities_relationships: Optional[list[TextSimilarity]] = detecter_doublons_relationships(
-        session, seuil_similarite=0.9
+    relationships: list[EntityStats] | None = distr_relationships_properties(session)
+
+    similarities_relationships: list[TextSimilarity] | None = (
+        detecter_doublons_relationships(
+            session,
+            seuil_similarite=0.9,
+        )
     )
 
     if some(properties):

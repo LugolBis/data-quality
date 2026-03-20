@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from quality.types import AnomalyDetail, FeatureMismatchReport
+from profiling.types import AnomalyDetail, FeatureMismatchReport
 from utils.utils import logger
 
 if TYPE_CHECKING:
@@ -113,7 +113,6 @@ def detect_label_anomalies_by_features(
         WHERE similarity >= {similarity_threshold}
           AND n1.__entity = n2.__entity 
           AND elementId(n1) < elementId(n2)
-        
         WITH n1, n2, similarity,
              CASE WHEN n1.__entity = 'NODE' THEN labels(n1) ELSE [n1.__original_type] END AS l1,
              CASE WHEN n2.__entity = 'NODE' THEN labels(n2) ELSE [n2.__original_type] END AS l2

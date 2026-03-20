@@ -34,9 +34,10 @@ def numerical_outlier_ratio(
     percent = percent.clip(upper=1.0)
 
     inverted_score = _weighted(
-        df_cached_patched, score_label=percent, group_by=group_by, population=population
+        df_cached_patched,
+        score_label=percent,
+        group_by=group_by,
+        population=population,
     )
 
-    final_score = round(1.0 - inverted_score, 2)
-
-    return final_score
+    return round(1.0 - inverted_score, 2)

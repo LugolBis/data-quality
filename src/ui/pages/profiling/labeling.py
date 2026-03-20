@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
-from quality.labeling import detect_label_anomalies_by_features
+from profiling.labeling import detect_label_anomalies_by_features
 from ui.components import (
     _analyze_call,
     _dynamic_analysis,
 )
-from ui.pages.integrity import _SIMILARITY_SLIDER
-from ui.utils import _lazy_func
+from ui.utils import _SIMILARITY_SLIDER, _lazy_func
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,7 +34,7 @@ def render() -> None:
 
 def _headers() -> None:
     st.title("Labeling")
-    st.markdown("#### Analysis labelling of the database.")
+    st.markdown("#### Profiling labelling of the database.")
 
 
 def _anomalies() -> None:

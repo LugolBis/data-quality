@@ -5,7 +5,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _config_page(function: Callable[..., None]) -> dict[str, Any]:
+def _config_page(
+    section: str,
+    title: str,
+    function: Callable[..., None],
+) -> dict[str, Any]:
     """
     Generate the configuration for a `StreamlitPage`.
 
@@ -15,10 +19,7 @@ def _config_page(function: Callable[..., None]) -> dict[str, Any]:
     :rtype: dict[str, Any]
     """
 
-    module_name: str = function.__module__
-    page_name: str = module_name.split(".")[-1]
-    title: str = page_name.replace("_", " ").capitalize()
-    url_path: str = page_name.lower()
+    url_path: str = f"{section.replace(' ', '_')}_{title.lower()}"
 
     return {
         "page": function,
@@ -39,3 +40,30 @@ def _lazy_func(call: Callable[..., Any], *args, **kwargs) -> Callable[[], Any]: 
     :rtype: Callable[[], Any]
     """
     return partial(call, *args, **kwargs)
+
+
+_SIMILARITY_SLIDER = (
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0,
+)
+
+_THRESHOLD_SLIDER = tuple(round(0.05 * x, 2) for x in range(-60, 61))

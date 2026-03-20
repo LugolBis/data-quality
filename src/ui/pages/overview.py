@@ -3,23 +3,14 @@ from typing import TYPE_CHECKING
 import streamlit as st
 from streamlit import session_state as app_st
 
-from quality.utils import _format_label
+from models.utils import format_label
 from ui.components import _button, _static_score
 from ui.enums import WidgetState
+from ui.layout import _SECTIONS
 from ui.utils import _lazy_func
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
-
-_SECTIONS: list[str] = [
-    "Completeness",
-    "Consistency",
-    "Integrity",
-    "Labeling",
-    "Lisibility",
-    "Outlier",
-    "Property schema",
-]
 
 _KEY_NODE: str = "nodes_stats"
 _KEY_RELATIONSHIPS: str = "rels_stats"
@@ -55,7 +46,7 @@ def _cached_data() -> None:
         " COUNT(*) AS count, max(props) AS count_props"
     )
     df = session.run_query(query).to_df()
-    df["label"] = df["label"].apply(_format_label)
+    df["label"] = df["label"].apply(format_label)
     app_st[_KEY_NODE] = df
 
     query = (
@@ -66,7 +57,7 @@ def _cached_data() -> None:
 
 
 def _run_all_analysis() -> None:
-    for section in _SECTIONS:
+    for section in _SECTIONS["Data Quality"]:
         for key in app_st[section]:
             app_st[key]()
 
@@ -74,7 +65,7 @@ def _run_all_analysis() -> None:
 def _render_scores() -> None:
     empty = False
 
-    for section in _SECTIONS:
+    for section in _SECTIONS["Data Quality"]:
         st.markdown(f"#### {section}")
         for key in app_st[section]:
             if key.endswith("_score"):

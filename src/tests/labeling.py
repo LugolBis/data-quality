@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from quality.labeling import detect_label_anomalies_by_features
+from profiling.labeling import detect_label_anomalies_by_features
 from utils.utils import some
 
 if TYPE_CHECKING:

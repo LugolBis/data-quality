@@ -2,9 +2,8 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
-from quality.completeness import measure_scc, measure_wcc
-from scoring.completeness import component_anomaly_ratio
-from ui.components import _analyze_call, _dynamic_analysis, _score_call
+from profiling.completeness import measure_scc, measure_wcc
+from ui.components import _analyze_call, _dynamic_analysis
 from ui.utils import _lazy_func
 
 if TYPE_CHECKING:
@@ -17,23 +16,11 @@ _LAZY_FUNCS = {
         key="CMS",
         flatten=["largest_components"],
     ),
-    "CMS_score": _lazy_func(
-        _score_call,
-        func=component_anomaly_ratio,
-        key="CMS",
-        lazy_func_args={"df": "CMS_res", "df_cached": "nodes_stats"},
-    ),
     "CMW": _lazy_func(
         _analyze_call,
         func=measure_wcc,
         key="CMW",
         flatten=["largest_components"],
-    ),
-    "CMW_score": _lazy_func(
-        _score_call,
-        func=component_anomaly_ratio,
-        key="CMW",
-        lazy_func_args={"df": "CMW_res", "df_cached": "nodes_stats"},
     ),
 }
 
@@ -48,7 +35,7 @@ def render() -> None:
 
 def _headers() -> None:
     st.title("Completeness")
-    st.markdown("#### Analysis of the completeness of the database.")
+    st.markdown("#### Profiling of the completeness of the database.")
 
 
 def _render_scc() -> None:

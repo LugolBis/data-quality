@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit import session_state as app_st
 
-from quality.lisibility import compute_graph_eccentricity, distr_node_degree
+from profiling.lisibility import compute_graph_eccentricity, distr_node_degree
 from scoring.lisibility import eccentricity, nodes_degree
 from ui.components import _analyze_call, _button, _score_call, _static_analysis
 from ui.utils import _lazy_func
@@ -39,7 +39,7 @@ def render() -> None:
 
 def _headers() -> None:
     st.title("Lisibility")
-    st.markdown("#### Analysis of the lisibilty of the database.")
+    st.markdown("#### Profiling of the lisibilty of the database.")
 
 
 def _node_degree() -> None:

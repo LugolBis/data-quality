@@ -1,23 +1,27 @@
 from collections import defaultdict
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
-from neo4j import Result
 
-from driver.neo4j_driver import Neo4jSession
-from quality.types import (
+from models.utils import format_label
+from profiling.types import (
     CentralityScore,
     LabelCentralityStats,
     NumericalOutlier,
     OutlierDetail,
 )
-from quality.utils import _format_label
 from utils.utils import logger
+
+if TYPE_CHECKING:
+    from neo4j import Result
+
+    from driver.neo4j_driver import Neo4jSession
 
 
 def detecter_outliers_numeriques(
-    session: Neo4jSession, z_score_threshold: float = 1.96
-) -> Optional[list[NumericalOutlier]]:
+    session: Neo4jSession,
+    z_score_threshold: float = 1.96,
+) -> list[NumericalOutlier] | None:
     """
     [Numerical Outliers]
     Calculate mean, standard deviation and confidence interval to detect numerical outliers.
@@ -40,7 +44,7 @@ def detecter_outliers_numeriques(
 
     groups: dict[str, list] = defaultdict(list)
     for node in nodes:
-        label_key = _format_label(node["Labels"])
+        label_key = format_label(node["Labels"])
         groups[label_key].append(node)
 
     detected_outliers: list[NumericalOutlier] = []
@@ -85,7 +89,7 @@ def detecter_outliers_numeriques(
                         lower_bound=lower_bound,
                         upper_bound=upper_bound,
                         outliers=details,
-                    )
+                    ),
                 )
 
     return detected_outliers if detected_outliers else None
@@ -94,7 +98,7 @@ def detecter_outliers_numeriques(
 def measure_eigenvector_centrality(
     session: Neo4jSession,
     epsilon: float = 0.5,
-) -> Optional[list[CentralityScore]]:
+) -> list[CentralityScore] | None:
     """
     Check the graph topology and measure 'Eigenvector Centrality' with the Neo4j GDS plugin.
 
@@ -128,10 +132,10 @@ def measure_eigenvector_centrality(
             node = record["node"]
             score: float = float(record["score"])
 
-            labels: str = _format_label(list(node.labels))
+            labels: str = format_label(list(node.labels))
 
             display_name: str = str(
-                node.get("name") or node.get("title") or "<Unnamed>"
+                node.get("name") or node.get("title") or "<Unnamed>",
             )
 
             scores.append(CentralityScore(labels, display_name, score))
@@ -151,13 +155,12 @@ def measure_eigenvector_centrality(
 
     if len(scores) > 0:
         return scores
-    else:
-        return None
+    return None
 
 
 def measure_average_centrality_by_label(
     session: Neo4jSession,
-) -> Optional[list[LabelCentralityStats]]:
+) -> list[LabelCentralityStats] | None:
     """
     Check the graph topology and calculate the average 'Eigenvector Centrality' grouped by node labels.\n
 
@@ -204,7 +207,7 @@ def measure_average_centrality_by_label(
                     count=count,
                     avg_score=avg_score,
                     max_score=max_score,
-                )
+                ),
             )
 
     except Exception as error:
@@ -222,5 +225,4 @@ def measure_average_centrality_by_label(
 
     if len(stats_list) > 0:
         return stats_list
-    else:
-        return None
+    return None

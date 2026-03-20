@@ -28,10 +28,7 @@ def component_anomaly_ratio(
     if df is None or df.empty:
         return 1.00
 
-    if size_col in df.columns:
-        invalid_nodes = df[size_col].sum()
-    else:
-        invalid_nodes = len(df)
+    invalid_nodes = df[size_col].sum() if size_col in df.columns else len(df)
 
     total_pop = df_cached[population].sum()
 

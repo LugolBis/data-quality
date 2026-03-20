@@ -5,15 +5,13 @@ import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
-from quality.consistency import check_properties_type, check_string_format
-from quality.enums import Entity
-from quality.utils import _to_dataframe
-from scoring.consistency import invalid_ratio, sum_percent
+from models.enums import Entity
+from models.utils import to_dataframe
+from quality.consistency import check_string_format
+from scoring.consistency import invalid_ratio
 from ui.components import (
-    _analyze_call,
     _dynamic_analysis,
     _score_call,
-    _static_analysis,
 )
 from ui.enums import WidgetState
 from ui.utils import _lazy_func
@@ -28,8 +26,6 @@ def render() -> None:
     _headers()
     st.divider()
     _string_format()
-    st.divider()
-    _properties_type()
 
 
 def _headers() -> None:
@@ -108,17 +104,6 @@ def _string_format() -> None:
     )
 
 
-def _properties_type() -> None:
-    _static_analysis(
-        "Analysis properties type.",
-        (
-            "Check if there is any pair of **Node**/**Relationship** who has one "
-            "property with different type."
-        ),
-        "CCPT",
-    )
-
-
 def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
     """Analyzes string format rules defined in the data editor."""
     key_res = "CSTRF_res"
@@ -174,7 +159,7 @@ def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
             st.error(err)
 
     if analysis:
-        df_result = _to_dataframe(analysis)
+        df_result = to_dataframe(analysis)
         if df_result is not None:
             app_st[key_res] = {"state": WidgetState.SUCCESS, "data": df_result}
         else:
@@ -187,13 +172,6 @@ def _run_string_format_analysis(editor_key: str) -> None:  # noqa: C901, PLR0912
 
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
-    "CCPT": _lazy_func(_analyze_call, func=check_properties_type, key="CCPT"),
-    "CCPT_score": _lazy_func(
-        _score_call,
-        func=sum_percent,
-        key="CCPT",
-        lazy_func_args={"df": "CCPT_res"},
-    ),
     "CSTRF": _lazy_func(
         _run_string_format_analysis,
         editor_key="_string_format_editor",

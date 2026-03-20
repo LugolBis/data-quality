@@ -1,12 +1,18 @@
-from typing import Optional
-from neo4j import Record, Result
-from driver.neo4j_driver import Neo4jSession
-from quality.types import AnomalyDetail, FeatureMismatchReport
+from typing import TYPE_CHECKING
+
+from profiling.types import AnomalyDetail, FeatureMismatchReport
 from utils.utils import logger
+
+if TYPE_CHECKING:
+    from neo4j import Result
+
+    from driver.neo4j_driver import Neo4jSession
 
 
 def _setup_and_project_graph(
-    session: Neo4jSession, graph_name: str, max_categories: int = 100
+    session: Neo4jSession,
+    graph_name: str,
+    max_categories: int = 100,
 ) -> list[str]:
     schema_query = """
     CALL db.schema.nodeTypeProperties() YIELD propertyName, propertyTypes
@@ -33,7 +39,7 @@ def _setup_and_project_graph(
     logger.info(f"Detected String properties: {string_props}")
 
     session.run_query(
-        "MATCH (n) WHERE NOT '__RelationshipNode__' IN labels(n) SET n.__entity = 'NODE'"
+        "MATCH (n) WHERE NOT '__RelationshipNode__' IN labels(n) SET n.__entity = 'NODE'",
     )
     session.run_query(
         "MATCH (a)-[r]->(b) "
@@ -44,7 +50,7 @@ def _setup_and_project_graph(
         "    __rel_id: elementId(r) "
         "}) "
         "CREATE (a)-[:__TEMP_OUT__]->(rn) "
-        "CREATE (rn)-[:__TEMP_IN__]->(b)"
+        "CREATE (rn)-[:__TEMP_IN__]->(b)",
     )
 
     return_clauses = ["id(n) AS id", "[n.__entity] AS labels"]
@@ -55,14 +61,21 @@ def _setup_and_project_graph(
         final_feature_names.append(prop)
 
     for prop in string_props:
-        distinct_query = f"MATCH (n) WHERE n.`{prop}` IS NOT NULL RETURN DISTINCT n.`{prop}` AS val LIMIT {max_categories + 1}"
+        distinct_query = (
+            "MATCH (n) "
+            f"WHERE n.`{prop}` IS NOT NULL "
+            f"RETURN DISTINCT n.`{prop}` AS val "
+            f"LIMIT {max_categories + 1}"
+        )
         distinct_vals = [
-            r["val"] for r in session.run_query(distinct_query) if r["val"] is not None
+            r["val"]
+            for r in session.run_query(distinct_query)  # ty:ignore[invalid-argument-type]
+            if r["val"] is not None
         ]
 
         if len(distinct_vals) == 0 or len(distinct_vals) > max_categories:
             logger.warning(
-                f"Skipping string property '{prop}' (categories: {len(distinct_vals)}). Exceeds limit {max_categories} or is empty."
+                f"Skipping string property '{prop}' (categories: {len(distinct_vals)}). Exceeds limit {max_categories} or is empty.",
             )
             continue
 
@@ -82,10 +95,10 @@ def _setup_and_project_graph(
         return_clauses.append("\n".join(case_stmts))
         final_feature_names.append(encoded_prop_name)
         logger.info(
-            f"Encoded String property '{prop}' into {len(distinct_vals)}-dim array: {encoded_prop_name}"
+            f"Encoded String property '{prop}' into {len(distinct_vals)}-dim array: {encoded_prop_name}",
         )
 
-    session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
+    session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")  # ty:ignore[invalid-argument-type]
 
     node_query = f"""
     MATCH (n) WHERE n.__entity IS NOT NULL
@@ -106,9 +119,9 @@ def _setup_and_project_graph(
     ) YIELD graphName, nodeCount, relationshipCount
     """
 
-    session.run_query(project_query)
+    session.run_query(project_query)  # ty:ignore[invalid-argument-type]
     logger.info(
-        f"Graph projected successfully with combined features: {final_feature_names}"
+        f"Graph projected successfully with combined features: {final_feature_names}",
     )
 
     return final_feature_names
@@ -116,7 +129,7 @@ def _setup_and_project_graph(
 
 def _cleanup_graph_and_temp_data(session: Neo4jSession, graph_name: str):
     try:
-        session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
+        session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")  # ty:ignore[invalid-argument-type]
         session.run_query("MATCH (rn:__RelationshipNode__) DETACH DELETE rn")
         session.run_query("MATCH (n) WHERE n.__entity IS NOT NULL REMOVE n.__entity")
     except Exception as cleanup_error:
@@ -133,11 +146,11 @@ def train_and_store_graphsage_model(
 
     try:
         logger.info(
-            f"Preparing data and projecting graph '{graph_name}' for training..."
+            f"Preparing data and projecting graph '{graph_name}' for training...",
         )
         numeric_properties = _setup_and_project_graph(session, graph_name)
 
-        session.run_query(f"CALL gds.model.drop('{model_name}', false) YIELD modelInfo")
+        session.run_query(f"CALL gds.model.drop('{model_name}', false) YIELD modelInfo")  # ty:ignore[invalid-argument-type]
 
         sample_sizes_str = "[" + ", ".join(map(str, sample_sizes)) + "]"
         train_config_lines = [
@@ -162,11 +175,11 @@ def train_and_store_graphsage_model(
         session.run_query(f"""
             CALL gds.beta.graphSage.train('{graph_name}', {train_config_cypher}) 
             YIELD modelInfo
-        """)
+        """)  # ty:ignore[invalid-argument-type]
 
         logger.info(f"Storing model '{model_name}' to disk...")
         session.run_query(
-            f"CALL gds.model.store('{model_name}') YIELD modelName, storeMillis"
+            f"CALL gds.model.store('{model_name}') YIELD modelName, storeMillis",  # ty:ignore[invalid-argument-type]
         )
         logger.info(f"Model '{model_name}' successfully trained and stored.")
         return True
@@ -183,7 +196,7 @@ def detect_anomalies_with_pretrained_model(
     session: Neo4jSession,
     model_name: str = "anomaly_graphsage_model",
     similarity_threshold: float = 0.85,
-) -> Optional[list[FeatureMismatchReport]]:
+) -> list[FeatureMismatchReport] | None:
     graph_name = "inference_feature_graph"
     anomalies_list: list[AnomalyDetail] = []
 
@@ -194,7 +207,7 @@ def detect_anomalies_with_pretrained_model(
         check_model_query = (
             f"CALL gds.model.exists('{model_name}') YIELD exists RETURN exists"
         )
-        exists_result = session.run_query(check_model_query)
+        exists_result = session.run_query(check_model_query)  # ty:ignore[invalid-argument-type]
 
         is_in_memory = False
         if exists_result:
@@ -205,7 +218,7 @@ def detect_anomalies_with_pretrained_model(
         if not is_in_memory:
             logger.info(f"Loading model '{model_name}' from disk to memory...")
             session.run_query(
-                f"CALL gds.model.load('{model_name}') YIELD modelName, loadMillis"
+                f"CALL gds.model.load('{model_name}') YIELD modelName, loadMillis",  # ty:ignore[invalid-argument-type]
             )
 
         logger.info("Mutating graph with GraphSAGE embeddings...")
@@ -214,7 +227,7 @@ def detect_anomalies_with_pretrained_model(
                 modelName: '{model_name}',
                 mutateProperty: 'embedding'
             }}) YIELD nodePropertiesWritten
-        """)
+        """)  # ty:ignore[invalid-argument-type]
 
         logger.info("Running KNN similarity stream...")
         knn_query = f"""
@@ -240,7 +253,7 @@ def detect_anomalies_with_pretrained_model(
                similarity
         ORDER BY similarity DESC
         """
-        result: Result = session.run_query(knn_query)
+        result: Result = session.run_query(knn_query)  # ty:ignore[invalid-argument-type]
 
         for record in result:
             entity_type = record["entity_type"]
@@ -267,7 +280,7 @@ def detect_anomalies_with_pretrained_model(
                     labels1=labels1_str,
                     id2=str(record["id2"]),
                     labels2=labels2_str,
-                )
+                ),
             )
 
     except Exception as error:
@@ -282,6 +295,6 @@ def detect_anomalies_with_pretrained_model(
                 threshold=similarity_threshold,
                 total_anomalies=len(anomalies_list),
                 anomalies=anomalies_list,
-            )
+            ),
         ]
     return None

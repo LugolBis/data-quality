@@ -1,21 +1,23 @@
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from neo4j import Record, Result
-
-from driver.neo4j_driver import Neo4jSession
-from quality.enums import ComponentAlgo
-from quality.types import (
+from profiling.enums import ComponentAlgo
+from profiling.types import (
+    CircularComponentsReport,
     ComponentDetail,
     IsolatedComponentsReport,
-    CircularComponentsReport,
 )
 from utils.utils import logger
+
+if TYPE_CHECKING:
+    from neo4j import Record, Result
+
+    from driver.neo4j_driver import Neo4jSession
 
 
 def measure_wcc(
     session: Neo4jSession,
     min_size: int = 1,
-) -> Optional[list[IsolatedComponentsReport]]:
+) -> list[IsolatedComponentsReport] | None:
     """
     Measure Weakly Connected Components (WCC) in the graph using GDS.\n
     Useful for finding isolated islands/fragments of data.
@@ -32,7 +34,7 @@ def measure_wcc(
     try:
         session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
         session.run_query(
-            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName"
+            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName",
         )
 
         query: str = (
@@ -46,8 +48,8 @@ def measure_wcc(
             f"       [c IN all_components WHERE c.size = {min_size}] AS filtered_components "
         )
 
-        result: Result = session.run_query(query)  # type: ignore
-        record: Optional[Record] = result.single()
+        result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+        record: Record | None = result.single()
 
         if record:
             filtered_comps: list[ComponentDetail] = []
@@ -62,14 +64,16 @@ def measure_wcc(
                         node.get("name")
                         or node.get("title")
                         or node.get("id")
-                        or "<NoName>"
+                        or "<NoName>",
                     )
                     samples.append(f"(:{labels_str} {{name: '{name_str}'}})")
 
                 filtered_comps.append(
                     ComponentDetail(
-                        component_id=c["id"], size=c["size"], sample_nodes=samples
-                    )
+                        component_id=c["id"],
+                        size=c["size"],
+                        sample_nodes=samples,
+                    ),
                 )
 
             return [
@@ -78,7 +82,7 @@ def measure_wcc(
                     total_components=record["total_components"],
                     total_nodes=record["total_nodes"],
                     largest_components=filtered_comps,
-                )
+                ),
             ]
 
     except Exception as error:
@@ -88,7 +92,7 @@ def measure_wcc(
     finally:
         try:
             session.run_query(
-                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName",
             )
         except Exception as cleanup_error:
             logger.error(f"Failed to drop WCC graph memory: {cleanup_error}")
@@ -99,7 +103,7 @@ def measure_wcc(
 def measure_scc(
     session: Neo4jSession,
     min_size: int = 2,
-) -> Optional[list[CircularComponentsReport]]:
+) -> list[CircularComponentsReport] | None:
     """
     Measure Strongly Connected Components (SCC) in the graph using GDS.\n
     Useful for finding cyclic dependencies (loops) in directional relationships.
@@ -116,7 +120,7 @@ def measure_scc(
     try:
         session.run_query(f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName")
         session.run_query(
-            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName"
+            f"CALL gds.graph.project('{graph_name}', '*', '*') YIELD graphName",
         )
 
         query: str = (
@@ -130,8 +134,8 @@ def measure_scc(
             f"       [c IN all_components WHERE c.size >= {min_size}] AS filtered_components "
         )
 
-        result: Result = session.run_query(query)  # type: ignore
-        record: Optional[Record] = result.single()
+        result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+        record: Record | None = result.single()
 
         if record:
             filtered_comps: list[ComponentDetail] = []
@@ -146,14 +150,16 @@ def measure_scc(
                         node.get("name")
                         or node.get("title")
                         or node.get("id")
-                        or "<NoName>"
+                        or "<NoName>",
                     )
                     samples.append(f"(:{labels_str} {{name: '{name_str}'}})")
 
                 filtered_comps.append(
                     ComponentDetail(
-                        component_id=c["id"], size=c["size"], sample_nodes=samples
-                    )
+                        component_id=c["id"],
+                        size=c["size"],
+                        sample_nodes=samples,
+                    ),
                 )
 
             return [
@@ -162,7 +168,7 @@ def measure_scc(
                     total_components=record["total_components"],
                     total_nodes=record["total_nodes"],
                     largest_components=filtered_comps,
-                )
+                ),
             ]
 
     except Exception as error:
@@ -172,7 +178,7 @@ def measure_scc(
     finally:
         try:
             session.run_query(
-                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName"
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName",
             )
         except Exception as cleanup_error:
             logger.error(f"Failed to drop SCC graph memory: {cleanup_error}")

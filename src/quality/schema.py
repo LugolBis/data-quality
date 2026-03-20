@@ -2,9 +2,10 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from quality.enums import Constraint, Entity
+from models.enums import Entity
+from models.utils import build_match, format_label
+from quality.enums import Constraint
 from quality.types import ConstraintViolation, IndexViolation
-from quality.utils import _build_match, _format_label
 from utils.utils import logger, some
 
 if TYPE_CHECKING:
@@ -34,7 +35,7 @@ def check_index_violation(session: Neo4jSession) -> list[IndexViolation] | None:
     result: Result = session.run_query(query)
     df: pd.DataFrame = result.to_df()
 
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(_format_label)
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
     df_exploded: pd.DataFrame = df.explode("properties")
 
     df_grouped: pd.DataFrame = pd.DataFrame(
@@ -51,13 +52,13 @@ def check_index_violation(session: Neo4jSession) -> list[IndexViolation] | None:
 
         sub_query: str = (
             f"WITH {properties} AS requiredProps "
-            f"{_build_match(entity, label)} "
+            f"{build_match(entity, label)} "
             "RETURN COUNT(e) as count, "
             "COUNT(CASE WHEN any(p IN requiredProps WHERE e[p] IS NULL) THEN 1 END) "
             "AS invalid "
         )
 
-        result_label: Result = session.run_query(sub_query)  # type: ignore
+        result_label: Result = session.run_query(sub_query)  # ty:ignore[invalid-argument-type]
         first_row = result_label.single()
         if some(first_row):
             invalid: int = first_row["invalid"]
@@ -97,7 +98,7 @@ def check_constraint_violation(
     df: pd.DataFrame = result.to_df()
 
     df["type"] = df["type"].apply(lambda x: x.split("_")[-1])
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(_format_label)
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
 
     violations: list[ConstraintViolation] = []
     for _idx, row in df.iterrows():
@@ -111,8 +112,8 @@ def check_constraint_violation(
             case Constraint.UNIQUENESS:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity, label, 'e1')} "
-                    f"{_build_match(entity, label, 'e2')} "
+                    f"{build_match(entity, label, 'e1')} "
+                    f"{build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) "
                     "AS is_valid "
@@ -122,7 +123,7 @@ def check_constraint_violation(
             case Constraint.EXISTENCE:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity, label)} "
+                    f"{build_match(entity, label)} "
                     "WITH e, any(p IN requiredProps WHERE e[p] IS NULL) AS is_invalid "
                     "RETURN COUNT(*) AS count, "
                     "COUNT(CASE WHEN is_invalid THEN 1 END) as invalid"
@@ -130,7 +131,7 @@ def check_constraint_violation(
             case Constraint.TYPE:
                 sub_query = (
                     f"WITH {properties} AS requiredProps"
-                    f"{_build_match(entity, label)} "
+                    f"{build_match(entity, label)} "
                     "WITH e, "
                     "any(p IN requiredProps WHERE NOT valueType(e[p]) "
                     f"STARTS WITH '{row['propertyType']} ') AS is_invalid "
@@ -140,8 +141,8 @@ def check_constraint_violation(
             case Constraint.KEY:
                 sub_query = (
                     f"WITH {properties} AS requiredProps "
-                    f"{_build_match(entity, label, 'e1')} "
-                    f"{_build_match(entity, label, 'e2')} "
+                    f"{build_match(entity, label, 'e1')} "
+                    f"{build_match(entity, label, 'e2')} "
                     "WHERE elementId(e1) < elementId(e2) "
                     "WITH e1, e2, "
                     "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR "
@@ -155,7 +156,7 @@ def check_constraint_violation(
                 logger.error(f"Unknown <EntityType> : {default}")
                 continue
 
-        result_label: Result = session.run_query(sub_query)  # type: ignore
+        result_label: Result = session.run_query(sub_query)  # ty:ignore[invalid-argument-type]
         first_row: Record | None = result_label.single()
 
         if some(first_row):

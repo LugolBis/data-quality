@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from quality.labeling_sage import (
+from profiling.labeling_sage import (
     detect_anomalies_with_pretrained_model,
     train_and_store_graphsage_model,
 )
