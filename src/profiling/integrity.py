@@ -67,6 +67,49 @@ def distr_nodes_properties(session: Neo4jSession) -> list[EntityStats] | None:
     return analysis
 
 
+def distr_properties_per_label(session: Neo4jSession) -> list[EntityStats] | None:
+    query: str = (
+        "MATCH (n) "
+        "WITH labels(n) AS Labels, keys(n) AS PropertyKeys "
+        "UNWIND Labels AS LabelExtracted "
+        "RETURN LabelExtracted, PropertyKeys, count(*) AS Nombre "
+    )
+
+    result: Result = session.run_query(query)
+    df: pd.DataFrame = result.to_df().sort_values("LabelExtracted")
+
+    df_count = df.groupby("LabelExtracted")["Nombre"].sum().rename("Total")
+
+    analysis: dict[str, EntityStats] = {}
+
+    for _idx, row in df.iterrows():
+        label: str = row["LabelExtracted"]
+        properties: list[str] = row["PropertyKeys"]
+        number: int = row["Nombre"]
+        total: int = df_count[label]
+        percent: float = number / total
+
+        entity_props: EntityProperties = EntityProperties(
+            names=properties,
+            count=number,
+            percent=percent,
+        )
+
+        if label in analysis:
+            analysis[label].properties.append(
+                entity_props,
+            )
+        else:
+            analysis[label] = EntityStats(
+                Entity.NODE,
+                label,
+                total,
+                properties=[entity_props],
+            )
+
+    return list(analysis.values())
+
+
 def distr_relationships_properties(
     session: Neo4jSession,
 ) -> list[EntityStats] | None:

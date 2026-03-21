@@ -1,6 +1,10 @@
 from typing import TYPE_CHECKING
 
-from profiling.integrity import distr_nodes_properties, distr_relationships_properties
+from profiling.integrity import (
+    distr_nodes_properties,
+    distr_properties_per_label,
+    distr_relationships_properties,
+)
 from quality.integrity import (
     detecter_doublons_node,
     detecter_doublons_relationships,
@@ -15,6 +19,8 @@ if TYPE_CHECKING:
 
 def main(session: Neo4jSession) -> None:
     properties: list[EntityStats] | None = distr_nodes_properties(session)
+
+    properties_per_label: list[EntityStats] | None = distr_properties_per_label(session)
 
     similarities_node: list[TextSimilarity] | None = detecter_doublons_node(
         session,
@@ -32,6 +38,10 @@ def main(session: Neo4jSession) -> None:
 
     if some(properties):
         print(properties)
+
+    if some(properties_per_label):
+        print("\n")
+        print(properties_per_label)
 
     if some(similarities_node):
         print("\n")
