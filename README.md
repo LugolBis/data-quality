@@ -1,6 +1,6 @@
 # TER Project
 
-## Gueting started :
+## Getting started :
 ```bash
 uv venv .venv && source .venv/bin/activate && uv sync
 ```

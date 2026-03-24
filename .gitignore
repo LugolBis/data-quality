@@ -1,6 +1,7 @@
 # Project section
 Data/*
 !Data/.gitkeep
+*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
