@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any
 
-import pandas as pd
 import streamlit as st
 from streamlit import session_state as app_st
 
 from models.utils import to_dataframe
+from ui.components.static import _display_score
 from ui.enums import WidgetState
 from utils.utils import some
 
@@ -12,86 +12,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from driver.neo4j_driver import Neo4jSession
-
-
-def _static_analysis(
-    section_name: str,
-    description: str,
-    key: str,
-    button_label: str = "Analyse",
-) -> None:
-    """
-    A Streamlit component for static analysis who needs to be persistent.
-
-    :param section_name: Markdown text.
-    :type section_name: str
-    :param description: Markdown text to describe the section.
-    :type description: str
-    :param func: Analysis function.
-    :type func: Callable[..., Optional[Any]]
-    :param func_args: If necessary arguments to the function.
-    :type func_args: dict[str, Any] | None
-    :param flatten: List of properties of the result of `func` who needs to be flatten
-     to be converted as a `pandas.DataFrame`.
-    :type flatten: list[str] | None
-    :param button_label: Text to be display on the button.
-    :type button_label: str
-    """
-
-    st.markdown(f"#### {key} - {section_name}")
-    st.markdown(description)
-
-    _button(button_label, key)
-
-    _display_df(f"{key}_res")
-
-
-def _dynamic_analysis(
-    section_name: str,
-    description: str,
-    key: str,
-    lazy_renders: list[Callable[[], Any]],
-    button_label: str = "Analyse",
-) -> None:
-    """
-    A Streamlit component for dynamic analysis who needs to be persistent.\n
-    **Note** : the main difference with `_static_analysis` is that you can specify\n
-        a list of **lazy** Streamlit functions constructed with `_lazy_func()`\n
-        to specify Streamlit objects to be rendered in the analysis.
-
-    :param section_name: Markdown text.
-    :type section_name: str
-    :param description: Markdown text to describe the section.
-    :type description: str
-    :param lazy_funcs: Description
-    :type lazy_funcs: list[Callable[[], Any]]
-    :param func: Analysis function.
-    :type func: Callable[..., Optional[Any]]
-    :param func_args: If necessary arguments to the function.
-    :type func_args: dict[str, Any] | None
-    :param lazy_func_args: Dict of lazy arguments who need to retrieved with
-     `app_st[value]`. The keys needs to match the arguments of `func` and the value are
-      used to retrieve them from the session state.
-    :type lazy_func_args: dict[str, str] | None
-    :param flatten: List of properties of the result of `func` who needs to be flatten
-     to be converted as a `pandas.DataFrame`.
-    :type flatten: list[str] | None
-    :param button_label: Text to be display on the button.
-    :type button_label: str
-    """
-
-    st.markdown(f"#### {key} - {section_name}")
-    st.markdown(description)
-
-    container = st.container()
-
-    with container:
-        for lazy_render in lazy_renders:
-            lazy_render()
-
-    _button(button_label, key)
-
-    _display_df(f"{key}_res")
 
 
 def _static_score(
@@ -230,52 +150,3 @@ def _button(
 
     if st.button(button_label, key=f"{key}_button"):
         app_st[key]()
-
-
-def _display_df(key_res: str) -> None:
-    # Persistent display
-    match app_st[key_res]["state"]:
-        case WidgetState.ERROR:
-            st.exception(app_st[key_res]["data"])
-        case WidgetState.EMPTY:
-            st.success("There isn't any data detected.")
-        case WidgetState.SUCCESS:
-            if isinstance(app_st[key_res]["data"], pd.DataFrame):
-                st.warning("Result of the analysis:")
-                st.dataframe(app_st[key_res]["data"], use_container_width=True)
-            else:
-                st.error(
-                    (
-                        "You can't display a pandas.DataFrame from an object of"
-                        f" {type(app_st[key_res]['data'])}"
-                    ),
-                )
-        case _:
-            pass
-
-
-def _display_score(key: str) -> None:
-    key_res = f"{key}_score_res"
-    match app_st[key_res]["state"]:
-        case WidgetState.ERROR:
-            st.exception(app_st[key_res]["data"])
-        case WidgetState.EMPTY:
-            st.success("There isn't any data detected.")
-        case WidgetState.SUCCESS:
-            data = app_st[key_res]["data"]
-            if isinstance(data, float):
-                st.metric(
-                    label=f"{key} - Quality score :",
-                    value=data,
-                    format="percent",
-                    border=True,
-                )
-            else:
-                st.error(
-                    (
-                        "You can't display a quality score from an object of"
-                        f" {type(data)}"
-                    ),
-                )
-        case _:
-            pass

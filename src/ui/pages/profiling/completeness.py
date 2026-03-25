@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, Any
 import streamlit as st
 
 from profiling.completeness import measure_scc, measure_wcc
-from ui.components import _analyze_call, _dynamic_analysis
+from ui.components.analysis import _dynamic_analysis
+from ui.components.dynamic import (
+    _analyze_call,
+)
 from ui.utils import _lazy_func
 
 if TYPE_CHECKING:

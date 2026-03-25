@@ -7,7 +7,7 @@ from streamlit import session_state as app_st
 
 from load.enums import LoadResult
 from load.neo4j import load_from_csv, load_from_dump, load_from_script
-from ui.components import _button, _spinner_call
+from ui.components.dynamic import _button, _spinner_call
 from ui.enums import LoadMethod, WidgetState
 from ui.utils import _lazy_func
 from utils.utils import logger

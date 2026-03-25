@@ -2,7 +2,11 @@ import streamlit as st
 
 from quality.schema import check_constraint_violation, check_index_violation
 from scoring.schema import constraint_score, index_score
-from ui.components import _analyze_call, _score_call, _static_analysis
+from ui.components.analysis import _static_analysis
+from ui.components.dynamic import (
+    _analyze_call,
+    _score_call,
+)
 from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {

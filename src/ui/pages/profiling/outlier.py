@@ -7,10 +7,9 @@ from profiling.outlier import (
     measure_average_centrality_by_label,
     measure_eigenvector_centrality,
 )
-from ui.components import (
+from ui.components.analysis import _dynamic_analysis, _static_analysis
+from ui.components.dynamic import (
     _analyze_call,
-    _dynamic_analysis,
-    _static_analysis,
 )
 from ui.utils import _SIMILARITY_SLIDER, _THRESHOLD_SLIDER, _lazy_func
 

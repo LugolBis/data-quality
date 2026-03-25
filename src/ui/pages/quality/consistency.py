@@ -9,10 +9,10 @@ from models.enums import Entity
 from models.utils import to_dataframe
 from quality.consistency import check_string_format
 from scoring.consistency import invalid_ratio
-from ui.components import (
+from ui.components.analysis import (
     _dynamic_analysis,
-    _score_call,
 )
+from ui.components.dynamic import _score_call
 from ui.enums import WidgetState
 from ui.utils import _lazy_func
 

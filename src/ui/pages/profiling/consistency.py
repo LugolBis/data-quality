@@ -1,9 +1,9 @@
 import streamlit as st
 
 from profiling.consistency import check_properties_type
-from ui.components import (
+from ui.components.analysis import _static_analysis
+from ui.components.dynamic import (
     _analyze_call,
-    _static_analysis,
 )
 from ui.utils import _lazy_func
 

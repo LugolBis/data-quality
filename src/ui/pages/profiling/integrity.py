@@ -5,9 +5,9 @@ from profiling.integrity import (
     distr_properties_per_label,
     distr_relationships_properties,
 )
-from ui.components import (
+from ui.components.analysis import _static_analysis
+from ui.components.dynamic import (
     _analyze_call,
-    _static_analysis,
 )
 from ui.utils import _lazy_func
 

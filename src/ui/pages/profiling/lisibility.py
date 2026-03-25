@@ -6,7 +6,11 @@ from profiling.lisibility import (
     compute_graph_eccentricity,
     distr_node_degree,
 )
-from ui.components import _analyze_call, _button, _static_analysis
+from ui.components.analysis import _static_analysis
+from ui.components.dynamic import (
+    _analyze_call,
+    _button,
+)
 from ui.enums import WidgetState
 from ui.utils import _lazy_func
 

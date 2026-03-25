@@ -7,9 +7,9 @@ from quality.integrity import (
     detecter_doublons_relationships,
 )
 from scoring.integrity import pair_label_ratio
-from ui.components import (
+from ui.components.analysis import _dynamic_analysis
+from ui.components.dynamic import (
     _analyze_call,
-    _dynamic_analysis,
     _score_call,
 )
 from ui.utils import _SIMILARITY_SLIDER, _lazy_func

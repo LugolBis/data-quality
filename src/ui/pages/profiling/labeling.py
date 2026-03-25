@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, Any
 import streamlit as st
 
 from profiling.labeling import detect_label_anomalies_by_features
-from ui.components import (
+from ui.components.analysis import _dynamic_analysis
+from ui.components.dynamic import (
     _analyze_call,
-    _dynamic_analysis,
 )
 from ui.utils import _SIMILARITY_SLIDER, _lazy_func
 

@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from models.utils import format_label
-from ui.components import _button, _static_score
+from ui.components.dynamic import _button, _static_score
 from ui.enums import WidgetState
 from ui.layout import _SECTIONS
 from ui.utils import _lazy_func
