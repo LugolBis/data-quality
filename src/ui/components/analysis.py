@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import streamlit as st
+from streamlit import session_state as app_st
 
 from models.utils import to_dataframe
 from ui.components.dynamic import _button
@@ -96,8 +97,8 @@ def _dataframe_analysis(  # noqa: PLR0913
     section_name: str,
     description: str,
     key: str,
-    analysis_func: Callable[[pd.DataFrame], Any],
-    initial_df: pd.DataFrame | None = None,
+    analysis_func: Callable[[dict[str, Any]], Any],
+    df_template: pd.DataFrame | None = None,
     editor_config: dict | None = None,
     additional_controls: list[Callable[[], Any]] | None = None,
     result_to_df: bool = True,  # noqa: FBT001, FBT002
@@ -111,7 +112,7 @@ def _dataframe_analysis(  # noqa: PLR0913
     :param description: Markdown description.
     :param key: Unique identifier for this component (used for state keys).
     :param analysis_func: Function that takes the edited DataFrame and returns a result.
-    :param initial_df: Initial DataFrame to display in the editor. Defaults to an empty
+    :param df_template: Initial DataFrame to display in the editor. Defaults to an empty
      DataFrame.
     :param editor_config: Additional keyword arguments for st.data_editor (e.g.,
      column_config, num_rows).
@@ -130,16 +131,14 @@ def _dataframe_analysis(  # noqa: PLR0913
     result_key = f"{key}_res"
 
     # Initialize editor state if not present
-    if editor_key not in st.session_state:
-        st.session_state[editor_key] = (
-            initial_df if initial_df is not None else pd.DataFrame()
-        )
+    if df_template is None:
+        df_template = pd.DataFrame()
 
     # Container for the editor and additional controls
     with st.container():
         # Render the data editor
         st.data_editor(
-            st.session_state[editor_key],
+            df_template,
             key=editor_key,
             use_container_width=True,
             **(editor_config or {}),
@@ -150,15 +149,22 @@ def _dataframe_analysis(  # noqa: PLR0913
             for control in additional_controls:
                 control()
 
+    # Initialize result state
+    app_st[result_key] = {
+        "state": WidgetState.IDLE,
+        "data": None,
+    }
+
     # Button to trigger analysis
     if st.button(button_label, key=f"{key}_button"):
         with st.spinner(progress_message):
-            df_edited = st.session_state.get(editor_key)
+            df_edited = app_st.get(editor_key)
+            print("\n\n\n\n", df_edited, "\n\n\n\n")
 
             if df_edited is None or (
                 isinstance(df_edited, pd.DataFrame) and df_edited.empty
             ):
-                st.session_state[result_key] = {
+                app_st[result_key] = {
                     "state": WidgetState.EMPTY,
                     "data": None,
                 }
@@ -168,22 +174,22 @@ def _dataframe_analysis(  # noqa: PLR0913
                     if result_to_df:
                         df = to_dataframe(result)
                         if df is not None:
-                            st.session_state[result_key] = {
+                            app_st[result_key] = {
                                 "state": WidgetState.SUCCESS,
                                 "data": df,
                             }
                         else:
-                            st.session_state[result_key] = {
+                            app_st[result_key] = {
                                 "state": WidgetState.ERROR,
                                 "data": "Failed to convert result to DataFrame.",
                             }
                     else:
-                        st.session_state[result_key] = {
+                        app_st[result_key] = {
                             "state": WidgetState.SUCCESS,
                             "data": result,
                         }
                 except Exception as error:
-                    st.session_state[result_key] = {
+                    app_st[result_key] = {
                         "state": WidgetState.ERROR,
                         "data": error,
                     }
