@@ -127,8 +127,8 @@ def _dataframe_analysis(  # noqa: PLR0913
     st.markdown(description)
 
     # Keys for editor and result
-    editor_key = f"{key}_editor"
-    result_key = f"{key}_res"
+    key_editor = f"{key}_editor"
+    key_res = f"{key}_res"
 
     # Initialize editor state if not present
     if df_template is None:
@@ -139,7 +139,7 @@ def _dataframe_analysis(  # noqa: PLR0913
         # Render the data editor
         st.data_editor(
             df_template,
-            key=editor_key,
+            key=key_editor,
             use_container_width=True,
             **(editor_config or {}),
         )
@@ -150,7 +150,7 @@ def _dataframe_analysis(  # noqa: PLR0913
                 control()
 
     # Initialize result state
-    app_st[result_key] = {
+    app_st[key_res] = {
         "state": WidgetState.IDLE,
         "data": None,
     }
@@ -158,13 +158,12 @@ def _dataframe_analysis(  # noqa: PLR0913
     # Button to trigger analysis
     if st.button(button_label, key=f"{key}_button"):
         with st.spinner(progress_message):
-            df_edited = app_st.get(editor_key)
-            print("\n\n\n\n", df_edited, "\n\n\n\n")
+            df_edited = app_st.get(key_editor)
 
             if df_edited is None or (
                 isinstance(df_edited, pd.DataFrame) and df_edited.empty
             ):
-                app_st[result_key] = {
+                app_st[key_res] = {
                     "state": WidgetState.EMPTY,
                     "data": None,
                 }
@@ -174,25 +173,31 @@ def _dataframe_analysis(  # noqa: PLR0913
                     if result_to_df:
                         df = to_dataframe(result)
                         if df is not None:
-                            app_st[result_key] = {
-                                "state": WidgetState.SUCCESS,
-                                "data": df,
-                            }
+                            if df.empty:
+                                app_st[key_res] = {
+                                    "state": WidgetState.EMPTY,
+                                    "data": None,
+                                }
+                            else:
+                                app_st[key_res] = {
+                                    "state": WidgetState.SUCCESS,
+                                    "data": df,
+                                }
                         else:
-                            app_st[result_key] = {
+                            app_st[key_res] = {
                                 "state": WidgetState.ERROR,
                                 "data": "Failed to convert result to DataFrame.",
                             }
                     else:
-                        app_st[result_key] = {
-                            "state": WidgetState.SUCCESS,
-                            "data": result,
+                        app_st[key_res] = {
+                            "state": WidgetState.EMPTY,
+                            "data": None,
                         }
                 except Exception as error:
-                    app_st[result_key] = {
+                    app_st[key_res] = {
                         "state": WidgetState.ERROR,
                         "data": error,
                     }
 
     # Display result using the existing helper
-    _display_df(result_key)
+    _display_df(key_res)
