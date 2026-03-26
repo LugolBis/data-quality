@@ -54,15 +54,9 @@ class ConstraintViolation(Violation):
 
 
 @dataclass(slots=True, frozen=True, eq=False)
-class QualityScore:
-    valid: int
-    total: int
-
-    def __add__(self, other: QualityScore) -> QualityScore:
-        return QualityScore(self.valid + other.valid, self.total + other.total)
-
-    def __repr__(self) -> str:
-        return f"{self.valid}\n_  is valid\n{self.total}"
-
-    def percent(self) -> str:
-        return f"{(self.valid / self.total) * 100:.2f}%"
+class ElementaryPath:
+    entity: Entity
+    entity_alias: str
+    label_start: str
+    graph_pattern: str
+    query: str
