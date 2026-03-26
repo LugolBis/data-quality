@@ -21,6 +21,7 @@ from ui.pages.profiling import (
 from ui.pages.profiling import (
     outlier as pf_outlier,
 )
+from ui.pages.quality import completeness as ql_completeness
 from ui.pages.quality import (
     consistency as ql_consistency,
 )
@@ -44,6 +45,7 @@ _SECTIONS = {
         "Outlier": pf_outlier,
     },
     "Data Quality": {
+        "Completeness": ql_completeness,
         "Consistency": ql_consistency,
         "Integrity": ql_integrity,
         "Schema": ql_schema,
