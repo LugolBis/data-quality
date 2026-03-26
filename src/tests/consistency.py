@@ -8,7 +8,7 @@ from utils.utils import some
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
-    from models.types import PairPropertiesType
+    from profiling.types import PairPropertiesType
     from quality.types import TextFormat
 
 

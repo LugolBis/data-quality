@@ -5,7 +5,7 @@ from utils.utils import some
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
-    from quality.types import CircularComponentsReport, IsolatedComponentsReport
+    from profiling.types import CircularComponentsReport, IsolatedComponentsReport
 
 
 def main(session: Neo4jSession) -> None:

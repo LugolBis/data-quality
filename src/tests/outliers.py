@@ -9,7 +9,7 @@ from utils.utils import some
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
-    from quality.types import CentralityScore, LabelCentralityStats, NumericalOutlier
+    from profiling.types import CentralityScore, LabelCentralityStats, NumericalOutlier
 
 
 def main(session: Neo4jSession) -> None:
