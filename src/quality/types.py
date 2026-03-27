@@ -60,3 +60,9 @@ class ElementaryPath:
     label_start: str
     graph_pattern: str
     query: str
+
+
+@dataclass(slots=True, frozen=True, eq=True)
+class RelationshipDuplicate:
+    label: str
+    invalid_pair: int

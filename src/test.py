@@ -11,6 +11,7 @@ from tests import (
     lisibility,
     outliers,
     schema,
+    uniqueness,
 )
 from utils.utils import some
 
@@ -31,4 +32,5 @@ if __name__ == "__main__":
             outliers.main(session)
             completeness.main(session)
             labeling.main(session)
+            uniqueness.main(session)
             # label_sage.main(session)
