@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from quality.schema import build_match
+from models.utils import build_match
 from quality.types import TextFormat
 from utils.utils import some
 

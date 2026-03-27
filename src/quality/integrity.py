@@ -1,159 +1,180 @@
-from collections import defaultdict
-from difflib import SequenceMatcher
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from models.enums import Entity
-from models.utils import format_label
-from quality.types import TextSimilarity
+from models.utils import build_match, format_label
+from quality.enums import Constraint
+from quality.types import ConstraintViolation, IndexViolation
+from utils.utils import logger, some
 
 if TYPE_CHECKING:
-    from neo4j import Result
+    from neo4j import Record, Result
 
     from driver.neo4j_driver import Neo4jSession
 
 
-def detecter_doublons_node(
-    session: Neo4jSession,
-    seuil_similarite: float = 0.8,
-) -> list[TextSimilarity] | None:
+def check_index_violation(session: Neo4jSession) -> list[IndexViolation] | None:
     """
-    [Duplicate Detection] Scan all nodes to find potential duplicates based
-    on string property similarity using SequenceMatcher.
-    :param self: The object itself.
-    :param seuil_similarite: Similarity threshold between 0 and 1.
-    :type seuil_similarite: float
+    Check if there is any **Node**/**Relationship** who has a `NULL` value
+    on an indexed property.
+
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The detailed report.
+    :rtype: list[ConstraintViolation] | None
     """
 
-    query = (
-        "MATCH (n) "
-        "RETURN elementId(n) as ID, labels(n) as Labels, properties(n) as Props "
+    query: str = (
+        "SHOW INDEXES "
+        "YIELD entityType, labelsOrTypes, properties "
+        "WHERE labelsOrTypes IS NOT NULL and properties IS NOT NULL "
+        "RETURN * "
     )
 
     result: Result = session.run_query(query)
-    nodes: list[dict[str, Any]] = [record.data() for record in result]
+    df: pd.DataFrame = result.to_df()
 
-    detected: list[TextSimilarity] = []
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
+    df_exploded: pd.DataFrame = df.explode("properties")
 
-    groups = defaultdict(list)
-    for node in nodes:
-        label_str = format_label(node["Labels"])
-        groups[label_str].append(node)
+    df_grouped: pd.DataFrame = pd.DataFrame(
+        df_exploded.groupby(["entityType", "labelsOrTypes"], as_index=False)[
+            "properties"
+        ].agg(set),
+    )
 
-    for label_str, group_nodes in groups.items():
-        n_count = len(group_nodes)
+    violations: list[IndexViolation] = []
+    for _idx, row in df_grouped.iterrows():
+        entity: Entity = Entity(row["entityType"])
+        label: str = row["labelsOrTypes"]
+        properties: list[str] = list(row["properties"])
 
-        if n_count < 2:
-            continue
+        sub_query: str = (
+            f"WITH {properties} AS requiredProps "
+            f"{build_match(entity, label)} "
+            "RETURN COUNT(e) as count, "
+            "COUNT(CASE WHEN any(p IN requiredProps WHERE e[p] IS NULL) THEN 1 END) "
+            "AS invalid "
+        )
 
-        for i in range(n_count):
-            for j in range(i + 1, n_count):
-                n1 = group_nodes[i]
-                n2 = group_nodes[j]
+        result_label: Result = session.run_query(sub_query)  # ty:ignore[invalid-argument-type]
+        first_row = result_label.single()
+        if some(first_row):
+            invalid: int = first_row["invalid"]
+            count: int = first_row["count"]
 
-                props1 = n1["Props"]
-                props2 = n2["Props"]
+            if invalid > 0:
+                violations.append(
+                    IndexViolation(entity, label, count, invalid, properties),
+                )
 
-                common_keys = set(props1.keys()) & set(props2.keys())
-
-                for key in common_keys:
-                    val1 = props1[key]
-                    val2 = props2[key]
-
-                    if isinstance(val1, str) and isinstance(val2, str):
-                        if len(val1) < 3 or len(val2) < 3:
-                            continue
-
-                        if val1 == val2:
-                            continue
-
-                        similarity = SequenceMatcher(None, val1, val2).ratio()
-
-                        if similarity >= seuil_similarite:
-                            detected.append(
-                                TextSimilarity(
-                                    entity=Entity.NODE,
-                                    label=label_str,
-                                    similarity=similarity,
-                                    property=key,
-                                    first_value=val1,
-                                    second_value=val2,
-                                ),
-                            )
-
-    if len(detected) == 0:
-        return None
-
-    return sorted(detected, key=lambda x: x.similarity, reverse=True)
+    if len(violations) > 0:
+        return violations
+    return None
 
 
-def detecter_doublons_relationships(
+def check_constraint_violation(
     session: Neo4jSession,
-    seuil_similarite: float = 0.8,
-) -> list[TextSimilarity] | None:
+) -> list[ConstraintViolation] | None:
     """
-    [Relationship Duplicate Detection]
-    Scan all relationships to find potential duplicates based
-    on string property similarity using SequenceMatcher.
-    :param session: The Neo4j session wrapper.
-    :param seuil_similarite: Similarity threshold between 0 and 1.
-    """
+    Check if there is any **Node**/**Relationship** constraint who's violated.\n
+    !!! CAUTION !!! : When it's `Constraint.UNIQUENESS` or `Constraint.KEY`,
+    `ConstraintViolation.count` is the number of distinct pair of entity
+    who violate the constraint.
 
-    query = (
-        "MATCH ()-[r]->() "
-        "RETURN elementId(r) as ID, type(r) as Type, properties(r) as Props "
+    :param session: A `Neo4jSession` to query the database.
+    :type session: Neo4jSession
+    :return: The detailed report.
+    :rtype: list[ConstraintViolation] | None
+    """
+    query: str = (
+        "SHOW CONSTRAINTS "
+        "YIELD type, entityType, labelsOrTypes, properties, ownedIndex, propertyType "
+        "RETURN * "
     )
 
     result: Result = session.run_query(query)
-    rels: list[dict[str, Any]] = [record.data() for record in result]
+    df: pd.DataFrame = result.to_df()
 
-    detected: list[TextSimilarity] = []
+    df["type"] = df["type"].apply(lambda x: x.split("_")[-1])
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
 
-    groups = defaultdict(list)
-    for r in rels:
-        type_key = r["Type"]
-        groups[type_key].append(r)
+    violations: list[ConstraintViolation] = []
+    for _idx, row in df.iterrows():
+        constraint: Constraint = Constraint(row["type"])
+        entity: Entity = Entity(row["entityType"])
+        label: str = row["labelsOrTypes"]
+        properties: list[str] = row["properties"]
+        sub_query: str
 
-    for r_type, group_rels in groups.items():
-        n_count = len(group_rels)
+        match constraint:
+            case Constraint.UNIQUENESS:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps "
+                    f"{build_match(entity, label, 'e1')} "
+                    f"{build_match(entity, label, 'e2')} "
+                    "WHERE elementId(e1) < elementId(e2) "
+                    "WITH e1, e2, any(p IN requiredProps WHERE e1[p] <> e2[p]) "
+                    "AS is_valid "
+                    "RETURN COUNT(*) AS count, "
+                    "COUNT(CASE WHEN NOT is_valid THEN 1 END) AS invalid"
+                )
+            case Constraint.EXISTENCE:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps "
+                    f"{build_match(entity, label)} "
+                    "WITH e, any(p IN requiredProps WHERE e[p] IS NULL) AS is_invalid "
+                    "RETURN COUNT(*) AS count, "
+                    "COUNT(CASE WHEN is_invalid THEN 1 END) as invalid"
+                )
+            case Constraint.TYPE:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps"
+                    f"{build_match(entity, label)} "
+                    "WITH e, "
+                    "any(p IN requiredProps WHERE NOT valueType(e[p]) "
+                    f"STARTS WITH '{row['propertyType']} ') AS is_invalid "
+                    "RETURN COUNT(*) AS count, "
+                    "COUNT(CASE WHEN is_invalid THEN 1 END) as invalid"
+                )
+            case Constraint.KEY:
+                sub_query = (
+                    f"WITH {properties} AS requiredProps "
+                    f"{build_match(entity, label, 'e1')} "
+                    f"{build_match(entity, label, 'e2')} "
+                    "WHERE elementId(e1) < elementId(e2) "
+                    "WITH e1, e2, "
+                    "any(p IN requiredProps WHERE e1 IS NULL OR e2 IS NULL OR "
+                    "valueType(e1[p]) <> valueType(e2[p])) AS is_invalid, "
+                    "any(p IN requiredProps WHERE e1[p] <> e2[p]) AS is_valid "
+                    "RETURN COUNT(*) AS count, "
+                    "COUNT(CASE WHEN (NOT is_valid) AND (is_invalid) THEN 1 END) "
+                    "AS invalid"
+                )
+            case default:
+                logger.error(f"Unknown <EntityType> : {default}")
+                continue
 
-        if n_count < 2:
-            continue
+        result_label: Result = session.run_query(sub_query)  # ty:ignore[invalid-argument-type]
+        first_row: Record | None = result_label.single()
 
-        for i in range(n_count):
-            for j in range(i + 1, n_count):
-                r1 = group_rels[i]
-                r2 = group_rels[j]
+        if some(first_row):
+            invalid: int = first_row["invalid"]
+            count: int = first_row["count"]
 
-                props1 = r1["Props"]
-                props2 = r2["Props"]
+            if invalid > 0:
+                violations.append(
+                    ConstraintViolation(
+                        entity,
+                        label,
+                        count,
+                        invalid,
+                        constraint,
+                        properties,
+                    ),
+                )
 
-                common_keys = set(props1.keys()) & set(props2.keys())
-
-                for key in common_keys:
-                    val1 = props1[key]
-                    val2 = props2[key]
-
-                    if isinstance(val1, str) and isinstance(val2, str):
-                        if len(val1) < 3 or len(val2) < 3:
-                            continue
-
-                        if val1 == val2:
-                            continue
-
-                        similarity = SequenceMatcher(None, val1, val2).ratio()
-
-                        if similarity >= seuil_similarite:
-                            detected.append(
-                                TextSimilarity(
-                                    entity=Entity.RELATIONSHIP,
-                                    label=r_type,
-                                    similarity=similarity,
-                                    property=key,
-                                    first_value=val1,
-                                    second_value=val2,
-                                ),
-                            )
-
-    if len(detected) == 0:
-        return None
-    return sorted(detected, key=lambda x: x.similarity, reverse=True)
+    if len(violations) > 0:
+        return violations
+    return None

@@ -6,15 +6,15 @@ from profiling.integrity import (
     distr_relationships_properties,
 )
 from quality.integrity import (
-    detecter_doublons_node,
-    detecter_doublons_relationships,
+    check_constraint_violation,
+    check_index_violation,
 )
 from utils.utils import some
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
     from profiling.types import EntityStats
-    from quality.types import TextSimilarity
+    from quality.types import ConstraintViolation, IndexViolation
 
 
 def main(session: Neo4jSession) -> None:
@@ -22,19 +22,12 @@ def main(session: Neo4jSession) -> None:
 
     properties_per_label: list[EntityStats] | None = distr_properties_per_label(session)
 
-    similarities_node: list[TextSimilarity] | None = detecter_doublons_node(
-        session,
-        seuil_similarite=0.9,
-    )
-
     relationships: list[EntityStats] | None = distr_relationships_properties(session)
 
-    similarities_relationships: list[TextSimilarity] | None = (
-        detecter_doublons_relationships(
-            session,
-            seuil_similarite=0.9,
-        )
+    constraints: list[ConstraintViolation] | None = check_constraint_violation(
+        session,
     )
+    indexes: list[IndexViolation] | None = check_index_violation(session)
 
     if some(properties):
         print(properties)
@@ -43,14 +36,13 @@ def main(session: Neo4jSession) -> None:
         print("\n")
         print(properties_per_label)
 
-    if some(similarities_node):
-        print("\n")
-        print("\n".join([sim.__repr__() for sim in similarities_node]))
-
     if some(relationships):
         print("\n")
         print(relationships)
 
-    if some(similarities_relationships):
+    if some(constraints):
+        print("\n".join([v.__repr__() for v in constraints]))
+
+    if some(indexes):
         print("\n")
-        print("\n".join([sim.__repr__() for sim in similarities_relationships]))
+        print("\n".join([v.__repr__() for v in indexes]))

@@ -25,7 +25,6 @@ from ui.pages.quality import completeness as ql_completeness
 from ui.pages.quality import (
     integrity as ql_integrity,
 )
-from ui.pages.quality import schema as ql_schema
 from ui.pages.quality import uniqueness as ql_uniqueness
 from ui.pages.quality import (
     validity as ql_validity,
@@ -48,7 +47,6 @@ _SECTIONS = {
     "Data Quality": {
         "Completeness": ql_completeness,
         "Integrity": ql_integrity,
-        "Schema": ql_schema,
         "Uniqueness": ql_uniqueness,
         "Validity": ql_validity,
     },

@@ -1,48 +1,32 @@
-from typing import TYPE_CHECKING, Any
-
 import streamlit as st
 
-from quality.integrity import (
-    detecter_doublons_node,
-    detecter_doublons_relationships,
-)
-from scoring.integrity import pair_label_ratio
-from ui.components.analysis import _dynamic_analysis
+from quality.integrity import check_constraint_violation, check_index_violation
+from scoring.integrity import constraint_score, index_score
+from ui.components.analysis import _static_analysis
 from ui.components.dynamic import (
     _analyze_call,
     _score_call,
 )
-from ui.utils import _SIMILARITY_SLIDER, _lazy_func
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {
-    "IDDN": _lazy_func(
-        _analyze_call,
-        func=detecter_doublons_node,
-        key="IDDN",
-        lazy_func_args={"seuil_similarite": "_integrity_nodes_duplicates_treshold"},
-    ),
-    "IDDN_score": _lazy_func(
+    "PSCCV": _lazy_func(_analyze_call, func=check_constraint_violation, key="PSCCV"),
+    "PSCCV_score": _lazy_func(
         _score_call,
-        func=pair_label_ratio,
-        key="IDDN",
-        lazy_func_args={"df": "IDDN_res", "df_cached": "nodes_stats"},
+        func=constraint_score,
+        key="PSCCV",
+        lazy_func_args={"df": "PSCCV_res"},
     ),
-    "IDDR": _lazy_func(
-        _analyze_call,
-        func=detecter_doublons_relationships,
-        key="IDDR",
+    "PSCIV": _lazy_func(_analyze_call, func=check_index_violation, key="PSCIV"),
+    "PSCIV_score": _lazy_func(
+        _score_call,
+        func=index_score,
+        key="PSCIV",
         lazy_func_args={
-            "seuil_similarite": "_integrity_relationships_duplicates_treshold",
+            "df": "PSCIV_res",
+            "df_cached_nodes": "nodes_stats",
+            "df_cached_rels": "rels_stats",
         },
-    ),
-    "IDDR_score": _lazy_func(
-        _score_call,
-        func=pair_label_ratio,
-        key="IDDR",
-        lazy_func_args={"df": "IDDR_res", "df_cached": "rels_stats"},
     ),
 }
 
@@ -50,51 +34,32 @@ _LAZY_FUNCS = {
 def render() -> None:
     _headers()
     st.divider()
-    _nodes_duplicates()
+    _constraint()
     st.divider()
-    _relationships_duplicates()
+    _index()
 
 
 def _headers() -> None:
-    st.title("Integrity")
-    st.markdown("#### Analysis of the integrity of the database.")
+    st.title("Property Schema")
+    st.markdown("#### Analysis of compliance with the property schema")
 
 
-def _nodes_duplicates() -> None:
-    lazy_render: Callable[[], Any] = _lazy_func(
-        st.select_slider,
-        label="Select nodes similarity threshold :",
-        options=_SIMILARITY_SLIDER,
-        value=0.8,
-        key="_integrity_nodes_duplicates_treshold",
+def _constraint() -> None:
+    description: str = (
+        "Scan the database to search schema constraint violations.\n"
+        "When it's `Constraint.UNIQUENESS` or `Constraint.KEY`, `count` is the number"
+        " of distinct pair of entity who violate the constraint."
     )
 
-    _dynamic_analysis(
-        "Detection of duplicate **Nodes**.",
+    _static_analysis("Analyse constraint integrity", description, "PSCCV")
+
+
+def _index() -> None:
+    _static_analysis(
+        "Analyse index integrity",
         (
-            "Scan all nodes to find potential duplicates based on string property"
-            "similarity using SequenceMatcher."
+            "Check if there is any **Node**/**Relationship** who has a `NULL` value"
+            " on an indexed property."
         ),
-        "IDDN",
-        lazy_renders=[lazy_render],
-    )
-
-
-def _relationships_duplicates() -> None:
-    lazy_render: Callable[[], Any] = _lazy_func(
-        st.select_slider,
-        label="Select relationships similarity threshold :",
-        options=_SIMILARITY_SLIDER,
-        value=0.8,
-        key="_integrity_relationships_duplicates_treshold",
-    )
-
-    _dynamic_analysis(
-        "Detection of duplicate **Relationships**.",
-        (
-            "Scan all relationships to find potential duplicates based on string"
-            " property similarity using SequenceMatcher."
-        ),
-        "IDDR",
-        lazy_renders=[lazy_render],
+        "PSCIV",
     )
