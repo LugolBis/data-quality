@@ -2,8 +2,8 @@ import re
 from typing import TYPE_CHECKING
 
 from models.enums import Entity
-from profiling.consistency import check_properties_type
-from quality.consistency import check_string_format
+from profiling.validity import check_properties_type
+from quality.validity import check_string_format
 from utils.utils import some
 
 if TYPE_CHECKING:

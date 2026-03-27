@@ -1,6 +1,6 @@
 import streamlit as st
 
-from profiling.consistency import check_properties_type
+from profiling.validity import check_properties_type
 from ui.components.analysis import _static_analysis
 from ui.components.dynamic import (
     _analyze_call,
@@ -8,7 +8,7 @@ from ui.components.dynamic import (
 from ui.utils import _lazy_func
 
 _LAZY_FUNCS = {
-    "CCPT": _lazy_func(_analyze_call, func=check_properties_type, key="CCPT"),
+    "VCPT": _lazy_func(_analyze_call, func=check_properties_type, key="VCPT"),
 }
 
 
@@ -19,8 +19,8 @@ def render() -> None:
 
 
 def _headers() -> None:
-    st.title("Consistency")
-    st.markdown("#### Profiling of the consistency of the database.")
+    st.title("Validity")
+    st.markdown("#### Profiling of the validity of the database.")
 
 
 def _properties_type() -> None:
@@ -30,5 +30,5 @@ def _properties_type() -> None:
             "Check if there is any pair of **Node**/**Relationship** who has one "
             "property with different type."
         ),
-        "CCPT",
+        "VCPT",
     )

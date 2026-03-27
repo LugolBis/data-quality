@@ -5,13 +5,13 @@ from dotenv import load_dotenv
 from driver.neo4j_driver import Neo4jSession
 from tests import (
     completeness,
-    consistency,
     integrity,
     labeling,
     lisibility,
     outliers,
     schema,
     uniqueness,
+    validity,
 )
 from utils.utils import some
 
@@ -27,10 +27,10 @@ if __name__ == "__main__":
         with Neo4jSession(uri, db_user, db_password, db_name) as session:
             integrity.main(session)
             schema.main(session)
-            consistency.main(session)
             lisibility.main(session)
             outliers.main(session)
             completeness.main(session)
             labeling.main(session)
             uniqueness.main(session)
+            validity.main(session)
             # label_sage.main(session)

@@ -7,9 +7,6 @@ from ui.pages.profiling import (
     completeness as pf_completeness,
 )
 from ui.pages.profiling import (
-    consistency as pf_consistency,
-)
-from ui.pages.profiling import (
     integrity as pf_integrity,
 )
 from ui.pages.profiling import (
@@ -21,15 +18,18 @@ from ui.pages.profiling import (
 from ui.pages.profiling import (
     outlier as pf_outlier,
 )
-from ui.pages.quality import completeness as ql_completeness
-from ui.pages.quality import (
-    consistency as ql_consistency,
+from ui.pages.profiling import (
+    validity as pf_validity,
 )
+from ui.pages.quality import completeness as ql_completeness
 from ui.pages.quality import (
     integrity as ql_integrity,
 )
 from ui.pages.quality import schema as ql_schema
 from ui.pages.quality import uniqueness as ql_uniqueness
+from ui.pages.quality import (
+    validity as ql_validity,
+)
 from ui.utils import _config_page
 
 _SECTIONS = {
@@ -39,18 +39,18 @@ _SECTIONS = {
     },
     "Data Profiling": {
         "Completeness": pf_completeness,
-        "Consistency": pf_consistency,
         "Integrity": pf_integrity,
         "Labeling": pf_labeling,
         "Lisibility": pf_lisibility,
         "Outlier": pf_outlier,
+        "Validity": pf_validity,
     },
     "Data Quality": {
         "Completeness": ql_completeness,
-        "Consistency": ql_consistency,
         "Integrity": ql_integrity,
         "Schema": ql_schema,
         "Uniqueness": ql_uniqueness,
+        "Validity": ql_validity,
     },
 }
 

@@ -5,8 +5,8 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Entity
-from quality.consistency import check_string_format
-from scoring.consistency import invalid_ratio
+from quality.validity import check_string_format
+from scoring.validity import invalid_ratio
 from ui.components.dynamic import _score_call
 from ui.utils import _lazy_func
 from utils.utils import logger
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 from ui.components.analysis import _dataframe_analysis
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
-    "CSTRF_score": _lazy_func(
+    "VSTRF_score": _lazy_func(
         _score_call,
         func=invalid_ratio,
-        key="CSTRF",
-        lazy_func_args={"df": "CSTRF_res"},
+        key="VSTRF",
+        lazy_func_args={"df": "VSTRF_res"},
     ),
 }
 
@@ -34,8 +34,8 @@ def render() -> None:
 
 
 def _headers() -> None:
-    st.title("Consistency")
-    st.markdown("#### Analysis of the consistency of the database.")
+    st.title("Validity")
+    st.markdown("#### Analysis of the validity of the database.")
 
 
 # Analysis function that takes the edited DataFrame and returns results
@@ -151,7 +151,7 @@ def _string_format() -> None:
     _dataframe_analysis(
         section_name="Analysis string properties format.",
         description="It checks the entities which do not match the Regex pattern.",
-        key="CSTRF",
+        key="VSTRF",
         analysis_func=_string_analyze,
         df_template=df_template,
         editor_config=editor_config,
