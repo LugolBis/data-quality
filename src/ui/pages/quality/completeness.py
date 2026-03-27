@@ -23,7 +23,7 @@ def render() -> None:
 
 def _headers() -> None:
     st.title("Completeness")
-    st.markdown("#### Analysis of the cmpleteness of the database.")
+    st.markdown("#### Analysis of the completeness of the database.")
 
 
 # Analysis function that takes the edited DataFrame and returns results

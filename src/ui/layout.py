@@ -29,6 +29,7 @@ from ui.pages.quality import (
     integrity as ql_integrity,
 )
 from ui.pages.quality import schema as ql_schema
+from ui.pages.quality import uniqueness as ql_uniqueness
 from ui.utils import _config_page
 
 _SECTIONS = {
@@ -49,6 +50,7 @@ _SECTIONS = {
         "Consistency": ql_consistency,
         "Integrity": ql_integrity,
         "Schema": ql_schema,
+        "Uniqueness": ql_uniqueness,
     },
 }
 
