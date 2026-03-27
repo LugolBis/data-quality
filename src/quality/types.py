@@ -66,3 +66,10 @@ class ElementaryPath:
 class RelationshipDuplicate:
     label: str
     invalid_pair: int
+
+
+@dataclass(slots=True, frozen=True, eq=True)
+class NodeDuplicate:
+    label: str
+    node_id_x: str
+    node_id_y: str
