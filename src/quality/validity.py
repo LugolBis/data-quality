@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
 from models.utils import build_match
-from quality.types import TextFormat
-from utils.utils import some
+from quality.types import DateErr, TextFormat
+from utils.utils import logger, some
 
 if TYPE_CHECKING:
     import re
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
     from driver.neo4j_driver import Neo4jSession
     from models.enums import Entity
+    from quality.enums import DateFmt
 
 
 def check_string_format(  # noqa: PLR0913
@@ -79,4 +80,42 @@ def check_string_format(  # noqa: PLR0913
 
     if len(violations) > 0:
         return violations
+    return None
+
+
+def check_date_format(  # noqa: PLR0913
+    session: Neo4jSession,
+    entity: Entity,
+    label: str,
+    properties: list[str],
+    date_fmt: DateFmt,
+    skip_null: bool = True,  # noqa: FBT001, FBT002
+) -> list[DateErr] | None:
+    query: str = (
+        f"{build_match(entity, label)}"
+        f"UNWIND {properties} AS targetProperty "
+        "WITH e, targetProperty "
+        f"WHERE e[targetProperty] IS NOT :: {date_fmt!s} "
+        f"{'AND e[targetProperty] IS NOT NULL ' if skip_null else ''} "
+        "RETURN targetProperty, "
+        "collect(valueType(e[targetProperty])) AS fmt_found "
+    )
+
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    records = result.to_eager_result().records
+
+    analysis: list[DateErr] = []
+    for record in records:
+        target_prop: str | None = record.get("targetProperty")
+        fmt_found: list[str] | None = record.get("fmt_found")
+
+        if some(target_prop) and some(fmt_found):
+            analysis.append(
+                DateErr(entity, label, target_prop, set(fmt_found)),
+            )
+        else:
+            logger.error(f"Invalid record {record}")
+
+    if len(analysis) > 0:
+        return analysis
     return None

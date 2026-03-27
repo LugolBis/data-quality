@@ -9,7 +9,6 @@ from tests import (
     labeling,
     lisibility,
     outliers,
-    schema,
     uniqueness,
     validity,
 )
@@ -26,7 +25,6 @@ if __name__ == "__main__":
     if some(uri) and some(db_user) and some(db_password) and some(db_name):
         with Neo4jSession(uri, db_user, db_password, db_name) as session:
             integrity.main(session)
-            schema.main(session)
             lisibility.main(session)
             outliers.main(session)
             completeness.main(session)

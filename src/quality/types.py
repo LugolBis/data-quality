@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from models.enums import Entity
 from models.types import Violation
 
 if TYPE_CHECKING:
@@ -73,3 +74,11 @@ class NodeDuplicate:
     label: str
     node_id_x: str
     node_id_y: str
+
+
+@dataclass(slots=True, frozen=True, eq=True)
+class DateErr:
+    entity: Entity
+    label: str
+    property: str
+    fmt_found: set[str]
