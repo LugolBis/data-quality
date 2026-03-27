@@ -82,7 +82,7 @@ Tel que on note :
 - *Les doublons de Relationships*
   - Définition : $forall r_1, r_2 in E_R^2$, $r_1, r_2$ sont des doublons SSI $r_1 [L_1] = r_2 [L_2]$, $r_1."src" = r_2."src"$, $r_1."dest" = r_2."dest"$, $r_1 {P_1} = r_2 {P_2}$ et $forall p in P_1$, $r_1.p = r_2.p$.
 - *Les doublons de Node*
-  - Définition : $forall n_1, n_2 in V_N^2$, $n_1, n_2$ sont des doublons SSI $n_1 {P_1} = n_2 {P_2}$, $forall p in P_1$, $n_1.p = n_2.p$ et $forall r$ tel que $r."src" = n_1 | n_2$ ou $r."dest" = n_1 | n_2$ sont des doublons si $n_1 = n_2$.
+  - Définition : $forall n_1, n_2 in V_N^2$, $n_1, n_2$ sont des doublons SSI $n_1 [L_1] = n_2 [L_2]$, $n_1 {P_1} = n_2 {P_2}$, $forall p in P_1$, $n_1.p = n_2.p$ et $forall r$ tel que $r."src" = n_1 | n_2$ ou $r."dest" = n_1 | n_2$ sont des doublons si $n_1 = n_2$.
 - *L’existence de Clés*
   - Définition : On note $K$ l’ensemble des *properties* formant une clé, tel que $forall n in V_N$ on a $n.p | forall p in K$, $n_1.p = n_2.p$ qui est unique.
 #pagebreak()
