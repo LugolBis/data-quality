@@ -22,6 +22,7 @@ from ui.pages.profiling import (
     validity as pf_validity,
 )
 from ui.pages.quality import completeness as ql_completeness
+from ui.pages.quality import consistency as ql_consistency
 from ui.pages.quality import (
     integrity as ql_integrity,
 )
@@ -46,6 +47,7 @@ _SECTIONS = {
     },
     "Data Quality": {
         "Completeness": ql_completeness,
+        "Consistency": ql_consistency,
         "Integrity": ql_integrity,
         "Uniqueness": ql_uniqueness,
         "Validity": ql_validity,
