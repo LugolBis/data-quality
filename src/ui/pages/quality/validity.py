@@ -58,7 +58,7 @@ def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         try:
             entity = Entity(row["Entity"])
             label = row["Label(s) / Type"]
-            properties = [p.strip() for p in row["Properties"].split(",") if p.strip()]
+            properties = row["Properties"]
             case_insensitive = row["Ignore case"]
             multiline = row["Multiline"]
             dotall = row["Dotall"]
@@ -113,9 +113,7 @@ def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         try:
             entity = Entity(row["Entity"])
             label: str = row["Label(s) / Type"]
-            properties: list[str] = [
-                p.strip() for p in row["Properties"].split(",") if p.strip()
-            ]
+            properties: list[str] = row["Properties"]
             date_fmt: DateFmt = DateFmt(row["Date format"])
             skip_null: bool = row["Skip null values"]
 
@@ -170,9 +168,9 @@ def _string_format() -> None:
                 help="You can select multiple labels by separate them with a '&'.",
                 required=True,
             ),
-            "Properties": st.column_config.TextColumn(
+            "Properties": st.column_config.ListColumn(
                 "Properties",
-                help="Properties separated by a comma.",
+                help="Target properties",
                 required=True,
             ),
             "Pattern": st.column_config.TextColumn(
@@ -240,9 +238,9 @@ def _date_format() -> None:
                 help="You can select multiple labels by separate them with a '&'.",
                 required=True,
             ),
-            "Properties": st.column_config.TextColumn(
+            "Properties": st.column_config.ListColumn(
                 "Properties",
-                help="Properties separated by a comma.",
+                help="Target properties",
                 required=True,
             ),
             "Date format": st.column_config.SelectboxColumn(
