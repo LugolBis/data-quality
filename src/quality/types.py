@@ -82,3 +82,12 @@ class DateErr:
     label: str
     property: str
     fmt_found: set[str]
+
+
+@dataclass(slots=True, frozen=True, eq=True)
+class FDErr:
+    entity: Entity
+    label: str
+    x: set[str]
+    y: set[str]
+    invalid: int
