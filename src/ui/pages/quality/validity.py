@@ -5,7 +5,8 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Entity
-from quality.validity import check_string_format
+from quality.enums import DateFmt
+from quality.validity import check_date_format, check_string_format
 from scoring.validity import invalid_ratio
 from ui.components.dynamic import _score_call
 from ui.utils import _lazy_func
@@ -18,11 +19,11 @@ if TYPE_CHECKING:
 from ui.components.analysis import _dataframe_analysis
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
-    "VSTRF_score": _lazy_func(
+    "VSFMT_score": _lazy_func(
         _score_call,
         func=invalid_ratio,
-        key="VSTRF",
-        lazy_func_args={"df": "VSTRF_res"},
+        key="VSFMT",
+        lazy_func_args={"df": "VSFMT_res"},
     ),
 }
 
@@ -31,6 +32,8 @@ def render() -> None:
     _headers()
     st.divider()
     _string_format()
+    st.divider()
+    _date_format()
 
 
 def _headers() -> None:
@@ -79,6 +82,50 @@ def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
                 case_insensitive,
                 multiline,
                 dotall,
+            )
+            if results:
+                analysis.extend(results)
+        except re.error as e:
+            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
+def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            entity = Entity(row["Entity"])
+            label: str = row["Label(s) / Type"]
+            properties: list[str] = [
+                p.strip() for p in row["Properties"].split(",") if p.strip()
+            ]
+            date_fmt: DateFmt = DateFmt(row["Date format"])
+            skip_null: bool = row["Skip null values"]
+
+            results = check_date_format(
+                session,
+                entity,
+                label,
+                properties,
+                date_fmt,
+                skip_null,
             )
             if results:
                 analysis.extend(results)
@@ -151,7 +198,7 @@ def _string_format() -> None:
     _dataframe_analysis(
         section_name="Analysis string properties format.",
         description="It checks the entities which do not match the Regex pattern.",
-        key="VSTRF",
+        key="VSFMT",
         analysis_func=_string_analyze,
         df_template=df_template,
         editor_config=editor_config,
@@ -163,4 +210,58 @@ def _string_format() -> None:
         "How it works: column `count` is the number of entities of the Label(s) / Type."
         "The column `invalid` is the number of nodes with the property who's not NULL"
         "and don't match the format specified by the Regex pattern.",
+    )
+
+
+def _date_format() -> None:
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Label(s) / Type",
+            "Properties",
+            "Date format",
+            "Skip null values",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = {
+        "num_rows": "dynamic",
+        "column_config": {
+            "Entity": st.column_config.SelectboxColumn(
+                label="Entity",
+                help="Choose the kind of Neo4j entity.",
+                options=["NODE", "RELATIONSHIP"],
+                required=True,
+            ),
+            "Label(s) / Type": st.column_config.TextColumn(
+                "Label(s) / Type",
+                help="You can select multiple labels by separate them with a '&'.",
+                required=True,
+            ),
+            "Properties": st.column_config.TextColumn(
+                "Properties",
+                help="Properties separated by a comma.",
+                required=True,
+            ),
+            "Date format": st.column_config.SelectboxColumn(
+                "Date format",
+                options=[str(fmt) for fmt in DateFmt],
+                required=True,
+            ),
+            "Skip null values": st.column_config.CheckboxColumn(
+                "Skip null values",
+                default=True,
+            ),
+        },
+    }
+
+    _dataframe_analysis(
+        section_name="Analysis date properties format.",
+        description="It checks the entities which do not match the date format.",
+        key="VDFMT",
+        analysis_func=_date_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
     )
