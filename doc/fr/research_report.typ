@@ -113,7 +113,7 @@ Tel que on note :
   - Définition : $forall e in V_N union E_R$, avec $X subset.eq e{P}$ et *DateFmt* tel que on vérifie que $forall p in X$, $e,p$ est une date respectant le format *DateFmt*.
 - *Labeling*
   - Méthode n°1 : Déterminer des clusters de nodes en fonction de leurs relationships entrant/sortant vers d’autres nodes (on s’intéresse ici à leur label et la mesure de distance choisie sur l’Edit distance) @Giot2015VisualGraph.
-  - Méthode n°2 : Valider des contraintes d’inclusion/d’exclusion entre des ensembles de label.
+  - Méthode n°2 : Soit $L_X, L_Y$ deux ensembles de labels et $"OP"_"ENS"$ un opérateur entre deux ensembles, on vérifie que $forall n in V_N$ tel que $n[L] = L_Y$ on a $L_X$ $"OP"_"ENS"$ $n[L] = "true"$.
 - *Intervalles de données*
   - Définition : $forall e in V_N union E_R$, avec $X subset.eq e{P}$, $I$ un ensemble de valeurs et $C$ une contrainte comme défini pour les CFD ; tel que on vérifie que $forall p in X$, $(e.p) in I$ AND $C = "true"$.
 #pagebreak()
