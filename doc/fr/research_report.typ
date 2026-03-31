@@ -66,12 +66,12 @@ Tel que on note :
 - *Existence de chemins élémentaires prédéfinis entre des _Nodes_ / _Relationships_*
   - Exemple : Vérifie que $forall n [A], exists r [B], n [C]$ tel que $r [B] ."src" = n [A]$ et $r [B] ."dest" = n [C]$
   - Paramètres modifiables : chemins/chaînes, longueur du chemin et label/type (des entités composantes).
+- *Le degré des _Nodes_*
+  - Définition : Soit $L_X$ un ensemble de labels et $D_s, D_e subset RR²$ représentant respectivement les degrés sortant et entrant, $forall n in V_N$ avec $n[L] subset.eq L_X$ on vérifie que $d^+(n) in D_s$ et $d^-(s) in D_e$.
 - *Les propriétés de connexité*
   - Exemples :
     - Vérifie que $forall n [A]$, $exists$ une arborescence couvrante dont la racine est $n [A]$
     - Vérifie que $forall n [A], n [B]$ et $r$ tel que $r [B] ."src" = n [A] | n [B]$, $r [B] ."dest" = n [A] | n [B]$ constituent un DAG.
-- *Distribution des properties des _Nodes_ / _Relationships_*
-  - Problème : Sûrement trop restrictif et inadapté à des données semi structurées.
 #pagebreak()
 
 // Unicité
@@ -84,7 +84,7 @@ Tel que on note :
 - *Les doublons de Node*
   - Définition : $forall n_1, n_2 in V_N^2$, $n_1, n_2$ sont des doublons SSI $n_1 [L_1] = n_2 [L_2]$, $n_1 {P_1} = n_2 {P_2}$, $forall p in P_1$, $n_1.p = n_2.p$ et $forall r$ tel que $r."src" = n_1 | n_2$ ou $r."dest" = n_1 | n_2$ sont des doublons si $n_1 = n_2$.
 - *L’existence de Clés*
-  - Définition : On note $K$ l’ensemble des *properties* formant une clé, tel que $forall n in V_N$ on a $n.p | forall p in K$, $n_1.p = n_2.p$ qui est unique.
+  - Définition : On note $K$ l’ensemble des *properties* formant une clé et $L_X$ les labels concernés, tel que $forall n in V_N$ tel que $n[L] subset.eq L_X$ on a $n.p | forall p in K$, $n_1.p = n_2.p$ qui est unique. @thang2026neo4j
 #pagebreak()
 
 // Cohérence
