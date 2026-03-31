@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING
 
+from neo4j import Result
+
+from models.enums import Degree
 from models.utils import build_match
-from quality.types import ElementaryPath
+from quality.types import DegreeErr, ElementaryPath
 from utils.utils import logger
 
 if TYPE_CHECKING:
@@ -36,4 +39,34 @@ def existence_path(
     count = record.get("invalid")
     if count > 0:
         return ElementaryPath(entity, entity_alias, label_start, graph_pattern, query)
+    return None
+
+
+def node_degree(
+    session: Neo4jSession,
+    degree: Degree,
+    label: str,
+    expected: set[int],
+) -> DegreeErr | None:
+    opt_pattern: str
+    if degree == Degree.INCOMING:
+        opt_pattern = "OPTIONAL MATCH ()-[r]->(n)"
+    else:
+        opt_pattern = "OPTIONAL MATCH ()<-[r]-(n)"
+
+    query: str = (
+        f"MATCH (n:{label}) "
+        f"{opt_pattern} "
+        "WITH id(n) AS k, COUNT(r) AS rels "
+        f"WHERE NOT rels IN {list(expected)} "
+        "RETURN collect(rels) AS invalid "
+    )
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    record = result.single()
+
+    if record:
+        invalid: list[int] | None = record.get("invalid")
+
+        if invalid:
+            return DegreeErr(degree, label, set(invalid))
     return None

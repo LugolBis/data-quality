@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from models.enums import Entity
+from models.enums import Degree, Entity
 from models.types import Violation
 
 if TYPE_CHECKING:
@@ -63,20 +63,20 @@ class ElementaryPath:
     query: str
 
 
-@dataclass(slots=True, frozen=True, eq=True)
+@dataclass(slots=True, frozen=True, eq=False)
 class RelationshipDuplicate:
     label: str
     invalid_pair: int
 
 
-@dataclass(slots=True, frozen=True, eq=True)
+@dataclass(slots=True, frozen=True, eq=False)
 class NodeDuplicate:
     label: str
     node_id_x: str
     node_id_y: str
 
 
-@dataclass(slots=True, frozen=True, eq=True)
+@dataclass(slots=True, frozen=True, eq=False)
 class DateErr:
     entity: Entity
     label: str
@@ -84,10 +84,17 @@ class DateErr:
     fmt_found: set[str]
 
 
-@dataclass(slots=True, frozen=True, eq=True)
+@dataclass(slots=True, frozen=True, eq=False)
 class FDErr:
     entity: Entity
     label: str
     x: set[str]
     y: set[str]
     invalid: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class DegreeErr:
+    degree: Degree
+    label: str
+    found: set[int]
