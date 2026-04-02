@@ -95,8 +95,6 @@ def _degree_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
             )
             if result:
                 analysis.append(result)
-        except re.error as e:
-            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
         except Exception as e:
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
