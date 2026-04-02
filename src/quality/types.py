@@ -1,12 +1,15 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from models.enums import Degree, Entity
+from models.enums import Entity
 from models.types import Violation
+from quality.enums import BoolOperator, ConditionFunc, ConditionType
 
 if TYPE_CHECKING:
-    from models.enums import Entity
+    from models.enums import Degree, Entity
     from quality.enums import Constraint
+
+_ENTITY_CONDITION_ALIAS: str = "__ENTITY_CONDITION_ALIAS__"
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -94,7 +97,47 @@ class FDErr:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
+class CFDErr:
+    entity: Entity
+    label: str
+    condition: str
+    x: set[str]
+    y: set[str]
+    invalid: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
 class DegreeErr:
     degree: Degree
     label: str
     found: set[int]
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class ConditionValue:
+    type: ConditionType
+    value: Any
+
+    def __str__(self) -> str:
+        if self.type == ConditionType.PROPERTY:
+            return str(f"{_ENTITY_CONDITION_ALIAS}['{self.value}']")
+        return str(self.value)
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class Condition:
+    property_: str
+    value: ConditionValue
+    func: ConditionFunc
+    next: tuple[BoolOperator, Condition] | None
+
+    def __str__(self) -> str:
+        if self.next:
+            return (
+                f"({_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.func!s}"
+                f" {self.value!s}) {self.next[0]!s} {self.next[1]!s}"
+            )
+        return (
+            f"{_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.func!s}"
+            f" {self.value!s}"
+        )

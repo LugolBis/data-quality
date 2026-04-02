@@ -17,3 +17,34 @@ class DateFmt(str, Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+class ConditionType(str, Enum):
+    CONSTANT = "CONSTANT"
+    PROPERTY = "PROPERTY"
+
+
+class ConditionFunc(str, Enum):
+    EQUAL = "="
+    DIFFERENT = "<>"
+    GREATER = ">"
+    GREATER_EQ = ">="
+    LOWER = "<"
+    LOWER_EQ = "<="
+    CONTAINS = "IN"
+    STARTS_WITH = "STARTS WITH"
+    ENDS_WITH = "ENDS WITH"
+    MATCH_REGEX = "=~"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class BoolOperator(str, Enum):
+    AND = "AND"
+    NOT = "NOT"
+    OR = "OR"
+    XOR = "XOR"
+
+    def __str__(self) -> str:
+        return self.value
