@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 def main(session: Neo4jSession) -> None:
     duplicates_rels = duplicate_relationships(session)
-    duplicates_nodes = duplicate_nodes(session)
+    duplicates_nodes = duplicate_nodes(session, "Person", 0.6)
 
     if some(duplicates_rels):
         print("\n")

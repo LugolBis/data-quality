@@ -17,22 +17,6 @@ _RELS_DUPLICATE_QUERY: LiteralString = (
     "RETURN type(r1) as Label, COUNT(*) AS Duplicates"
 )
 
-_NODES_DUPLICATE_QUERY: LiteralString = (
-    "MATCH (n1), (n2) "
-    "WHERE id(n1) < id(n2) "
-    "OPTIONAL MATCH (n1)-[r1]-() "
-    "WITH n1, n2, collect(r1) AS rels1 "
-    "OPTIONAL MATCH (n2)-[r2]-() "
-    "WITH n1, n2, rels1, collect(r2) AS rels2 "
-    "WITH n1, n2, "
-    "[r in rels1 | {t: type(r), p: properties(r), o: CASE WHEN startNode(r) = n1 THEN "
-    "id(endNode(r)) ELSE id(startNode(r)) END}] AS norm1, "
-    "[r in rels2 | {t: type(r), p: properties(r), o: CASE WHEN startNode(r) = n2 THEN "
-    "id(endNode(r)) ELSE id(startNode(r)) END}] AS norm2 "
-    "WHERE size(norm1) = size(norm2) AND all(rel IN norm1 WHERE rel in norm2) "
-    "RETURN labels(n1) AS Label, elementId(n1) AS n1_id, elementId(n2) AS n2_id "
-)
-
 
 def duplicate_relationships(
     session: Neo4jSession,
@@ -59,8 +43,34 @@ def duplicate_relationships(
     return None
 
 
-def duplicate_nodes(session: Neo4jSession) -> list[NodeDuplicate] | None:
-    result: Result = session.run_query(_NODES_DUPLICATE_QUERY)
+def duplicate_nodes(
+    session: Neo4jSession,
+    label: str,
+    treshold: float,
+) -> list[NodeDuplicate] | None:
+    nodes_duplicate_query: str = (
+        f"MATCH (n1:{label}), (n2:{label}) "
+        "WHERE id(n1) < id(n2) "
+        "AND properties(n1) = properties(n2) "
+        "OPTIONAL MATCH (n1)-[r1]-() "
+        "WITH n1, n2, collect(r1) AS rels1 "
+        "OPTIONAL MATCH (n2)-[r2]-() "
+        "WITH n1, n2, rels1, collect(r2) AS rels2 "
+        "WITH n1, n2, "
+        "[r in rels1 | [type(r), properties(r), CASE WHEN startNode(r) = n1 "
+        "THEN id(endNode(r)) ELSE id(startNode(r)) END]] AS norm1, "
+        "[r in rels2 | [type(r), properties(r), CASE WHEN startNode(r) = n2 "
+        "THEN id(endNode(r)) ELSE id(startNode(r)) END]] AS norm2 "
+        "WITH n1, n2, norm1, norm2, [r1 IN norm1 WHERE r1 IN norm2] AS shared, "
+        "size(norm1) AS size1, size(norm2) AS size2 "
+        "WITH n1, n2, size(shared) AS shared_count, "
+        "size1 + size2 - 2 * size(shared) AS unique_count "
+        "WITH n1, n2, shared_count / (shared_count + unique_count) AS treshold "
+        f"WHERE treshold >= {treshold} "
+        "RETURN labels(n1) AS Label, elementId(n1) AS n1_id, elementId(n2) AS n2_id "
+    )
+
+    result: Result = session.run_query(nodes_duplicate_query)  # ty:ignore[invalid-argument-type]
     records = result.to_eager_result().records
 
     if len(records) == 0:
