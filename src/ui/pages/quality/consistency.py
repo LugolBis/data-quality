@@ -1,4 +1,3 @@
-import re
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -6,7 +5,7 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from models.enums import Entity
-from quality.consistency import cfd, fd
+from quality.consistency import cfd, fd, gfd
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 from ui.components.analysis import _dataframe_analysis
@@ -55,6 +54,8 @@ def render() -> None:
     _fd_render()
     st.divider()
     _cfd_render()
+    st.divider()
+    _gfd_render()
 
 
 def _headers() -> None:
@@ -68,7 +69,7 @@ def _fd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []
@@ -90,8 +91,6 @@ def _fd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
             )
             if result:
                 analysis.append(result)
-        except re.error as e:
-            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
         except Exception as e:
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
@@ -147,7 +146,7 @@ def _generate_condition(
         return str(e)
 
 
-def _cfd_analyze(
+def _cfd_analyze(  # noqa: C901
     dict_rows: dict[str, Any],
 ) -> list[dict] | None:
     df_edited = app_st.get(_CONDITION_EDITOR_KEY)
@@ -161,7 +160,7 @@ def _cfd_analyze(
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []
@@ -189,6 +188,48 @@ def _cfd_analyze(
                 entity,
                 label,
                 condition,
+                x,
+                y,
+            )
+            if result:
+                analysis.append(result)
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
+def _gfd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            entity = Entity(row["Entity"])
+            entity_alias = row["Entity alias"]
+            label = row["Label(s) / Type"]
+            graph_pattern = row["Graph pattern"]
+            x = set(row["X"])
+            y = set(row["Y"])
+
+            result = gfd(
+                session,
+                entity,
+                entity_alias,
+                label,
+                graph_pattern,
                 x,
                 y,
             )
@@ -308,4 +349,46 @@ def _cfd_render() -> None:
         df_template=df_template,
         editor_config=editor_config,
         lazy_renders=[lazy_render],
+    )
+
+
+def _gfd_render() -> None:
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Entity alias",
+            "Label(s) / Type",
+            "Graph pattern",
+            "X",
+            "Y",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = _FD_EDITOR_CONFIG
+    if isinstance(editor_config["column_config"], dict):
+        editor_config["column_config"]["Entity alias"] = st.column_config.TextColumn(
+            "Entity alias",
+            help="It's the alias used by `Graph Pattern` to reference the entity.",
+            required=True,
+        )
+        editor_config["column_config"]["Graph pattern"] = st.column_config.TextColumn(
+            "Graph pattern",
+            help="It's the alias used to reference the entity in the `Graph Pattern`.",
+            required=True,
+        )
+
+    _dataframe_analysis(
+        section_name="Check graph functional dependencies (GFD)",
+        description=(
+            "It checks for a given label _L_ of the chosen entity who match a given "
+            "graph pattern if all of it's occurencies verify the FD (X -> Y). "
+            "Paid attention to don't give alias to the entities who are part of the "
+            "graph pattern because it is matched twice to verify the GFD."
+        ),
+        key="CGFD",
+        analysis_func=_gfd_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
     )
