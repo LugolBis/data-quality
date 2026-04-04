@@ -44,7 +44,7 @@ def fd(
     return None
 
 
-def cfd(
+def cfd(  # noqa: PLR0913
     session: Neo4jSession,
     entity: Entity,
     label: str,

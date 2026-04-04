@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 from models.enums import Entity
 from models.types import Violation
-from quality.enums import BoolOperator, ConditionFunc, ConditionType
+from quality.enums import BoolOperator, ConditionOp, ConditionType
 
 if TYPE_CHECKING:
     from models.enums import Degree, Entity
@@ -128,16 +128,16 @@ class ConditionValue:
 class Condition:
     property_: str
     value: ConditionValue
-    func: ConditionFunc
+    operator: ConditionOp
     next: tuple[BoolOperator, Condition] | None
 
     def __str__(self) -> str:
         if self.next:
             return (
-                f"({_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.func!s}"
+                f"({_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.operator!s}"
                 f" {self.value!s}) {self.next[0]!s} {self.next[1]!s}"
             )
         return (
-            f"{_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.func!s}"
+            f"{_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.operator!s}"
             f" {self.value!s}"
         )

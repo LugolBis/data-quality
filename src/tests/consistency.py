@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from models.enums import Entity
 from quality.consistency import cfd, fd
-from quality.enums import BoolOperator, ConditionFunc, ConditionType
+from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 from utils.utils import some
 
@@ -19,13 +19,13 @@ def main(session: Neo4jSession) -> None:
             ConditionType.CONSTANT,
             ["confirmed", "beginner", "professionnal"],
         ),
-        ConditionFunc.CONTAINS,
+        ConditionOp.CONTAINS,
         None,
     )
     condition = Condition(
         "education",
         ConditionValue(ConditionType.CONSTANT, 45),
-        ConditionFunc.LOWER,
+        ConditionOp.LOWER,
         (
             BoolOperator.OR,
             sub_condition,

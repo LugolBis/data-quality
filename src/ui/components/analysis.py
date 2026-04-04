@@ -100,7 +100,7 @@ def _dataframe_analysis(  # noqa: PLR0913
     analysis_func: Callable[[dict[str, Any]], Any],
     df_template: pd.DataFrame | None = None,
     editor_config: dict | None = None,
-    additional_controls: list[Callable[[], Any]] | None = None,
+    lazy_renders: list[Callable[[], Any]] | None = None,
     result_to_df: bool = True,  # noqa: FBT001, FBT002
     progress_message: str = "Analysis in progress...",
     button_label: str = "Analyse",
@@ -116,7 +116,7 @@ def _dataframe_analysis(  # noqa: PLR0913
      DataFrame.
     :param editor_config: Additional keyword arguments for st.data_editor (e.g.,
      column_config, num_rows).
-    :param additional_controls: List of lazy-rendered Streamlit widgets (e.g., sliders,
+    :param lazy_renders: List of lazy-rendered Streamlit widgets (e.g., sliders,
      selectors).
     :param result_to_df: If True, the result of analysis_func is converted to a pandas
      DataFrame using to_dataframe.
@@ -136,6 +136,11 @@ def _dataframe_analysis(  # noqa: PLR0913
 
     # Container for the editor and additional controls
     with st.container():
+        # Render additional controls if any
+        if lazy_renders:
+            for lazy_render in lazy_renders:
+                lazy_render()
+
         # Render the data editor
         st.data_editor(
             df_template,
@@ -143,11 +148,6 @@ def _dataframe_analysis(  # noqa: PLR0913
             use_container_width=True,
             **(editor_config or {}),
         )
-
-        # Render additional controls if any
-        if additional_controls:
-            for control in additional_controls:
-                control()
 
     # Initialize result state
     app_st[key_res] = {

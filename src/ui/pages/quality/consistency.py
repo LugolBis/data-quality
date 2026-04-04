@@ -3,22 +3,58 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import streamlit as st
+from streamlit import session_state as app_st
 
 from models.enums import Entity
-from quality.consistency import fd
+from quality.consistency import cfd, fd
+from quality.enums import BoolOperator, ConditionOp, ConditionType
+from quality.types import Condition, ConditionValue
 from ui.components.analysis import _dataframe_analysis
+from ui.utils import _lazy_func
 from utils.utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from streamlit.elements.lib.column_types import ColumnConfig
+
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {}
+_CONDITION_EDITOR_KEY: str = "_ql_consistency_condition_editor_key"
+
+_FD_EDITOR_CONFIG: dict[str, str | dict[str, ColumnConfig]] = {
+    "num_rows": "dynamic",
+    "column_config": {
+        "Entity": st.column_config.SelectboxColumn(
+            label="Entity",
+            help="Choose the kind of Neo4j entity.",
+            options=["NODE", "RELATIONSHIP"],
+            required=True,
+        ),
+        "Label(s) / Type": st.column_config.TextColumn(
+            "Label(s) / Type",
+            help="You can select multiple labels by separate them with a '&'.",
+            required=True,
+        ),
+        "X": st.column_config.ListColumn(
+            "X",
+            help="Set of key properties.",
+            required=True,
+        ),
+        "Y": st.column_config.ListColumn(
+            "Y",
+            help="Set of deduced properties.",
+            required=True,
+        ),
+    },
+}
 
 
 def render() -> None:
     _headers()
     st.divider()
     _fd_render()
+    st.divider()
+    _cfd_render()
 
 
 def _headers() -> None:
@@ -66,6 +102,108 @@ def _fd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     return analysis if analysis else None
 
 
+def _generate_condition(
+    df_cond: pd.DataFrame,
+    target_name: str,
+    line_visited: list[str],
+) -> Condition | str:
+    if target_name in line_visited:
+        return (
+            "Dependency cycle detected between conditions : "
+            f"{' -> '.join([str(idx) for idx in line_visited])}"
+            f" -X> {target_name}"
+        )
+    try:
+        filtered = df_cond[df_cond["Name"] == target_name]
+        row = filtered.iloc[0] if not filtered.empty else None
+        if row is None:
+            return f"Failed to retrieve the condition called {target_name}"
+
+        property_ = row["Property"]
+        value_type = ConditionType(row["Value type"])
+        value = row["Value"]
+        operator = ConditionOp(row["Operator"])
+        next_op = row["Next Op."]
+        next_cond = row["Next condition"]
+
+        if not isinstance(next_cond, str):
+            return Condition(
+                property_,
+                ConditionValue(value_type, value),
+                operator,
+                None,
+            )
+        line_visited.append(target_name)
+        sub_condition = _generate_condition(df_cond, next_cond, line_visited)
+        if isinstance(sub_condition, str):
+            return f"{target_name} <X- {next_cond} : {sub_condition}"
+        return Condition(
+            property_,
+            ConditionValue(value_type, value),
+            operator,
+            (BoolOperator(next_op), sub_condition),
+        )
+    except Exception as e:
+        return str(e)
+
+
+def _cfd_analyze(
+    dict_rows: dict[str, Any],
+) -> list[dict] | None:
+    df_edited = app_st.get(_CONDITION_EDITOR_KEY)
+
+    if df_edited is None or (isinstance(df_edited, pd.DataFrame) and df_edited.empty):
+        return None
+    df_cond = pd.DataFrame(df_edited.get("added_rows"))
+
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return []
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            entity = Entity(row["Entity"])
+            label = row["Label(s) / Type"]
+            cond_name = row["Condition name"]
+            x = set(row["X"])
+            y = set(row["Y"])
+
+            if cond_name is None:
+                errors.append(f"Line {idx + 1}: Missing required field Condition Line")
+                continue
+
+            condition = _generate_condition(df_cond, cond_name, [])
+            if isinstance(condition, str):
+                errors.append(f"Line {idx + 1}: {condition}")
+                continue
+
+            result = cfd(
+                session,
+                entity,
+                label,
+                condition,
+                x,
+                y,
+            )
+            if result:
+                analysis.append(result)
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
 def _fd_render() -> None:
     # Template DataFrame with predefined columns
     df_template = pd.DataFrame(
@@ -78,35 +216,10 @@ def _fd_render() -> None:
     )
 
     # Configuration for the data editor
-    editor_config = {
-        "num_rows": "dynamic",
-        "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.TextColumn(
-                "Label(s) / Type",
-                help="You can select multiple labels by separate them with a '&'.",
-                required=True,
-            ),
-            "X": st.column_config.ListColumn(
-                "X",
-                help="Set of key properties.",
-                required=True,
-            ),
-            "Y": st.column_config.ListColumn(
-                "Y",
-                help="Set of deduced properties.",
-                required=True,
-            ),
-        },
-    }
+    editor_config = _FD_EDITOR_CONFIG
 
     _dataframe_analysis(
-        section_name="Check functional dependency (FD)",
+        section_name="Check functional dependencies (FD)",
         description=(
             "It checks for a given label _L_ of the chosen entity if all of it's"
             " occurencies verify the FD (X -> Y)"
@@ -115,4 +228,84 @@ def _fd_render() -> None:
         analysis_func=_fd_analyze,
         df_template=df_template,
         editor_config=editor_config,
+    )
+
+
+def _cfd_render() -> None:
+    cond_df_template = pd.DataFrame(
+        columns=[
+            "Name",
+            "Property",
+            "Value type",
+            "Value",
+            "Operator",
+            "Next Op.",
+            "Next condition",
+        ],
+    )
+
+    cond_column_config = {
+        "Name": st.column_config.TextColumn("Name", required=True),
+        "Property": st.column_config.TextColumn("Property", required=True),
+        "Operator": st.column_config.SelectboxColumn(
+            "Operator",
+            options=[e.value for e in ConditionOp],
+            required=True,
+        ),
+        "Value type": st.column_config.SelectboxColumn(
+            "Value Type",
+            options=[e.value for e in ConditionType],
+            required=True,
+        ),
+        "Value": st.column_config.TextColumn("Value", required=True),
+        "Next Op.": st.column_config.SelectboxColumn(
+            "Next Op.",
+            options=[e.value for e in BoolOperator],
+        ),
+        "Next condition": st.column_config.TextColumn(
+            "Next condition",
+            help="Select the name of next condition.",
+        ),
+    }
+
+    lazy_render: Callable[[], Any] = _lazy_func(
+        st.data_editor,
+        data=cond_df_template,
+        key=_CONDITION_EDITOR_KEY,
+        use_container_width=True,
+        num_rows="dynamic",
+        column_config=cond_column_config,
+    )
+
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Label(s) / Type",
+            "Condition name",
+            "X",
+            "Y",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = _FD_EDITOR_CONFIG
+    if isinstance(editor_config["column_config"], dict):
+        editor_config["column_config"]["Condition name"] = st.column_config.TextColumn(
+            "Condition name",
+            help=("Select the name of the condition written in the Condition editor."),
+            required=True,
+        )
+
+    _dataframe_analysis(
+        section_name="Check conditional functional dependencies (CFD)",
+        description=(
+            "It checks for a given label _L_ of the chosen entity if all of it's"
+            " occurencies verify the FD (X -> Y)"
+        ),
+        key="CCFD",
+        analysis_func=_cfd_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
+        lazy_renders=[lazy_render],
     )

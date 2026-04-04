@@ -24,7 +24,7 @@ class ConditionType(str, Enum):
     PROPERTY = "PROPERTY"
 
 
-class ConditionFunc(str, Enum):
+class ConditionOp(str, Enum):
     EQUAL = "="
     DIFFERENT = "<>"
     GREATER = ">"
