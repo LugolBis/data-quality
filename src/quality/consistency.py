@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING
 
-from models.enums import Entity
 from models.utils import build_match
 from quality.types import _ENTITY_CONDITION_ALIAS, CFDErr, Condition, FDErr, GFDErr
+from quality.utils import _graph_pattern_parser
 from utils.utils import logger
 
 if TYPE_CHECKING:
     from neo4j import Result
 
     from driver.neo4j_driver import Neo4jSession
+    from models.enums import Entity
 
 
 def fd(
@@ -81,7 +82,7 @@ def cfd(  # noqa: PLR0913
     return None
 
 
-def gfd(
+def gfd(  # noqa: PLR0913
     session: Neo4jSession,
     entity: Entity,
     entity_alias: str,
@@ -90,20 +91,10 @@ def gfd(
     x: set[str],
     y: set[str],
 ) -> GFDErr | None:
-    if entity == Entity.NODE:
-        graph_pattern = graph_pattern.replace(
-            f"({entity_alias})",
-            f"({entity_alias}:{label})",
-        )
-    else:
-        graph_pattern = graph_pattern.replace(
-            f"[{entity_alias}]",
-            f"[{entity_alias}:{label}]",
-        )
-
     query: str = (
-        f"MATCH {graph_pattern.replace(entity_alias, 'e1')}, "
-        f"{graph_pattern.replace(entity_alias, 'e2')} "
+        f"MATCH {_graph_pattern_parser(graph_pattern, entity_alias, 1, label)}, "
+        f"{_graph_pattern_parser(graph_pattern, entity_alias, 2, label)} "
+        f"WITH {entity_alias}1 AS e1, {entity_alias}2 AS e2 "
         "WHERE id(e1) < id(e2) "
         f"WITH e1, e2, {list(x)} AS X, {list(y)} AS Y "
         "WITH e1, e2, X, Y, "
