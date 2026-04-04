@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from models.enums import Entity
+from models.enums import WILDCARD, Entity
 from utils.utils import logger
 
 if TYPE_CHECKING:
@@ -13,8 +13,12 @@ if TYPE_CHECKING:
 def build_match(entity_type: Entity, label_str: str, alias: str = "e") -> str:
     match entity_type:
         case Entity.NODE:
+            if label_str == WILDCARD:
+                return f"MATCH ({alias}) "
             return f"MATCH ({alias}:{label_str}) "
         case Entity.RELATIONSHIP:
+            if label_str == WILDCARD:
+                return f"MATCH ()-[{alias}]->() "
             return f"MATCH ()-[{alias}:{label_str}]->() "
         case default:
             logger.error(f"Unknown entity : {default}")
@@ -23,6 +27,16 @@ def build_match(entity_type: Entity, label_str: str, alias: str = "e") -> str:
 
 def format_label(iterable: Iterable[str]) -> str:
     return "&".join(sorted(iterable))
+
+
+def get_label(iterable: Iterable[str]) -> str:
+    """
+    This function is an extension of `format_label` that support `WILDCARD`.
+    """
+    label_set = set(iterable)
+    if WILDCARD in label_set:
+        return WILDCARD
+    return format_label(label_set)
 
 
 def to_dataframe(

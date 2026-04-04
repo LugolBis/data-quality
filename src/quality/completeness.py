@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from models.enums import Degree
+from models.enums import WILDCARD, Degree
 from models.utils import build_match
 from quality.types import Component, DegreeErr
 from utils.utils import logger
@@ -54,8 +54,10 @@ def node_degree(
     else:
         opt_pattern = "OPTIONAL MATCH ()<-[r]-(n)"
 
+    match_clause: str = f"MATCH (n:{label})" if label != WILDCARD else "MATCH (n)"
+
     query: str = (
-        f"MATCH (n:{label}) "
+        f"{match_clause} "
         f"{opt_pattern} "
         "WITH id(n) AS k, COUNT(r) AS rels "
         f"WHERE NOT rels IN {list(expected)} "

@@ -1,3 +1,5 @@
+from models.enums import WILDCARD
+
 _STATE_LINK: int = 0
 _STATE_ENTITY: int = 1
 
@@ -8,7 +10,7 @@ def _graph_pattern_parser(
     index: int,
     label: str | None = None,
 ) -> str:
-    label = label if label != "_" else None
+    label = label if label != WILDCARD else None
     alias_nb = str(index)
     state: int = _STATE_LINK
     result = ""

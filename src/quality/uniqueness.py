@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, LiteralString
 
-from models.enums import Entity
+from models.enums import WILDCARD, Entity
 from models.utils import build_match, format_label
 from quality.types import MultivaluedDuplicate, NodeDuplicate, RelationshipDuplicate
 from utils.utils import logger, some
@@ -49,8 +49,13 @@ def duplicate_nodes(
     label: str,
     treshold: float,
 ) -> list[NodeDuplicate] | None:
+    if label != WILDCARD:
+        match_clause = f"MATCH (n1:{label}), (n2:{label})"
+    else:
+        match_clause = "MATCH (n1), (n2)"
+
     nodes_duplicate_query: str = (
-        f"MATCH (n1:{label}), (n2:{label}) "
+        f"{match_clause} "
         "WHERE id(n1) < id(n2) "
         "AND properties(n1) = properties(n2) "
         "OPTIONAL MATCH (n1)-[r1]-() "

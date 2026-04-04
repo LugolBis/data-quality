@@ -1,5 +1,7 @@
 from enum import Enum
 
+WILDCARD = "_"
+
 
 class Degree(str, Enum):
     INCOMING = "INCOMING"
