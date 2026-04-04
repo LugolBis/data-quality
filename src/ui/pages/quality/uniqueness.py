@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Entity
-from models.utils import format_label
+from models.utils import get_label
 from quality.uniqueness import (
     duplicate_multivalued,
     duplicate_nodes,
@@ -70,14 +70,13 @@ def _nodes_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
             labels: list[str] = row["Label(s)"]
             treshold: int = row["Relationships similarity treshold"]
 
-            for label in labels:
-                result = duplicate_nodes(
-                    session,
-                    label,
-                    (treshold / 100.00),
-                )
-                if result:
-                    analysis.extend(result)
+            result = duplicate_nodes(
+                session,
+                get_label(labels),
+                (treshold / 100.00),
+            )
+            if result:
+                analysis.extend(result)
         except Exception as e:
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
@@ -103,13 +102,13 @@ def _multivalued_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     for idx, row in enumerate(rows):
         try:
             entity: Entity = Entity(row["Entity"])
-            label: list[str] = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             properties: list[str] = row["Properties"]
 
             result = duplicate_multivalued(
                 session,
                 entity,
-                format_label(label),
+                get_label(labels),
                 set(properties),
             )
             if result:
@@ -140,8 +139,8 @@ def _nodes_render() -> None:
             "Label(s)": st.column_config.ListColumn(
                 "Label(s)",
                 help=(
-                    "You can select combined labels by separate them with a '&' in"
-                    " the same entry."
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any node."
                 ),
                 required=True,
             ),
@@ -194,8 +193,11 @@ def _multivalued_render() -> None:
                 required=True,
             ),
             "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s)",
-                help=("Select the set of label of the targeted entity."),
+                "Label(s) / Type",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any entity."
+                ),
                 required=True,
             ),
             "Properties": st.column_config.ListColumn(

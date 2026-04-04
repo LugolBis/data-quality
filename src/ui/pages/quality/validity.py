@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Entity
+from models.utils import get_label
 from quality.enums import DateFmt
 from quality.validity import check_date_format, check_string_format
 from scoring.validity import invalid_ratio
@@ -57,7 +58,7 @@ def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:  # noqa: C9
     for idx, row in enumerate(rows):
         try:
             entity = Entity(row["Entity"])
-            label = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             properties = row["Properties"]
             case_insensitive = row["Ignore case"]
             multiline = row["Multiline"]
@@ -76,7 +77,7 @@ def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:  # noqa: C9
             results = check_string_format(
                 session,
                 entity,
-                label,
+                get_label(labels),
                 properties,
                 pattern,
                 case_insensitive,
@@ -112,7 +113,7 @@ def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     for idx, row in enumerate(rows):
         try:
             entity = Entity(row["Entity"])
-            label: str = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             properties: list[str] = row["Properties"]
             date_fmt: DateFmt = DateFmt(row["Date format"])
             skip_null: bool = row["Skip null values"]
@@ -120,7 +121,7 @@ def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
             results = check_date_format(
                 session,
                 entity,
-                label,
+                get_label(labels),
                 properties,
                 date_fmt,
                 skip_null,
@@ -163,9 +164,12 @@ def _string_format() -> None:
                 options=["NODE", "RELATIONSHIP"],
                 required=True,
             ),
-            "Label(s) / Type": st.column_config.TextColumn(
+            "Label(s) / Type": st.column_config.ListColumn(
                 "Label(s) / Type",
-                help="You can select multiple labels by separate them with a '&'.",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any entity."
+                ),
                 required=True,
             ),
             "Properties": st.column_config.ListColumn(
@@ -233,9 +237,12 @@ def _date_format() -> None:
                 options=["NODE", "RELATIONSHIP"],
                 required=True,
             ),
-            "Label(s) / Type": st.column_config.TextColumn(
+            "Label(s) / Type": st.column_config.ListColumn(
                 "Label(s) / Type",
-                help="You can select multiple labels by separate them with a '&'.",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any entity."
+                ),
                 required=True,
             ),
             "Properties": st.column_config.ListColumn(

@@ -5,6 +5,7 @@ import streamlit as st
 from streamlit import session_state as app_st
 
 from models.enums import Entity
+from models.utils import get_label
 from quality.consistency import cfd, fd, gfd
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
@@ -29,9 +30,12 @@ _FD_EDITOR_CONFIG: dict[str, str | dict[str, ColumnConfig]] = {
             options=["NODE", "RELATIONSHIP"],
             required=True,
         ),
-        "Label(s) / Type": st.column_config.TextColumn(
+        "Label(s) / Type": st.column_config.ListColumn(
             "Label(s) / Type",
-            help="You can select multiple labels by separate them with a '&'.",
+            help=(
+                "Select the set of labels combination, use the wildcard '_'"
+                " to match any entity."
+            ),
             required=True,
         ),
         "X": st.column_config.ListColumn(
@@ -78,14 +82,14 @@ def _fd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     for idx, row in enumerate(rows):
         try:
             entity = Entity(row["Entity"])
-            label = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             x = set(row["X"])
             y = set(row["Y"])
 
             result = fd(
                 session,
                 entity,
-                label,
+                get_label(labels),
                 x,
                 y,
             )
@@ -169,7 +173,7 @@ def _cfd_analyze(  # noqa: C901
     for idx, row in enumerate(rows):
         try:
             entity = Entity(row["Entity"])
-            label = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             cond_name = row["Condition name"]
             x = set(row["X"])
             y = set(row["Y"])
@@ -186,7 +190,7 @@ def _cfd_analyze(  # noqa: C901
             result = cfd(
                 session,
                 entity,
-                label,
+                get_label(labels),
                 condition,
                 x,
                 y,
@@ -219,7 +223,7 @@ def _gfd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         try:
             entity = Entity(row["Entity"])
             entity_alias = row["Entity alias"]
-            label = row["Label(s) / Type"]
+            labels: list[str] = row["Label(s) / Type"]
             graph_pattern = row["Graph pattern"]
             x = set(row["X"])
             y = set(row["Y"])
@@ -228,7 +232,7 @@ def _gfd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
                 session,
                 entity,
                 entity_alias,
-                label,
+                get_label(labels),
                 graph_pattern,
                 x,
                 y,

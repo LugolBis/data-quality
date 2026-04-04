@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Degree, Entity
+from models.utils import get_label
 from quality.completeness import existence_component, node_degree
 from ui.components.analysis import _dataframe_analysis
 from utils.utils import logger
@@ -45,14 +46,14 @@ def _component_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         try:
             entity = Entity(row["Entity"])
             entity_alias = row["Entity alias"]
-            label_start = row["Entity label"]
+            labels: list[str] = row["Label(s) / Type"]
             graph_pattern = row["Graph Pattern"]
 
             result = existence_component(
                 session,
                 entity,
                 entity_alias,
-                label_start,
+                get_label(labels),
                 graph_pattern,
             )
             if result:
@@ -84,13 +85,13 @@ def _degree_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     for idx, row in enumerate(rows):
         try:
             degree: Degree = Degree(row["Degree type"])
-            label: str = row["Label"]
+            labels: list[str] = row["Label(s)"]
             expected: list[str] = row["Expected degree"]
 
             result = node_degree(
                 session,
                 degree,
-                label,
+                get_label(labels),
                 {int(x) for x in expected},
             )
             if result:
@@ -111,7 +112,7 @@ def _component_render() -> None:
         columns=[
             "Entity",
             "Entity alias",
-            "Entity label",
+            "Label(s) / Type",
             "Graph Pattern",
         ],
     )
@@ -133,9 +134,12 @@ def _component_render() -> None:
                 ),
                 required=True,
             ),
-            "Entity label": st.column_config.TextColumn(
-                "Entity label",
-                help="You can select multiple labels by separate them with a '&'.",
+            "Label(s) / Type": st.column_config.ListColumn(
+                "Label(s) / Type",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any entity."
+                ),
                 required=True,
             ),
             "Graph Pattern": st.column_config.TextColumn(
@@ -163,7 +167,7 @@ def _degree_render() -> None:
     df_template = pd.DataFrame(
         columns=[
             "Degree type",
-            "Label",
+            "Label(s)",
             "Expected degree",
         ],
     )
@@ -177,9 +181,12 @@ def _degree_render() -> None:
                 options=["INCOMING", "OUTCOMING"],
                 required=True,
             ),
-            "Label": st.column_config.TextColumn(
-                "Label",
-                help="You can select multiple labels by separate them with a '&'.",
+            "Label(s)": st.column_config.ListColumn(
+                "Label(s)",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any node."
+                ),
                 required=True,
             ),
             "Expected degree": st.column_config.ListColumn(
