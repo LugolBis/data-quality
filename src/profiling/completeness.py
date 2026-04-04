@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from models.utils import format_label
 from profiling.enums import ComponentAlgo
 from profiling.types import (
     CircularComponentsReport,
@@ -58,7 +59,7 @@ def measure_wcc(
                 samples: list[str] = []
                 for node in c["samples"]:
                     labels_str = (
-                        "&".join(list(node.labels)) if node.labels else "UNLABELED"
+                        format_label(node.labels) if node.labels else "UNLABELED"
                     )
                     name_str = str(
                         node.get("name")
@@ -144,7 +145,7 @@ def measure_scc(
                 samples: list[str] = []
                 for node in c["samples"]:
                     labels_str = (
-                        "&".join(list(node.labels)) if node.labels else "UNLABELED"
+                        format_label(node.labels) if node.labels else "UNLABELED"
                     )
                     name_str = str(
                         node.get("name")

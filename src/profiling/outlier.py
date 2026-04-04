@@ -199,7 +199,7 @@ def measure_average_centrality_by_label(
             avg_score: float = float(record["avgScore"])
             max_score: float = float(record["maxScore"])
 
-            label_str: str = "&".join(sorted(raw_labels)) if raw_labels else "UNLABELED"
+            label_str: str = format_label(raw_labels) if raw_labels else "UNLABELED"
 
             stats_list.append(
                 LabelCentralityStats(

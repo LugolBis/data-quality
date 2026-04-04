@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from models.utils import format_label
 from profiling.types import AnomalyDetail, FeatureMismatchReport
 from utils.utils import logger
 
@@ -259,14 +260,10 @@ def detect_anomalies_with_pretrained_model(
             entity_type = record["entity_type"]
             similarity = float(record["similarity"])
             labels1_str = (
-                "&".join(sorted(record["labels1"]))
-                if record["labels1"]
-                else "UNLABELED"
+                format_label(record["labels1"]) if record["labels1"] else "UNLABELED"
             )
             labels2_str = (
-                "&".join(sorted(record["labels2"]))
-                if record["labels2"]
-                else "UNLABELED"
+                format_label(record["labels2"]) if record["labels2"] else "UNLABELED"
             )
 
             if labels1_str == labels2_str:

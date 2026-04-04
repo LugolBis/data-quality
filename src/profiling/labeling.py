@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from models.utils import format_label
 from profiling.types import AnomalyDetail, FeatureMismatchReport
 from utils.utils import logger
 
@@ -133,14 +134,10 @@ def detect_label_anomalies_by_features(
             id2 = str(record["id2"])
 
             labels1_str = (
-                "&".join(sorted(record["labels1"]))
-                if record["labels1"]
-                else "UNLABELED"
+                format_label(record["labels1"]) if record["labels1"] else "UNLABELED"
             )
             labels2_str = (
-                "&".join(sorted(record["labels2"]))
-                if record["labels2"]
-                else "UNLABELED"
+                format_label(record["labels2"]) if record["labels2"] else "UNLABELED"
             )
 
             if labels1_str == labels2_str:
