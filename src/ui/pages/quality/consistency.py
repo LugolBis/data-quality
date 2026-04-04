@@ -6,7 +6,7 @@ from streamlit import session_state as app_st
 
 from models.enums import Entity
 from models.utils import get_label
-from quality.consistency import cfd, fd, gfd
+from quality.consistency import cfd, fd, gfd, query_validation
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 from ui.components.analysis import _dataframe_analysis
@@ -60,6 +60,8 @@ def render() -> None:
     _cfd_render()
     st.divider()
     _gfd_render()
+    st.divider()
+    _dvq_render()
 
 
 def _headers() -> None:
@@ -249,6 +251,40 @@ def _gfd_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     return analysis if analysis else None
 
 
+def _dvq_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            query: str = row["Query"]
+            should_be_empty: bool = row["Should be empty"]
+
+            result = query_validation(
+                session,
+                query,
+                should_be_empty,
+            )
+            if result:
+                analysis.append(result)
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
 def _fd_render() -> None:
     # Template DataFrame with predefined columns
     df_template = pd.DataFrame(
@@ -393,6 +429,43 @@ def _gfd_render() -> None:
         ),
         key="CGFD",
         analysis_func=_gfd_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
+    )
+
+
+def _dvq_render() -> None:
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Query",
+            "Should be empty",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = {
+        "num_rows": "dynamic",
+        "column_config": {
+            "Query": st.column_config.TextColumn(
+                label="Query",
+                help="Enter a Cypher query.",
+                required=True,
+            ),
+            "Should be empty": st.column_config.CheckboxColumn(
+                label="Should be empty",
+                help="If the query shouldn't return values.",
+                default=True,
+                required=True,
+            ),
+        },
+    }
+
+    _dataframe_analysis(
+        section_name="Data validation query",
+        description=("Validate your data with a query approach for complex purpose."),
+        key="CDVQ",
+        analysis_func=_dvq_analyze,
         df_template=df_template,
         editor_config=editor_config,
     )
