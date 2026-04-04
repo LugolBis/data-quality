@@ -1,6 +1,11 @@
 from typing import TYPE_CHECKING
 
-from quality.uniqueness import duplicate_nodes, duplicate_relationships
+from models.enums import Entity
+from quality.uniqueness import (
+    duplicate_multivalued,
+    duplicate_nodes,
+    duplicate_relationships,
+)
 from utils.utils import some
 
 if TYPE_CHECKING:
@@ -10,6 +15,12 @@ if TYPE_CHECKING:
 def main(session: Neo4jSession) -> None:
     duplicates_rels = duplicate_relationships(session)
     duplicates_nodes = duplicate_nodes(session, "Person", 0.6)
+    duplicates_multivalued = duplicate_multivalued(
+        session,
+        Entity.NODE,
+        "Person",
+        {"sports"},
+    )
 
     if some(duplicates_rels):
         print("\n")
@@ -18,3 +29,10 @@ def main(session: Neo4jSession) -> None:
     if some(duplicates_nodes):
         print("\n")
         print(f"Found the following duplicates of nodes :\n{duplicates_nodes}")
+
+    if some(duplicates_multivalued):
+        print("\n")
+        print(
+            "Found the following duplicates of multivalued property :"
+            f"\n{duplicates_multivalued}",
+        )

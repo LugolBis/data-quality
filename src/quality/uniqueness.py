@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING, LiteralString
 
-from models.utils import format_label
-from quality.types import NodeDuplicate, RelationshipDuplicate
+from models.enums import Entity
+from models.utils import build_match, format_label
+from quality.types import MultivaluedDuplicate, NodeDuplicate, RelationshipDuplicate
 from utils.utils import logger, some
 
 if TYPE_CHECKING:
@@ -85,6 +86,43 @@ def duplicate_nodes(
             label: str = format_label(label)
             analysis.append(
                 NodeDuplicate(label, node_id_x, node_id_y),
+            )
+        else:
+            logger.error(f"Invalid record : {record}")
+
+    if len(analysis) > 0:
+        return analysis
+    return None
+
+
+def duplicate_multivalued(
+    session: Neo4jSession,
+    entity: Entity,
+    label: str,
+    properties: set[str],
+) -> list[MultivaluedDuplicate] | None:
+    query: str = (
+        f"{build_match(entity, label)} "
+        f"UNWIND {list(properties)} AS prop "
+        "WITH prop, size(e[prop]) AS values_count, "
+        "size(collect(DISTINCT e[prop])) AS set_count "
+        "WHERE values_count <> set_count "
+        "RETURN prop AS property, COUNT(*) AS invalid"
+    )
+
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    records = result.to_eager_result().records
+
+    if len(records) == 0:
+        return None
+    analysis = []
+    for record in records:
+        property_: str = record.get("property")
+        invalid: int = record.get("invalid")
+
+        if some(label) and some(invalid):
+            analysis.append(
+                MultivaluedDuplicate(entity, label, property_, invalid),
             )
         else:
             logger.error(f"Invalid record : {record}")

@@ -80,6 +80,14 @@ class NodeDuplicate:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
+class MultivaluedDuplicate:
+    entity: Entity
+    label: str
+    property_: str
+    invalid: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
 class DateErr:
     entity: Entity
     label: str
