@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from models.enums import Entity
-from quality.consistency import cfd, fd
+from quality.consistency import cfd, fd, gfd
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 from utils.utils import some
@@ -33,6 +33,16 @@ def main(session: Neo4jSession) -> None:
     )
     cfd_err = cfd(session, Entity.NODE, "Person", condition, {"name"}, {"birth"})
 
+    gfd_err = gfd(
+        session,
+        Entity.NODE,
+        "city",
+        "City",
+        "(:Actif)-[:Habite]->(city)<-[:Est_maire]-(:Person)",
+        {"country", "name", "dept"},
+        {"arr"},
+    )
+
     if some(fd_err):
         print("\n")
         print(f"The functional dependency isn't verified : {fd_err}")
@@ -40,3 +50,7 @@ def main(session: Neo4jSession) -> None:
     if some(cfd_err):
         print("\n")
         print(f"The conditional functional dependency isn't verified : {cfd_err}")
+
+    if some(gfd_err):
+        print("\n")
+        print(f"The graph functional dependency isn't verified : {gfd_err}")

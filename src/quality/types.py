@@ -107,6 +107,17 @@ class CFDErr:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
+class GFDErr:
+    entity: Entity
+    entity_alias: str
+    label: str
+    graph_pattern: str
+    x: set[str]
+    y: set[str]
+    invalid: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
 class DegreeErr:
     degree: Degree
     label: str
