@@ -1,26 +1,26 @@
 from typing import TYPE_CHECKING
 
-from neo4j import Result
-
 from models.enums import Degree
 from models.utils import build_match
-from quality.types import DegreeErr, ElementaryPath
+from quality.types import Component, DegreeErr
 from utils.utils import logger
 
 if TYPE_CHECKING:
+    from neo4j import Result
+
     from driver.neo4j_driver import Neo4jSession
     from models.enums import Entity
 
 
-def existence_path(
+def existence_component(
     session: Neo4jSession,
     entity: Entity,
     entity_alias: str,
-    label_start: str,
+    label: str,
     graph_pattern: str,
-) -> ElementaryPath | None:
+) -> Component | None:
     query: str = (
-        f"{build_match(entity, label_start, entity_alias)} "
+        f"{build_match(entity, label, entity_alias)} "
         "WHERE NOT EXISTS { "
         f"   MATCH {graph_pattern} "
         "} "
@@ -36,9 +36,9 @@ def existence_path(
     if record is None:
         return logger.error("No result found.")
 
-    count = record.get("invalid")
-    if count > 0:
-        return ElementaryPath(entity, entity_alias, label_start, graph_pattern, query)
+    invalid = record.get("invalid")
+    if invalid > 0:
+        return Component(entity, entity_alias, label, graph_pattern, invalid)
     return None
 
 

@@ -58,12 +58,12 @@ class ConstraintViolation(Violation):
 
 
 @dataclass(slots=True, frozen=True, eq=False)
-class ElementaryPath:
+class Component:
     entity: Entity
     entity_alias: str
-    label_start: str
+    label: str
     graph_pattern: str
-    query: str
+    invalid: int
 
 
 @dataclass(slots=True, frozen=True, eq=False)

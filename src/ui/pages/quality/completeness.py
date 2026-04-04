@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from models.enums import Degree, Entity
-from quality.completeness import existence_path, node_degree
+from quality.completeness import existence_component, node_degree
 from ui.components.analysis import _dataframe_analysis
 from utils.utils import logger
 
@@ -18,7 +18,7 @@ _LAZY_FUNCS: dict[str, Callable[[], Any]] = {}
 def render() -> None:
     _headers()
     st.divider()
-    _path_render()
+    _component_render()
     st.divider()
     _degree_render()
 
@@ -29,7 +29,7 @@ def _headers() -> None:
 
 
 # Analysis function that takes the edited DataFrame and returns results
-def _path_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+def _component_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     rows = dict_rows.get("added_rows")
     if rows is None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
@@ -48,7 +48,7 @@ def _path_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
             label_start = row["Entity label"]
             graph_pattern = row["Graph Pattern"]
 
-            result = existence_path(
+            result = existence_component(
                 session,
                 entity,
                 entity_alias,
@@ -105,7 +105,7 @@ def _degree_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     return analysis if analysis else None
 
 
-def _path_render() -> None:
+def _component_render() -> None:
     # Template DataFrame with predefined columns
     df_template = pd.DataFrame(
         columns=[
@@ -146,13 +146,13 @@ def _path_render() -> None:
     }
 
     _dataframe_analysis(
-        section_name="Analysis existence of paths based on graph patterns.",
+        section_name="Analysis existence of components based on graph patterns.",
         description=(
-            "It checks for given labels if all the nodes with it verify the path from"
-            " the graph pattern"
+            "It checks for given labels if all the nodes with it are part of"
+            " a component defined by the graph pattern"
         ),
-        key="CEPG",
-        analysis_func=_path_analyze,
+        key="CECG",
+        analysis_func=_component_analyze,
         df_template=df_template,
         editor_config=editor_config,
     )

@@ -2,17 +2,17 @@ from typing import TYPE_CHECKING
 
 from models.enums import Entity
 from profiling.completeness import measure_scc, measure_wcc
-from quality.completeness import existence_path
+from quality.completeness import existence_component
 from utils.utils import some
 
 if TYPE_CHECKING:
     from driver.neo4j_driver import Neo4jSession
     from profiling.types import CircularComponentsReport, IsolatedComponentsReport
-    from quality.types import ElementaryPath
+    from quality.types import Component
 
 
 def main(session: Neo4jSession) -> None:
-    path_report: ElementaryPath | None = existence_path(
+    path_report: Component | None = existence_component(
         session,
         Entity("NODE"),
         "n1",
