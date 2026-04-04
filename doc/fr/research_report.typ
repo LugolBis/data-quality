@@ -102,9 +102,9 @@ Tel que on note :
   - Intuition : L’approche de *GFD* est intéressante mais peut rapidement devenir complexe à étendre. Une approche de validation par requête complètement écrite par l’utilisateur permettrait plus de flexibilité.
 #pagebreak()
 
-// Validité
-#title([== Validité])
-*Définition* : La Validité mesure la validité du format des données.
+// Conformité
+#title([== Conformité])
+*Définition* : La Conformité mesure la conformité du format des données.
 
 *Comment la mesurer dans une base de données Graphe* :
 - *Format des chaînes de caractère*
