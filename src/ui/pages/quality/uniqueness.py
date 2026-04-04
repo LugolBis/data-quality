@@ -3,7 +3,13 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 import streamlit as st
 
-from quality.uniqueness import duplicate_nodes, duplicate_relationships
+from models.enums import Entity
+from models.utils import format_label
+from quality.uniqueness import (
+    duplicate_multivalued,
+    duplicate_nodes,
+    duplicate_relationships,
+)
 from ui.components.analysis import _dataframe_analysis, _static_analysis
 from ui.components.dynamic import _analyze_call
 from ui.utils import _lazy_func
@@ -27,6 +33,8 @@ def render() -> None:
     _relationships()
     st.divider()
     _nodes_render()
+    st.divider()
+    _multivalued_render()
 
 
 def _headers() -> None:
@@ -70,6 +78,42 @@ def _nodes_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
                 )
                 if result:
                     analysis.extend(result)
+        except Exception as e:
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
+def _multivalued_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            entity: Entity = Entity(row["Entity"])
+            label: list[str] = row["Label(s) / Type"]
+            properties: list[str] = row["Properties"]
+
+            result = duplicate_multivalued(
+                session,
+                entity,
+                format_label(label),
+                set(properties),
+            )
+            if result:
+                analysis.extend(result)
         except Exception as e:
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
@@ -124,6 +168,52 @@ def _nodes_render() -> None:
         ),
         key="UDND",
         analysis_func=_nodes_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
+    )
+
+
+def _multivalued_render() -> None:
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Label(s) / Type",
+            "Properties",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = {
+        "num_rows": "dynamic",
+        "column_config": {
+            "Entity": st.column_config.SelectboxColumn(
+                label="Entity",
+                help="Choose the kind of Neo4j entity.",
+                options=["NODE", "RELATIONSHIP"],
+                required=True,
+            ),
+            "Label(s) / Type": st.column_config.ListColumn(
+                "Label(s)",
+                help=("Select the set of label of the targeted entity."),
+                required=True,
+            ),
+            "Properties": st.column_config.ListColumn(
+                "Properties",
+                help=(
+                    "Select the set of multivalued properties who shouldn't contains"
+                    " duplicates."
+                ),
+                required=True,
+            ),
+        },
+    }
+
+    _dataframe_analysis(
+        section_name="Detection of duplicate in multivalued property.",
+        description=("Detect the multivalued properties who had duplicates values."),
+        key="UDMD",
+        analysis_func=_multivalued_analyze,
         df_template=df_template,
         editor_config=editor_config,
     )
