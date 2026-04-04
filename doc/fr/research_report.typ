@@ -63,15 +63,10 @@ Tel que on note :
 *Définition* : La Complétude mesure la quantité de données manquantes d’une base de données @cai2016challenges.
 
 *Comment la mesurer dans une base de données Graphe* :
-- *Existence de chemins élémentaires prédéfinis entre des _Nodes_ / _Relationships_*
-  - Exemple : Vérifie que $forall n [A], exists r [B], n [C]$ tel que $r [B] ."src" = n [A]$ et $r [B] ."dest" = n [C]$
-  - Paramètres modifiables : chemins/chaînes, longueur du chemin et label/type (des entités composantes).
+- *Existence de composantes prédéfinies entre des _Nodes_ / _Relationships_*
+  - Définition : Soit $G_p$ un graph pattern modélisant une composante connexe ou fortement connexe, on vérifie que $forall n[A]$, $n$ vérifie $G_p$.
 - *Le degré des _Nodes_*
   - Définition : Soit $L_X$ un ensemble de labels et $D_s, D_e subset RR²$ représentant respectivement les degrés sortant et entrant, $forall n in V_N$ avec $n[L] subset.eq L_X$ on vérifie que $d^+(n) in D_s$ et $d^-(s) in D_e$.
-- *Les propriétés de connexité*
-  - Exemples :
-    - Vérifie que $forall n [A]$, $exists$ une arborescence couvrante dont la racine est $n [A]$
-    - Vérifie que $forall n [A], n [B]$ et $r$ tel que $r [B] ."src" = n [A] | n [B]$, $r [B] ."dest" = n [A] | n [B]$ constituent un DAG.
 #pagebreak()
 
 // Unicité
