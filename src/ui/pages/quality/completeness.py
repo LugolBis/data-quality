@@ -35,7 +35,7 @@ def _path_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []
@@ -75,7 +75,7 @@ def _degree_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []
@@ -129,7 +129,7 @@ def _path_render() -> None:
             "Entity alias": st.column_config.TextColumn(
                 "Entity alias",
                 help=(
-                    "It's the alias used to reference the entity in the`Graph Pattern`."
+                    "It's the alias used by `Graph Pattern` to reference the entity."
                 ),
                 required=True,
             ),

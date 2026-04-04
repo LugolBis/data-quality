@@ -38,7 +38,7 @@ def main(session: Neo4jSession) -> None:
         Entity.NODE,
         "city",
         "City",
-        "(:Actif)-[:Habite]->(city)<-[:Est_maire]-(:Person)",
+        "(pa:Actif)-[:Habite]->(city)<-[:Est_maire]-(:Person)",
         {"country", "name", "dept"},
         {"arr"},
     )

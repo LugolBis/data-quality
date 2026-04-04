@@ -51,7 +51,7 @@ def _nodes_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []

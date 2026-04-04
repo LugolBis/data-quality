@@ -42,13 +42,13 @@ def _headers() -> None:
 
 
 # Analysis function that takes the edited DataFrame and returns results
-def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:  # noqa: C901
     rows = dict_rows.get("added_rows")
     if rows is None:
         logger.error("Failed to get the key 'added_rows' from a data editor.")
         return None
     if len(rows) == 0:
-        return []
+        return None
 
     session = st.session_state["db_session"]
     analysis = []
