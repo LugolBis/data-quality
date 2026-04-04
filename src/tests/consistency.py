@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from models.enums import Entity
-from quality.consistency import cfd, fd, gfd
+from quality.consistency import cfd, fd, gfd, query_validation
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 from utils.utils import some
@@ -43,6 +43,12 @@ def main(session: Neo4jSession) -> None:
         {"arr"},
     )
 
+    dvq_err = query_validation(
+        session,
+        "MATCH (c1:City)-[:Love]->(c2:Company) RETURN c1, c2",
+        False,  # noqa: FBT003
+    )
+
     if some(fd_err):
         print("\n")
         print(f"The functional dependency isn't verified : {fd_err}")
@@ -54,3 +60,7 @@ def main(session: Neo4jSession) -> None:
     if some(gfd_err):
         print("\n")
         print(f"The graph functional dependency isn't verified : {gfd_err}")
+
+    if some(dvq_err):
+        print("\n")
+        print(f"The data query validation isn't verified : {dvq_err}")

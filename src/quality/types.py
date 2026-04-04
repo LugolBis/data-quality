@@ -126,6 +126,13 @@ class GFDErr:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
+class DVQErr:
+    query: str
+    should_be_empty: bool
+    found: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
 class DegreeErr:
     degree: Degree
     label: str

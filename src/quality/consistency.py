@@ -1,7 +1,14 @@
 from typing import TYPE_CHECKING
 
 from models.utils import build_match
-from quality.types import _ENTITY_CONDITION_ALIAS, CFDErr, Condition, FDErr, GFDErr
+from quality.types import (
+    _ENTITY_CONDITION_ALIAS,
+    CFDErr,
+    Condition,
+    DVQErr,
+    FDErr,
+    GFDErr,
+)
 from quality.utils import _graph_pattern_parser
 from utils.utils import logger
 
@@ -114,4 +121,26 @@ def gfd(  # noqa: PLR0913
 
         if invalid:
             return GFDErr(entity, entity_alias, label, graph_pattern, x, y, invalid)
+    return None
+
+
+def query_validation(
+    session: Neo4jSession,
+    query: str,
+    should_be_empty: bool = True,  # noqa: FBT001, FBT002
+) -> DVQErr | None:
+    """
+    Provide a solution for data validation query.
+
+    :param should_be_empty: Set it to `True` if your query shouldn't return records, and
+    set it to `False` if it needs to return records.
+    :type should_be_empty: bool
+    """
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    records = result.to_eager_result().records
+    row_count = len(records)
+    empty = row_count == 0
+
+    if should_be_empty != empty:
+        return DVQErr(query, should_be_empty, row_count)
     return None
