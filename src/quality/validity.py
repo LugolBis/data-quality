@@ -173,11 +173,12 @@ def numerical_interval(  # noqa: PLR0913
     properties: set[str],
     min_value: float,
     max_value: float,
-    condition: Condition | None,
+    condition: Condition | None = None,
 ) -> list[NumericalIntervalErr] | None:
-    condition_str = str(condition).replace(_ENTITY_CONDITION_ALIAS, "e")
     if condition:
-        where_clause: str = f"AND {condition_str}"
+        where_clause: str = (
+            f"AND {str(condition).replace(_ENTITY_CONDITION_ALIAS, 'e')}"
+        )
     else:
         where_clause: str = ""
 
@@ -200,7 +201,7 @@ def numerical_interval(  # noqa: PLR0913
         if invalid > 0:
             property_: str = record.get("prop")
             analysis.append(
-                NumericalIntervalErr(entity, label, property_, condition_str, invalid),
+                NumericalIntervalErr(entity, label, property_, condition, invalid),
             )
 
     if analysis:

@@ -108,7 +108,7 @@ class NumericalIntervalErr:
     entity: Entity
     label: str
     property_: str
-    condition: str | None
+    condition: Condition | None
     invalid: int
 
 
