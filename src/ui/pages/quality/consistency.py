@@ -7,9 +7,12 @@ from streamlit import session_state as app_st
 from models.enums import Entity
 from models.utils import get_label
 from quality.consistency import cfd, fd, gfd, query_validation
-from quality.enums import BoolOperator, ConditionOp, ConditionType
 from ui.components.analysis import _dataframe_analysis
-from ui.pages.quality.utils import _generate_condition
+from ui.pages.quality.utils import (
+    _CONDITIONAL_COL_CONFIG,
+    _CONDITIONAL_DF_TEMPLATE,
+    _generate_condition,
+)
 from ui.utils import _lazy_func
 from utils.utils import logger
 
@@ -268,49 +271,13 @@ def _fd_render() -> None:
 
 
 def _cfd_render() -> None:
-    cond_df_template = pd.DataFrame(
-        columns=[
-            "Name",
-            "Property",
-            "Value type",
-            "Value",
-            "Operator",
-            "Next Op.",
-            "Next condition",
-        ],
-    )
-
-    cond_column_config = {
-        "Name": st.column_config.TextColumn("Name", required=True),
-        "Property": st.column_config.TextColumn("Property", required=True),
-        "Operator": st.column_config.SelectboxColumn(
-            "Operator",
-            options=[e.value for e in ConditionOp],
-            required=True,
-        ),
-        "Value type": st.column_config.SelectboxColumn(
-            "Value Type",
-            options=[e.value for e in ConditionType],
-            required=True,
-        ),
-        "Value": st.column_config.TextColumn("Value", required=True),
-        "Next Op.": st.column_config.SelectboxColumn(
-            "Next Op.",
-            options=[e.value for e in BoolOperator],
-        ),
-        "Next condition": st.column_config.TextColumn(
-            "Next condition",
-            help="Select the name of next condition.",
-        ),
-    }
-
     lazy_render: Callable[[], Any] = _lazy_func(
         st.data_editor,
-        data=cond_df_template,
+        data=_CONDITIONAL_DF_TEMPLATE,
         key=_CONDITION_EDITOR_KEY,
         use_container_width=True,
         num_rows="dynamic",
-        column_config=cond_column_config,
+        column_config=_CONDITIONAL_COL_CONFIG,
     )
 
     # Template DataFrame with predefined columns

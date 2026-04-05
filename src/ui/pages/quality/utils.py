@@ -1,10 +1,45 @@
-from typing import TYPE_CHECKING
+import pandas as pd
+import streamlit as st
+from streamlit.elements.lib.column_types import ColumnConfig
 
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
 
-if TYPE_CHECKING:
-    import pandas as pd
+_CONDITIONAL_DF_TEMPLATE: pd.DataFrame = pd.DataFrame(
+    columns=[
+        "Name",
+        "Property",
+        "Value type",
+        "Value",
+        "Operator",
+        "Next Op.",
+        "Next condition",
+    ],
+)
+
+_CONDITIONAL_COL_CONFIG: dict[str, ColumnConfig] = {
+    "Name": st.column_config.TextColumn("Name", required=True),
+    "Property": st.column_config.TextColumn("Property", required=True),
+    "Operator": st.column_config.SelectboxColumn(
+        "Operator",
+        options=[e.value for e in ConditionOp],
+        required=True,
+    ),
+    "Value type": st.column_config.SelectboxColumn(
+        "Value Type",
+        options=[e.value for e in ConditionType],
+        required=True,
+    ),
+    "Value": st.column_config.TextColumn("Value", required=True),
+    "Next Op.": st.column_config.SelectboxColumn(
+        "Next Op.",
+        options=[e.value for e in BoolOperator],
+    ),
+    "Next condition": st.column_config.TextColumn(
+        "Next condition",
+        help="Select the name of next condition.",
+    ),
+}
 
 
 def _generate_condition(
