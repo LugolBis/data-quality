@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from models.enums import Entity
 from models.utils import build_match
 from quality.enums import SetRelation
 from quality.types import DateErr, LblgSetErr, TextFormat
@@ -11,7 +12,6 @@ if TYPE_CHECKING:
     from neo4j import Record, Result
 
     from driver.neo4j_driver import Neo4jSession
-    from models.enums import Entity
     from quality.enums import DateFmt
 
 
@@ -140,7 +140,7 @@ def labeling_set(
             return None
 
     query: str = (
-        f"MATCH (n:{label}) "
+        f"{build_match(Entity.NODE, label, 'n')} "
         f"WITH n, {'labels(n) AS L'}, "
         f"{list(cmp_set)} AS X "
         f"WHERE {where_clause} "
