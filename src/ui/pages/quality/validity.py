@@ -7,15 +7,29 @@ import streamlit as st
 from models.enums import Entity
 from models.utils import get_label
 from quality.enums import DateFmt, SetRelation
-from quality.validity import check_date_format, check_string_format, labeling_set
+from quality.validity import (
+    check_date_format,
+    check_string_format,
+    labeling_set,
+    numerical_interval,
+)
 from scoring.validity import invalid_ratio
 from ui.components.dynamic import _score_call
+from ui.pages.quality.utils import (
+    _CONDITIONAL_COL_CONFIG,
+    _CONDITIONAL_DF_TEMPLATE,
+    _generate_condition,
+)
 from ui.utils import _lazy_func
 from utils.utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from quality.types import Condition
+
+
+from streamlit import session_state as app_st
 
 from ui.components.analysis import _dataframe_analysis
 
@@ -27,6 +41,7 @@ _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
         lazy_func_args={"df": "VSFMT_res"},
     ),
 }
+_CONDITION_EDITOR_KEY: str = "_ql_validity_condition_editor_key"
 
 
 def render() -> None:
@@ -37,6 +52,8 @@ def render() -> None:
     _date_format()
     st.divider()
     _lblg_set_render()
+    st.divider()
+    _interval_render()
 
 
 def _headers() -> None:
@@ -170,6 +187,64 @@ def _lblg_set_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
                 analysis.append(result)
         except Exception as e:
             logger.error(e)
+            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+
+    if errors:
+        for err in errors:
+            st.error(err)
+
+    return analysis if analysis else None
+
+
+def _interval_analyze(  # noqa: C901
+    dict_rows: dict[str, Any],
+) -> list[dict] | None:
+    df_edited = app_st.get(_CONDITION_EDITOR_KEY)
+
+    if df_edited is None or (isinstance(df_edited, pd.DataFrame) and df_edited.empty):
+        return None
+    df_cond = pd.DataFrame(df_edited.get("added_rows"))
+
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis = []
+    errors = []
+
+    for idx, row in enumerate(rows):
+        try:
+            entity = Entity(row["Entity"])
+            labels: list[str] = row["Label(s) / Type"]
+            properties: list[str] = row["Properties"]
+            min_value: float = row["Min value"]
+            max_value: float = row["Max value"]
+            cond_name: str | None = row["Condition name"]
+
+            condition: Condition | None = None
+            if cond_name:
+                condition_gen = _generate_condition(df_cond, cond_name, [])
+                if isinstance(condition_gen, str):
+                    errors.append(f"Line {idx + 1}: {condition_gen}")
+                    continue
+                condition = condition_gen
+
+            results = numerical_interval(
+                session,
+                entity,
+                get_label(labels),
+                set(properties),
+                min_value,
+                max_value,
+                condition,
+            )
+            if results:
+                analysis.extend(results)
+        except Exception as e:
             errors.append(f"Line {idx + 1}: Unexpected error - {e}")
 
     if errors:
@@ -360,4 +435,83 @@ def _lblg_set_render() -> None:
         analysis_func=_lblg_set_analyze,
         df_template=df_template,
         editor_config=editor_config,
+    )
+
+
+def _interval_render() -> None:
+    lazy_render: Callable[[], Any] = _lazy_func(
+        st.data_editor,
+        data=_CONDITIONAL_DF_TEMPLATE,
+        key=_CONDITION_EDITOR_KEY,
+        use_container_width=True,
+        num_rows="dynamic",
+        column_config=_CONDITIONAL_COL_CONFIG,
+    )
+
+    # Template DataFrame with predefined columns
+    df_template = pd.DataFrame(
+        columns=[
+            "Entity",
+            "Label(s) / Type",
+            "Properties",
+            "Min value",
+            "Max value",
+            "Condition name",
+        ],
+    )
+
+    # Configuration for the data editor
+    editor_config = {
+        "num_rows": "dynamic",
+        "column_config": {
+            "Entity": st.column_config.SelectboxColumn(
+                label="Entity",
+                help="Choose the kind of Neo4j entity.",
+                options=["NODE", "RELATIONSHIP"],
+                required=True,
+            ),
+            "Label(s) / Type": st.column_config.ListColumn(
+                "Label(s) / Type",
+                help=(
+                    "Select the set of labels combination, use the wildcard '_'"
+                    " to match any entity."
+                ),
+                required=True,
+            ),
+            "Properties": st.column_config.ListColumn(
+                "Properties",
+                help="Target properties",
+                required=True,
+            ),
+            "Min value": st.column_config.NumberColumn(
+                "Min value",
+                help="Min accepted value (included in the interval).",
+                required=True,
+            ),
+            "Max value": st.column_config.NumberColumn(
+                "Max value",
+                help="Max accepted value (included in the interval).",
+                required=True,
+            ),
+            "Condition name": st.column_config.TextColumn(
+                "Condition name",
+                help=(
+                    "Select the name of the condition written in the Condition editor."
+                ),
+            ),
+        },
+    }
+
+    _dataframe_analysis(
+        section_name="Analysis properties interval",
+        description=(
+            "It checks for a given label _L_ of the chosen entity if all of it's"
+            " occurencies have their numerical properties in the choosen interval."
+            " You can filter the matches with the (optional) condition."
+        ),
+        key="VNIC",
+        analysis_func=_interval_analyze,
+        df_template=df_template,
+        editor_config=editor_config,
+        lazy_renders=[lazy_render],
     )

@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 import streamlit as st
-from streamlit.elements.lib.column_types import ColumnConfig
 
 from quality.enums import BoolOperator, ConditionOp, ConditionType
 from quality.types import Condition, ConditionValue
+from utils.utils import logger
+
+if TYPE_CHECKING:
+    from streamlit.elements.lib.column_types import ColumnConfig
 
 _CONDITIONAL_DF_TEMPLATE: pd.DataFrame = pd.DataFrame(
     columns=[
@@ -63,10 +68,10 @@ def _generate_condition(
         value_type = ConditionType(row["Value type"])
         value = row["Value"]
         operator = ConditionOp(row["Operator"])
-        next_op = row["Next Op."]
-        next_cond = row["Next condition"]
+        next_op = row.get("Next Op.")
+        next_cond = row.get("Next condition")
 
-        if not isinstance(next_cond, str):
+        if not (isinstance(next_op, str) and isinstance(next_cond, str)):
             return Condition(
                 property_,
                 ConditionValue(value_type, value),
@@ -84,4 +89,5 @@ def _generate_condition(
             (BoolOperator(next_op), sub_condition),
         )
     except Exception as e:
+        logger.error(e)
         return str(e)
