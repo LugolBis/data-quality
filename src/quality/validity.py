@@ -3,7 +3,14 @@ from typing import TYPE_CHECKING
 from models.enums import Entity
 from models.utils import build_match
 from quality.enums import SetRelation
-from quality.types import DateErr, LblgSetErr, TextFormat
+from quality.types import (
+    _ENTITY_CONDITION_ALIAS,
+    Condition,
+    DateErr,
+    LblgSetErr,
+    NumericalIntervalErr,
+    TextFormat,
+)
 from utils.utils import logger, some
 
 if TYPE_CHECKING:
@@ -77,7 +84,9 @@ def check_string_format(  # noqa: PLR0913
             count: int = row["count"]
 
             if invalid > 0:
-                violations.append(TextFormat(entity, label, count, invalid, property=p))
+                violations.append(
+                    TextFormat(entity, label, count, invalid, property_=p),
+                )
 
     if len(violations) > 0:
         return violations
@@ -154,4 +163,46 @@ def labeling_set(
         invalid: int = record.get("invalid")
         if invalid > 0:
             return LblgSetErr(label, cmp_set, set_rel, invalid)
+    return None
+
+
+def numerical_interval(  # noqa: PLR0913
+    session: Neo4jSession,
+    entity: Entity,
+    label: str,
+    properties: set[str],
+    min_value: float,
+    max_value: float,
+    condition: Condition | None,
+) -> list[NumericalIntervalErr] | None:
+    condition_str = str(condition).replace(_ENTITY_CONDITION_ALIAS, "e")
+    if condition:
+        where_clause: str = f"AND {condition_str}"
+    else:
+        where_clause: str = ""
+
+    query: str = (
+        f"{build_match(entity, label)} "
+        f"UNWIND {list(properties)} AS prop "
+        "WITH e, prop "
+        f"WHERE (e[prop] < {min_value} OR e[prop] > {max_value}) "
+        f"{where_clause} "
+        "RETURN prop, COUNT(*) AS invalid"
+    )
+
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    records = result.to_eager_result().records
+
+    analysis: list[NumericalIntervalErr] = []
+    for record in records:
+        invalid: int = record.get("invalid")
+
+        if invalid > 0:
+            property_: str = record.get("prop")
+            analysis.append(
+                NumericalIntervalErr(entity, label, property_, condition_str, invalid),
+            )
+
+    if analysis:
+        return analysis
     return None

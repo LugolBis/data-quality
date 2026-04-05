@@ -3,8 +3,14 @@ from typing import TYPE_CHECKING
 
 from models.enums import Entity
 from profiling.validity import check_properties_type
-from quality.enums import DateFmt, SetRelation
-from quality.validity import check_date_format, check_string_format, labeling_set
+from quality.enums import ConditionOp, ConditionType, DateFmt, SetRelation
+from quality.types import Condition, ConditionValue
+from quality.validity import (
+    check_date_format,
+    check_string_format,
+    labeling_set,
+    numerical_interval,
+)
 from utils.utils import some
 
 if TYPE_CHECKING:
@@ -38,6 +44,22 @@ def main(session: Neo4jSession) -> None:
         {"Person"},
     )
 
+    condition = Condition(
+        "job",
+        ConditionValue(ConditionType.CONSTANT, ["Médecin"]),
+        ConditionOp.CONTAINS,
+        None,
+    )
+    ni_errs = numerical_interval(
+        session,
+        Entity.NODE,
+        "Person",
+        {"salary"},
+        1000,
+        1_000_000,
+        condition,
+    )
+
     types: list[PairPropertiesType] | None = check_properties_type(session)
 
     if some(formats):
@@ -51,6 +73,10 @@ def main(session: Neo4jSession) -> None:
     if some(lblg_set):
         print("\n")
         print(lblg_set)
+
+    if some(ni_errs):
+        print("\n")
+        print("\n".join([str(ni) for ni in ni_errs]))
 
     if some(types):
         print("\n".join([t.__repr__() for t in types]))
