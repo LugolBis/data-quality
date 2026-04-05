@@ -8,6 +8,13 @@ from models.enums import Degree, Entity
 from models.utils import get_label
 from quality.completeness import existence_component, node_degree
 from ui.components.analysis import _dataframe_analysis
+from ui.pages.quality.configs import (
+    _COL_ENTITY,
+    _COL_ENTITY_ALIAS,
+    _COL_GRAPH_PATTERN,
+    _COL_LABELS,
+    _COL_LABELS_TYPE,
+)
 from utils.utils import logger
 
 if TYPE_CHECKING:
@@ -121,31 +128,10 @@ def _component_render() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Entity alias": st.column_config.TextColumn(
-                "Entity alias",
-                help=(
-                    "It's the alias used by `Graph Pattern` to reference the entity."
-                ),
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s) / Type",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any entity."
-                ),
-                required=True,
-            ),
-            "Graph Pattern": st.column_config.TextColumn(
-                "Graph Pattern",
-                required=True,
-            ),
+            "Entity": _COL_ENTITY,
+            "Entity alias": _COL_ENTITY_ALIAS,
+            "Label(s) / Type": _COL_LABELS_TYPE,
+            "Graph Pattern": _COL_GRAPH_PATTERN,
         },
     }
 
@@ -181,14 +167,7 @@ def _degree_render() -> None:
                 options=["INCOMING", "OUTCOMING"],
                 required=True,
             ),
-            "Label(s)": st.column_config.ListColumn(
-                "Label(s)",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any node."
-                ),
-                required=True,
-            ),
+            "Label(s)": _COL_LABELS,
             "Expected degree": st.column_config.ListColumn(
                 "Expected degree",
                 help="You can select multiple expected degree.",

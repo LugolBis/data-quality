@@ -12,6 +12,12 @@ from quality.uniqueness import (
 )
 from ui.components.analysis import _dataframe_analysis, _static_analysis
 from ui.components.dynamic import _analyze_call
+from ui.pages.quality.configs import (
+    _COL_ENTITY,
+    _COL_LABELS,
+    _COL_LABELS_TYPE,
+    _COL_PROPERTIES,
+)
 from ui.utils import _lazy_func
 from utils.utils import logger
 
@@ -136,14 +142,7 @@ def _nodes_render() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Label(s)": st.column_config.ListColumn(
-                "Label(s)",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any node."
-                ),
-                required=True,
-            ),
+            "Label(s)": _COL_LABELS,
             "Relationships similarity treshold": st.column_config.NumberColumn(
                 "Relationships similarity treshold",
                 help=(
@@ -186,28 +185,9 @@ def _multivalued_render() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s) / Type",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any entity."
-                ),
-                required=True,
-            ),
-            "Properties": st.column_config.ListColumn(
-                "Properties",
-                help=(
-                    "Select the set of multivalued properties who shouldn't contains"
-                    " duplicates."
-                ),
-                required=True,
-            ),
+            "Entity": _COL_ENTITY,
+            "Label(s) / Type": _COL_LABELS_TYPE,
+            "Properties": _COL_PROPERTIES,
         },
     }
 

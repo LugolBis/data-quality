@@ -15,6 +15,12 @@ from quality.validity import (
 )
 from scoring.validity import invalid_ratio
 from ui.components.dynamic import _score_call
+from ui.pages.quality.configs import (
+    _COL_ENTITY,
+    _COL_LABELS,
+    _COL_LABELS_TYPE,
+    _COL_PROPERTIES,
+)
 from ui.pages.quality.utils import (
     _CONDITIONAL_COL_CONFIG,
     _CONDITIONAL_DF_TEMPLATE,
@@ -272,25 +278,9 @@ def _string_format() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s) / Type",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any entity."
-                ),
-                required=True,
-            ),
-            "Properties": st.column_config.ListColumn(
-                "Properties",
-                help="Target properties",
-                required=True,
-            ),
+            "Entity": _COL_ENTITY,
+            "Label(s) / Type": _COL_LABELS_TYPE,
+            "Properties": _COL_PROPERTIES,
             "Pattern": st.column_config.TextColumn(
                 "Regex Pattern",
                 help="https://neo4j.com/docs/cypher-manual/current/expressions/predicates/string-operators/#regular-expressions",
@@ -345,25 +335,9 @@ def _date_format() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s) / Type",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any entity."
-                ),
-                required=True,
-            ),
-            "Properties": st.column_config.ListColumn(
-                "Properties",
-                help="Target properties",
-                required=True,
-            ),
+            "Entity": _COL_ENTITY,
+            "Label(s) / Type": _COL_LABELS_TYPE,
+            "Properties": _COL_PROPERTIES,
             "Date format": st.column_config.SelectboxColumn(
                 "Date format",
                 options=[str(fmt) for fmt in DateFmt],
@@ -400,14 +374,7 @@ def _lblg_set_render() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Label(s)": st.column_config.ListColumn(
-                "Label(s)",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any node."
-                ),
-                required=True,
-            ),
+            "Label(s)": _COL_LABELS,
             "Set relation": st.column_config.SelectboxColumn(
                 label="Entity",
                 help="Choose a set realtion to compare the nodes label set.",
@@ -464,25 +431,9 @@ def _interval_render() -> None:
     editor_config = {
         "num_rows": "dynamic",
         "column_config": {
-            "Entity": st.column_config.SelectboxColumn(
-                label="Entity",
-                help="Choose the kind of Neo4j entity.",
-                options=["NODE", "RELATIONSHIP"],
-                required=True,
-            ),
-            "Label(s) / Type": st.column_config.ListColumn(
-                "Label(s) / Type",
-                help=(
-                    "Select the set of labels combination, use the wildcard '_'"
-                    " to match any entity."
-                ),
-                required=True,
-            ),
-            "Properties": st.column_config.ListColumn(
-                "Properties",
-                help="Target properties",
-                required=True,
-            ),
+            "Entity": _COL_ENTITY,
+            "Label(s) / Type": _COL_LABELS_TYPE,
+            "Properties": _COL_PROPERTIES,
             "Min value": st.column_config.NumberColumn(
                 "Min value",
                 help="Min accepted value (included in the interval).",

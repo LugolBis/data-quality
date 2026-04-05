@@ -8,6 +8,7 @@ from models.enums import Entity
 from models.utils import get_label
 from quality.consistency import cfd, fd, gfd, query_validation
 from ui.components.analysis import _dataframe_analysis
+from ui.pages.quality.configs import _COL_ENTITY, _COL_LABELS_TYPE
 from ui.pages.quality.utils import (
     _CONDITIONAL_COL_CONFIG,
     _CONDITIONAL_DF_TEMPLATE,
@@ -27,20 +28,8 @@ _CONDITION_EDITOR_KEY: str = "_ql_consistency_condition_editor_key"
 _FD_EDITOR_CONFIG: dict[str, str | dict[str, ColumnConfig]] = {
     "num_rows": "dynamic",
     "column_config": {
-        "Entity": st.column_config.SelectboxColumn(
-            label="Entity",
-            help="Choose the kind of Neo4j entity.",
-            options=["NODE", "RELATIONSHIP"],
-            required=True,
-        ),
-        "Label(s) / Type": st.column_config.ListColumn(
-            "Label(s) / Type",
-            help=(
-                "Select the set of labels combination, use the wildcard '_'"
-                " to match any entity."
-            ),
-            required=True,
-        ),
+        "Entity": _COL_ENTITY,
+        "Label(s) / Type": _COL_LABELS_TYPE,
         "X": st.column_config.ListColumn(
             "X",
             help="Set of key properties.",
