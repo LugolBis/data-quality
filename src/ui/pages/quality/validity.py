@@ -14,7 +14,7 @@ from quality.validity import (
     numerical_interval,
 )
 from scoring.validity import invalid_ratio
-from ui.components.dynamic import _score_call
+from ui.components.dynamic import _editor_analyze, _score_call
 from ui.pages.quality.configs import (
     _COL_ENTITY,
     _COL_LABELS,
@@ -27,11 +27,11 @@ from ui.pages.quality.utils import (
     _generate_condition,
 )
 from ui.utils import _lazy_func
-from utils.utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from driver.neo4j_driver import Neo4jSession
     from quality.types import Condition
 
 
@@ -53,9 +53,9 @@ _CONDITION_EDITOR_KEY: str = "_ql_validity_condition_editor_key"
 def render() -> None:
     _headers()
     st.divider()
-    _string_format()
+    _string_render()
     st.divider()
-    _date_format()
+    _date_render()
     st.divider()
     _lblg_set_render()
     st.divider()
@@ -67,39 +67,31 @@ def _headers() -> None:
     st.markdown("#### Analysis of the validity of the database.")
 
 
-# Analysis function that takes the edited DataFrame and returns results
-def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:  # noqa: C901
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        entity = Entity(row["Entity"])
+        labels: list[str] = row["Label(s) / Type"]
+        properties = row["Properties"]
+        case_insensitive: bool = row["Ignore case"]
+        multiline: bool = row["Multiline"]
+        dotall: bool = row["Dotall"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        flags = 0
+        if case_insensitive:
+            flags |= re.IGNORECASE
+        if multiline:
+            flags |= re.MULTILINE
+        if dotall:
+            flags |= re.DOTALL
 
-    for idx, row in enumerate(rows):
         try:
-            entity = Entity(row["Entity"])
-            labels: list[str] = row["Label(s) / Type"]
-            properties = row["Properties"]
-            case_insensitive = row["Ignore case"]
-            multiline = row["Multiline"]
-            dotall = row["Dotall"]
-
-            flags = 0
-            if case_insensitive:
-                flags |= re.IGNORECASE
-            if multiline:
-                flags |= re.MULTILINE
-            if dotall:
-                flags |= re.DOTALL
-
             pattern = re.compile(row["Pattern"], flags)
+        except re.error as e:
+            msg = f"Invalid regex - {e}"
+            raise ValueError(msg) from e
 
-            results = check_string_format(
+        return (
+            check_string_format(
                 session,
                 entity,
                 get_label(labels),
@@ -109,41 +101,22 @@ def _string_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:  # noqa: C9
                 multiline,
                 dotall,
             )
-            if results:
-                analysis.extend(results)
-        except re.error as e:
-            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+            or None  # ty:ignore[invalid-return-type]
+        )
 
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        entity = Entity(row["Entity"])
+        labels: list[str] = row["Label(s) / Type"]
+        properties: list[str] = row["Properties"]
+        date_fmt: DateFmt = DateFmt(row["Date format"])
+        skip_null: bool = row["Skip null values"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
-
-    for idx, row in enumerate(rows):
-        try:
-            entity = Entity(row["Entity"])
-            labels: list[str] = row["Label(s) / Type"]
-            properties: list[str] = row["Properties"]
-            date_fmt: DateFmt = DateFmt(row["Date format"])
-            skip_null: bool = row["Skip null values"]
-
-            results = check_date_format(
+        return (
+            check_date_format(
                 session,
                 entity,
                 get_label(labels),
@@ -151,95 +124,46 @@ def _date_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
                 date_fmt,
                 skip_null,
             )
-            if results:
-                analysis.extend(results)
-        except re.error as e:
-            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+            or None  # ty:ignore[invalid-return-type]
+        )
 
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _lblg_set_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        labels: list[str] = row["Label(s)"]
+        set_rel: SetRelation = SetRelation(row["Set relation"])
+        cmp_list: list[str] = row["Label set"]
+        result = labeling_set(session, get_label(labels), set_rel, set(cmp_list))
+        return [result] if result else None  # ty:ignore[invalid-return-type]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
-
-    for idx, row in enumerate(rows):
-        try:
-            labels: list[str] = row["Label(s)"]
-            set_rel: SetRelation = SetRelation(row["Set relation"])
-            cmp_list: list[str] = row["Label set"]
-
-            result = labeling_set(
-                session,
-                get_label(labels),
-                set_rel,
-                set(cmp_list),
-            )
-            if result:
-                analysis.append(result)
-        except Exception as e:
-            logger.error(e)
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
-
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
-def _interval_analyze(  # noqa: C901
-    dict_rows: dict[str, Any],
-) -> list[dict] | None:
+def _interval_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     df_edited = app_st.get(_CONDITION_EDITOR_KEY)
-
     if df_edited is None or (isinstance(df_edited, pd.DataFrame) and df_edited.empty):
         return None
     df_cond = pd.DataFrame(df_edited.get("added_rows"))
 
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        entity = Entity(row["Entity"])
+        labels: list[str] = row["Label(s) / Type"]
+        properties: list[str] = row["Properties"]
+        min_value: float = row["Min value"]
+        max_value: float = row["Max value"]
+        cond_name: str | None = row["Condition name"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        condition: Condition | None = None
+        if cond_name:
+            condition_gen = _generate_condition(df_cond, cond_name, [])
+            if isinstance(condition_gen, str):
+                raise ValueError(condition_gen)
+            condition = condition_gen
 
-    for idx, row in enumerate(rows):
-        try:
-            entity = Entity(row["Entity"])
-            labels: list[str] = row["Label(s) / Type"]
-            properties: list[str] = row["Properties"]
-            min_value: float = row["Min value"]
-            max_value: float = row["Max value"]
-            cond_name: str | None = row["Condition name"]
-
-            condition: Condition | None = None
-            if cond_name:
-                condition_gen = _generate_condition(df_cond, cond_name, [])
-                if isinstance(condition_gen, str):
-                    errors.append(f"Line {idx + 1}: {condition_gen}")
-                    continue
-                condition = condition_gen
-
-            results = numerical_interval(
+        return (
+            numerical_interval(
                 session,
                 entity,
                 get_label(labels),
@@ -248,19 +172,13 @@ def _interval_analyze(  # noqa: C901
                 max_value,
                 condition,
             )
-            if results:
-                analysis.extend(results)
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
+            or None  # ty:ignore[invalid-return-type]
+        )
 
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
-def _string_format() -> None:
+def _string_render() -> None:
     # Template DataFrame with predefined columns
     df_template = pd.DataFrame(
         columns=[
@@ -319,7 +237,7 @@ def _string_format() -> None:
     )
 
 
-def _date_format() -> None:
+def _date_render() -> None:
     # Template DataFrame with predefined columns
     df_template = pd.DataFrame(
         columns=[

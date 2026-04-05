@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 import streamlit as st
 
+from driver.neo4j_driver import Neo4jSession
 from models.enums import Entity
 from models.utils import get_label
 from quality.uniqueness import (
@@ -11,7 +12,7 @@ from quality.uniqueness import (
     duplicate_relationships,
 )
 from ui.components.analysis import _dataframe_analysis, _static_analysis
-from ui.components.dynamic import _analyze_call
+from ui.components.dynamic import _analyze_call, _editor_analyze
 from ui.pages.quality.configs import (
     _COL_ENTITY,
     _COL_LABELS,
@@ -19,7 +20,6 @@ from ui.pages.quality.configs import (
     _COL_PROPERTIES,
 )
 from ui.utils import _lazy_func
-from utils.utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -60,73 +60,33 @@ def _relationships() -> None:
 
 
 def _nodes_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        labels: list[str] = row["Label(s)"]
+        treshold: int = row["Relationships similarity treshold"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        return duplicate_nodes(
+            session,
+            get_label(labels),
+            (treshold / 100.00),
+        )  # ty:ignore[invalid-return-type]
 
-    for idx, row in enumerate(rows):
-        try:
-            labels: list[str] = row["Label(s)"]
-            treshold: int = row["Relationships similarity treshold"]
-
-            result = duplicate_nodes(
-                session,
-                get_label(labels),
-                (treshold / 100.00),
-            )
-            if result:
-                analysis.extend(result)
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
-
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _multivalued_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        entity: Entity = Entity(row["Entity"])
+        labels: list[str] = row["Label(s) / Type"]
+        properties: list[str] = row["Properties"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        return duplicate_multivalued(
+            session,
+            entity,
+            get_label(labels),
+            set(properties),
+        )  # ty:ignore[invalid-return-type]
 
-    for idx, row in enumerate(rows):
-        try:
-            entity: Entity = Entity(row["Entity"])
-            labels: list[str] = row["Label(s) / Type"]
-            properties: list[str] = row["Properties"]
-
-            result = duplicate_multivalued(
-                session,
-                entity,
-                get_label(labels),
-                set(properties),
-            )
-            if result:
-                analysis.extend(result)
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
-
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _nodes_render() -> None:

@@ -1,13 +1,14 @@
-import re
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import streamlit as st
 
+from driver.neo4j_driver import Neo4jSession
 from models.enums import Degree, Entity
 from models.utils import get_label
 from quality.completeness import existence_component, node_degree
 from ui.components.analysis import _dataframe_analysis
+from ui.components.dynamic import _editor_analyze
 from ui.pages.quality.configs import (
     _COL_ENTITY,
     _COL_ENTITY_ALIAS,
@@ -15,7 +16,6 @@ from ui.pages.quality.configs import (
     _COL_LABELS,
     _COL_LABELS_TYPE,
 )
-from utils.utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,79 +38,39 @@ def _headers() -> None:
 
 # Analysis function that takes the edited DataFrame and returns results
 def _component_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        entity = Entity(row["Entity"])
+        entity_alias = row["Entity alias"]
+        labels: list[str] = row["Label(s) / Type"]
+        graph_pattern = row["Graph Pattern"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        result = existence_component(
+            session,
+            entity,
+            entity_alias,
+            get_label(labels),
+            graph_pattern,
+        )
+        return [result] if result else None  # ty:ignore[invalid-return-type]
 
-    for idx, row in enumerate(rows):
-        try:
-            entity = Entity(row["Entity"])
-            entity_alias = row["Entity alias"]
-            labels: list[str] = row["Label(s) / Type"]
-            graph_pattern = row["Graph Pattern"]
-
-            result = existence_component(
-                session,
-                entity,
-                entity_alias,
-                get_label(labels),
-                graph_pattern,
-            )
-            if result:
-                analysis.append(result)
-        except re.error as e:
-            errors.append(f"Line {idx + 1}: Invalid regex - {e}")
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
-
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _degree_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
-    rows = dict_rows.get("added_rows")
-    if rows is None:
-        logger.error("Failed to get the key 'added_rows' from a data editor.")
-        return None
-    if len(rows) == 0:
-        return None
+    def _row_func(session: Neo4jSession, row: dict[str, Any]) -> list[dict] | None:
+        degree: Degree = Degree(row["Degree type"])
+        labels: list[str] = row["Label(s)"]
+        expected: list[str] = row["Expected degree"]
 
-    session = st.session_state["db_session"]
-    analysis = []
-    errors = []
+        result = node_degree(
+            session,
+            degree,
+            get_label(labels),
+            {int(x) for x in expected},
+        )
+        return [result] if result else None  # ty:ignore[invalid-return-type]
 
-    for idx, row in enumerate(rows):
-        try:
-            degree: Degree = Degree(row["Degree type"])
-            labels: list[str] = row["Label(s)"]
-            expected: list[str] = row["Expected degree"]
-
-            result = node_degree(
-                session,
-                degree,
-                get_label(labels),
-                {int(x) for x in expected},
-            )
-            if result:
-                analysis.append(result)
-        except Exception as e:
-            errors.append(f"Line {idx + 1}: Unexpected error - {e}")
-
-    if errors:
-        for err in errors:
-            st.error(err)
-
-    return analysis if analysis else None
+    return _editor_analyze(dict_rows, _row_func)
 
 
 def _component_render() -> None:

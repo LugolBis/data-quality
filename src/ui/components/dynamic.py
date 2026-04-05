@@ -6,7 +6,7 @@ from streamlit import session_state as app_st
 from models.utils import to_dataframe
 from ui.components.static import _display_score
 from ui.enums import WidgetState
-from utils.utils import some
+from utils.utils import logger, some
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -150,3 +150,56 @@ def _button(
 
     if st.button(button_label, key=f"{key}_button"):
         app_st[key]()
+
+
+def _editor_analyze(
+    dict_rows: dict[str, Any],
+    row_func: Callable[[Neo4jSession, dict[str, Any]], list[dict] | None],
+) -> list[dict] | None:
+    """
+    Common logic for all editor-based analysis functions.
+
+    Handles the boilerplate shared across every ``_*_analyze`` function:
+    extracting ``added_rows``, fetching the DB session, iterating over rows,
+    catching exceptions, and surfacing errors via ``st.error``.
+
+    The caller is responsible only for the per-row business logic, expressed as
+    ``row_func(session, row) -> list[dict] | None``.  Any exception raised by
+    ``row_func`` is caught and displayed as a line-numbered error; raise a
+    ``ValueError`` with a descriptive message for expected / recoverable errors
+    (e.g. invalid regex, missing field), and let unexpected exceptions propagate
+    naturally so they are reported as-is.
+
+    :param dict_rows: The dictionary emitted by a Streamlit data editor
+        (must contain the ``"added_rows"`` key).
+    :type dict_rows: dict[str, Any]
+    :param row_func: A callable ``(session, row) -> list[dict] | None`` that
+        processes a single editor row and returns zero or more result dicts.
+    :type row_func: Callable[[Any, dict[str, Any]], list[dict] | None]
+    :return: A flat list of all results collected across rows, or ``None`` when
+        no results were produced.
+    :rtype: list[dict] | None
+    """
+    rows = dict_rows.get("added_rows")
+    if rows is None:
+        logger.error("Failed to get the key 'added_rows' from a data editor.")
+        return None
+    if len(rows) == 0:
+        return None
+
+    session = st.session_state["db_session"]
+    analysis: list[dict] = []
+    errors: list[str] = []
+
+    for idx, row in enumerate(rows):
+        try:
+            results = row_func(session, row)
+            if results:
+                analysis.extend(results)
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"Line {idx + 1}: {e}")
+
+    for err in errors:
+        st.error(err)
+
+    return analysis if analysis else None
