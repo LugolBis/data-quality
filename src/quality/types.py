@@ -17,23 +17,23 @@ class TextSimilarity:
     entity: Entity
     label: str
     similarity: float
-    property: str
+    property_: str
     first_value: str
     second_value: str
 
     def __repr__(self) -> str:
         return (
-            f"[{self.similarity:.2f}] | {self.label} -> {self.property}\n\t"
+            f"[{self.similarity:.2f}] | {self.label} -> {self.property_}\n\t"
             f"'{self.first_value}' <--> '{self.second_value}'"
         )
 
 
 @dataclass(slots=True, frozen=True, eq=False)
 class TextFormat(Violation):
-    property: str
+    property_: str
 
     def __repr__(self) -> str:
-        return super().__repr__() + f" of Text Format violation for {self.property}"
+        return super().__repr__() + f" of Text Format violation for {self.property_}"
 
 
 @dataclass(slots=True, frozen=True, eq=False)
@@ -91,7 +91,7 @@ class MultivaluedDuplicate:
 class DateErr:
     entity: Entity
     label: str
-    property: str
+    property_: str
     fmt_found: set[str]
 
 
@@ -100,6 +100,15 @@ class LblgSetErr:
     label: str
     cmp_set: set[str]
     relation: SetRelation
+    invalid: int
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class NumericalIntervalErr:
+    entity: Entity
+    label: str
+    property_: str
+    consition: str | None
     invalid: int
 
 

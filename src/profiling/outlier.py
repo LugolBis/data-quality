@@ -83,7 +83,7 @@ def detecter_outliers_numeriques(
                 detected_outliers.append(
                     NumericalOutlier(
                         label=label_str,
-                        property=prop,
+                        property_=prop,
                         mean=moyenne,
                         std_dev=ecart_type,
                         lower_bound=lower_bound,

@@ -161,7 +161,7 @@ class OutlierDetail:
 @dataclass(slots=True, frozen=True, eq=False)
 class NumericalOutlier:
     label: str
-    property: str
+    property_: str
     mean: float
     std_dev: float
     lower_bound: float
@@ -171,7 +171,7 @@ class NumericalOutlier:
     def __repr__(self) -> str:
         details = "\n\t\t".join([str(o) for o in self.outliers])
         return (
-            f"(:{self.label}) on property '{self.property}'\n"
+            f"(:{self.label}) on property '{self.property_}'\n"
             f"Mean: {self.mean:.2f} | Std: {self.std_dev:.2f}\n"
             f"Confidence Interval: [{self.lower_bound:.2f}, {self.upper_bound:.2f}]\n"
             f"Outliers ({len(self.outliers)} found):\n{details}"
