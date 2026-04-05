@@ -48,3 +48,9 @@ class BoolOperator(str, Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+class SetRelation(str, Enum):
+    INCLUDE = "⊂"
+    INCLUDE_EQ = "⊆"
+    EXCLUDE = "⊥"

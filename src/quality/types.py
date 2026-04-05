@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 from models.enums import Entity
 from models.types import Violation
-from quality.enums import BoolOperator, ConditionOp, ConditionType
+from quality.enums import BoolOperator, ConditionOp, ConditionType, SetRelation
 
 if TYPE_CHECKING:
     from models.enums import Degree, Entity
@@ -93,6 +93,14 @@ class DateErr:
     label: str
     property: str
     fmt_found: set[str]
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class LblgSetErr:
+    label: str
+    cmp_set: set[str]
+    relation: SetRelation
+    invalid: int
 
 
 @dataclass(slots=True, frozen=True, eq=False)

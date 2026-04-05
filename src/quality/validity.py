@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
 from models.utils import build_match
-from quality.types import DateErr, TextFormat
+from quality.enums import SetRelation
+from quality.types import DateErr, LblgSetErr, TextFormat
 from utils.utils import logger, some
 
 if TYPE_CHECKING:
@@ -118,4 +119,39 @@ def check_date_format(  # noqa: PLR0913
 
     if len(analysis) > 0:
         return analysis
+    return None
+
+
+def labeling_set(
+    session: Neo4jSession,
+    label: str,
+    set_rel: SetRelation,
+    cmp_set: set[str],
+) -> LblgSetErr | None:
+    match set_rel:
+        case SetRelation.EXCLUDE:
+            where_clause: str = "any(l IN L WHERE l IN X)"
+        case SetRelation.INCLUDE:
+            where_clause: str = "(NOT any(l IN L WHERE l IN X)) OR size(X) = size(L)"
+        case SetRelation.INCLUDE_EQ:
+            where_clause: str = "NOT any(l IN L WHERE l IN X)"
+        case default:
+            logger.error(f"Inconsistant set relation : {default}")
+            return None
+
+    query: str = (
+        f"MATCH (n:{label}) "
+        f"WITH n, {'labels(n) AS L'}, "
+        f"{list(cmp_set)} AS X "
+        f"WHERE {where_clause} "
+        "RETURN COUNT(*) AS invalid"
+    )
+
+    result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
+    record = result.single()
+
+    if record:
+        invalid: int = record.get("invalid")
+        if invalid > 0:
+            return LblgSetErr(label, cmp_set, set_rel, invalid)
     return None
