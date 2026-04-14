@@ -29,6 +29,18 @@ uv venv
 uv pip install -e .
 ```
 
+Create a ```.env``` file and configure it :
+```bash
+echo '' > .env
+```
+and copy-paste
+```plaintext
+URI="neo4j://127.0.0.1:7687"
+DB_USER="your_neo4j_user"
+DB_PW="your_neo4j_password"
+DB_NAME="your_database"
+```
+
 ## Usage
 Launch the interactive profiler (Streamlit UI) :
 ```bash
