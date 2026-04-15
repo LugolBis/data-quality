@@ -25,6 +25,51 @@
 
 #let alinea = [#h(1.5em)]
 
+#let presentation = [
+
+
+  #text("", size: 25pt)
+]
+
+#align(center)[
+  #image("../assets/img/logo-UVSQ-2020-RVB.jpg", height: 17%)
+  #v(2cm)
+
+  #text(size: 25pt, weight: "bold")[
+    Étude de la qualité de donnée d'une base de donnée graphe
+  ]
+
+  #v(0.5cm)
+
+  #text(size: 16pt)[
+    TER M1 Informatique\
+  ]
+  #text(size: 14pt)[
+    Étude de la qualité de donnée d'une base de donnée graphe
+  ]
+
+  #v(8cm)
+
+  #text(size: 14pt)[
+    Auteur : Loïc DESMARÈS et Tianyi YANG\
+    Encadrantes : Béatrice FINANCE et Zoubida KEDAD
+  ]
+
+  #v(0.5cm)
+
+  #text(size: 14pt)[
+    Université Versailles Saint-Quentin-en-Yvelines\
+    Année universitaire 2025–2026
+  ]
+]
+
+#pagebreak()
+#outline(
+  title: "Table des matières",
+  depth: 3,
+)
+#pagebreak()
+
 *Abstract*: L'état de l'art des *Graphes de Propriété*...
 
 = Introduction
