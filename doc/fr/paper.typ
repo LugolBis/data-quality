@@ -245,7 +245,8 @@ On définit donc les algorithmes suivant :\
 
 #Merge
 
-#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autre terme l'algorithme détecte les noeuds qui de part leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).
+#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autre terme l'algorithme détecte les noeuds qui de part leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).\
+\
 
 #grid(
   columns: (1fr, 1fr),
@@ -258,6 +259,7 @@ On définit donc les algorithmes suivant :\
   ],
 )
 
+#pagebreak()
 == Cohérence
 *Définition 2.3.0*\
 #alinea La Cohérence mesure la validité des relations de la base de données graphe.
@@ -290,6 +292,7 @@ Une autre approche (très différente) nommé _gFD_ @Manouvrier2024PGFD consiste
 + $R$ est une requête, aussi riche que le language de requêtage le permet; qui renvoie (ou non) des objets.
 + $B$ est un booléen indiquant si $R$ doit renvoyer des objets pour valider la contrainte définit par celle-ci.
 
+#pagebreak()
 == Intégrité
 *Définition 2.4.0*\
 #alinea L’intégrité mesure la validité structurelle d'une base de données graphe.
@@ -380,6 +383,7 @@ Algorithme :\
 
 #alinea L'algorithme est définit dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), semblent avoir moins de sens dans un contexte de normalisation car l'algorithme normaliserai en 3NF seulement un fragment de la base de donnée.
 
+#pagebreak()
 == Unicité
 *Définition 2.5.0*\
 #alinea L'unicité mesure la redondance d'une base de données graphe.
@@ -393,7 +397,28 @@ Algorithme :\
 #alinea $forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$.\
 Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
 
+#pagebreak()
 = Profilage d'un Graphe de Propriété
+#alinea L'objectif du profilage d'une base de donnée graphe est d'avoir un tableau de bord sur la distribution des données. Cette section regroupe donc des indicateurs intéressant pour caractériser les données d'un graphe de propriété.
+== Complétude
+=== Composants faiblement connectés
+=== Composants fortement connectés
+== Conformité
+=== Détection de type distinct pour des propriétés
+== Intégrité
+=== Distribution des propriétés des noeuds
+=== Distribution des propriétés des noeuds par étiquette
+=== Distribution des propriétés des arcs
+== Étiquetage
+=== Détection d'anomalies par regroupement (clustering)
+== Lisibilité
+=== Distribution du degré des noeuds
+=== Détection des arcs formant un multi-graphe
+=== Analyse de l'excentricité du graphe
+== Valeurs aberrante (Outlier)
+=== Analyse des valeurs numériques
+=== Analyse de l'influence transitive des noeuds
+=== Analyse de l'influence transitive moyenne
 
 = Preuve de concept (Neo4j)
 
