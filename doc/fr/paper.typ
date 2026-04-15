@@ -13,6 +13,8 @@
 
 #set heading(numbering: "1.1 -")
 
+#set par(justify: true)
+
 #let code = content => block(
   [#text(content, font: "JetBrains Mono", size: 10pt)],
   fill: luma(230),
@@ -41,7 +43,7 @@ Un graphe de propriété est un tuple $G = (N, E, rho, lambda, sigma)$ tel que :
 La Complétude mesure la quantité de données manquantes d'une base de données graphe @cai2016challenges.
 
 === Existence de composantes
-L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important. Tant par le fait qu'il disposent d'un ensemble d'étiquettes que par les propriétés qui leur sont associés avec $sigma$.\
+L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
 Plus intuitivement vérifier l'existance de composantes entre des ensembles de noeuds et d'arcs permet par exemple d'exprimer des contraîntes de chemins (resp. chaînes). Naturellement l'ajout de contraintes comme la longueur des chemins, l'appartenance d'un ensemble d'étiquettes à ceux-ci constitutent de solides outils pour capturer un sens sémantique complexe.
 
 *Définition 2.1.1*\
@@ -73,21 +75,25 @@ Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$, $I$ un ensemb
 *Définition 2.2.4*\
 Soit $O in {N, E, N union E}$, $L_X, L_Y subset.eq L$ et $"Op"_"ens" in { subset, subset.eq, \\ }$ un opérateur ensembliste. Tel que $forall o in O$ tel que $L_X subset.eq lambda(o)$ vérifie $lambda(o) "Op"_"ens" L_Y = "Vrai"$.
 
-Notons que seule l'implémentation partielle de cette définition à du sens pour *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
+Notons que seule l'implémentation partielle de cette définition à du sens dans le cadre de la base de donnée graphe *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
 
 === Étiquetage par Regroupement (clustering)
 L'intuition est la suivante : des noeuds similaire doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaire pour détecter les erreurs d'étiquetage. L'approche qui suit est inspiré d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
-+ Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un outil riche en sémantique : les arcs. En effet les arcs sont caractérisés par une pair de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
++ Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une pair de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
   Serait traduit par "OUT:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
++ Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexe par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
 + Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jacard* pour calculer la similarité entre deux noeuds sur le critère des ensembles détiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = (|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
-  On définit par $"tokens": N -> "SET"("Tokens")$ une fonction partielle qui associe à un noeud son ensemble de _Tokens_. La similarité entre deux noeuds sur le critère des _Tokens_ est calculée comme suit, $forall n_1, n_2 in N^2$, $"Similarité"_"Tokens" = (sum_(i = 0)^(|"tokens"(n_1)|) sum_(j = 0)^(|"tokens"(n_2)|) "Similarité_Levenshtein"("tokens"(n_1)_i, "tokens"(n_2)_j))/(|"tokens"(n_1)| + |"tokens"(n_2)|)$.
+  On définit $"tokens": N -> "SET"("Tokens")$ une fonction partielle qui associe à un noeud son ensemble de _Tokens_. La similarité entre deux noeuds sur le critère des _Tokens_ est calculée comme suit, $forall n_1, n_2 in N^2$, $"Similarité"_"Tokens" = (sum_(i = 0)^(|"tokens"(n_1)|) sum_(j = 0)^(|"tokens"(n_2)|) "Similarité_Levenshtein"("tokens"(n_1)_i, "tokens"(n_2)_j))/(|"tokens"(n_1)| + |"tokens"(n_2)|)$.
 
-On définit donc l'algorithme suivant :
+On définit donc les algorithmes suivant :\
+L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
+L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeud connexe représentant l'ensemble des _Token_ distinct générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque pair de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
+
 #let Tokenization = [#algo(
-  main-text-styles: (size: 12pt),
+  main-text-styles: (size: 11pt),
   block-align: none,
-  title: [#text(size: 14pt)[Tokenization]],
+  title: [#text(size: 12pt)[Tokenization]],
   parameters: (
     [#text(size: 12pt)[$G$ PG.]],
   ),
@@ -102,8 +108,8 @@ On définit donc l'algorithme suivant :
   #comment("Étape - 1", inline: true)\
   for $e$ in $E$ do#i\
   $(n_s, n_d) <- rho(e)$\
-  $c_s <-$ 'OUT:' $+ lambda(e) + lambda(n_d)$\
-  $c_d <-$ 'IN:' $+ lambda(e) + lambda(n_s)$\
+  $c_s <-$ 'OUT:' $+ lambda(e) +$ ':' $+ lambda(n_d)$\
+  $c_d <-$ 'IN:' $+ lambda(e) +$ ':' $+ lambda(n_s)$\
   $t_s <- sigma(n_s, {"Tokens"})$\
   $t_d <- sigma(n_d, {"Tokens"})$\
   $sigma(n_s, {"Tokens"}) <- t_s union c_s$\
@@ -112,9 +118,9 @@ On définit donc l'algorithme suivant :
 ]]
 
 #let CreateTokens = [#algo(
-  main-text-styles: (size: 12pt),
+  main-text-styles: (size: 11pt),
   block-align: none,
-  title: [#text(size: 14pt)[CreateTokens]],
+  title: [#text(size: 12pt)[CreateTokens]],
   parameters: (
     [#text(size: 12pt)[$G$ PG.]],
   ),
@@ -132,13 +138,13 @@ On définit donc l'algorithme suivant :
   $"tokens" <- sigma(n, {"Tokens"})$\
   if $"tokens" eq.not "NULL"$ do#i\
   $"vocab" <- "vocab" union "tokens"$#d#d\
-  for $"idx" in [0;|"tokens"|-1]$ do#i\
+  for $"idx"$ in $[0;|"tokens"|-1]$ do#i\
   $n <- "newNode"()$\
   $N <- N union {n}$\
   $lambda(n) <- {"TOKEN"}$\
   $sigma(n, {"VAL", "ID"}) <- ("vocab"["idx"], "idx")$#d\
   #comment("On calcule la similarité entre les tokens.", inline: true)\
-  for $(n_1, n_2) in N^2$ do#i\
+  for $(n_1, n_2)$ in $N^2$ do#i\
   if $lambda(n_1) = lambda(n_2) = {"TOKEN"}$\
   and $sigma(n_1, {"ID"}) < sigma(n_2, {"ID"})$ do#i\
   $"t1", "t2" <- sigma(n_1, {"VAL"}), sigma(n_2, {"VAL"})$\
@@ -151,15 +157,102 @@ On définit donc l'algorithme suivant :
   end
 ]]
 
+#let Merge = [#algo(
+  main-text-styles: (size: 11pt),
+  block-align: none,
+  title: [#text(size: 12pt)[Merge]],
+  parameters: (
+    [#text(size: 12pt)[$G$ PG., $t_e$ seuil similarité étiquettes, $t_t$ seuil similarité Tokens]],
+  ),
+  indent-size: 8pt,
+  indent-guides: 1pt + gray,
+  row-gutter: 6pt,
+  column-gutter: 5pt,
+  inset: 8pt,
+  stroke: 2pt + black,
+  breakable: false,
+)[
+  #comment("Étape - 3 : Détection de noeuds qui devraient appartenir", inline: true)\
+  #comment("au même cluster d'étiquettes.", inline: true)\
+  for $(n_1, n_2)$ in $N^2$ do#i\
+  if $sigma(n_1, {"ID"}) < sigma(n_2, {"ID"})$\
+  and $sigma(n_1, {"Tokens"}) != "NULL"$\
+  and $sigma(n_2, {"Tokens"}) != "NULL"$ do#i\
+  $"Similarité"_"Étiquettes" <- (|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$\
+  if $"Similarité"_"Étiquettes" >= t_e$ do#i\
+  skip this iteration;#d\
+  end\
+  \
+  $"Similarité"_"Tokens" <- 0.0$\
+  for $"token"_1$ in $sigma(n_1, {"Tokens"})$ do#i\
+  $"nt"_1 <- n in N "where" lambda(n) = {"Token"} and sigma(n, {"VAL"}) = "token"_1$\
+  for $"token"_2$ in $sigma(n_2, {"Tokens"})$ do#i\
+  $"nt"_2 <- n in N "where" lambda(n) = {"Token"} and sigma(n, {"VAL"}) = "token"_2$\
+  $e <- e in E "where" rho(e) in {("nt"_1, "nt"_2), ("nt"_2, "nt"_1)}$\
+  $"Similarité"_"Tokens" <- "Similarité"_"Tokens" + sigma(e, {"SCORE"})$#d#d\
+  end\
+  $"Similarité"_"Tokens" <- "Similarité"_"Tokens" + sigma(e, {"SCORE"})$\
+  if $"Similarité"_"Tokens" >= t_t$ do#i\
+  $e <- "newEdge"()$\
+  $E <- E union {e}$\
+  $rho(e) <- (n_1, n_2)$\
+  $lambda(e) <- {"MERGE"}$#d#d\
+  end#d\
+  end
+]]
+
+#let Split = [#algo(
+  main-text-styles: (size: 11pt),
+  block-align: none,
+  title: [#text(size: 12pt)[Split]],
+  parameters: (
+    [#text(size: 12pt)[$G$ PG., $t_e$, $t_t$]],
+  ),
+  indent-size: 8pt,
+  indent-guides: 1pt + gray,
+  row-gutter: 6pt,
+  column-gutter: 5pt,
+  inset: 8pt,
+  stroke: 2pt + black,
+  breakable: false,
+)[
+  #comment("[...]", inline: true)\
+  #comment("Ligne 8 :", inline: true)\
+  if $"Similarité"_"Étiquettes" <= t_e$ do\
+  #comment("[...]", inline: true)\
+  #comment("Ligne 21 :", inline: true)\
+  if $"Similarité"_"Tokens" >= t_t$#i\
+  #comment("[...]", inline: true)\
+  #comment("Ligne 25 :", inline: true)\
+  $lambda(e) <- {"SPLIT"}$#d\
+]]
+
 #grid(
   columns: (0.9fr, 1.1fr),
   gutter: 1em,
   [
     #Tokenization
-    L'algorithme _Tokenization_ à une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens()_ à une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = |N| + |E|$).
+    L'algorithme _Tokenization_ à une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens_ à une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = |N| + |E|$).
   ],
   [
     #CreateTokens
+  ],
+)
+
+Une fois les algorithmes _Tokenization_ et _CreateTokens_ ont peut analyser les regroupement de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jacard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée à partir de deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient être intéressantes). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_ et qui à un impact direct sur la création ou non d'un arc "Merge" / "Split".
+
+#Merge
+
+L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autre terme l'algorithme détecte les noeuds qui de part leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    Cet algorithme peut être aisément modifié pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensemble d'étiquettes aussi similaire. Pour opérer les changement nécessaire il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
+  ],
+  [
+    #Split
   ],
 )
 
@@ -179,7 +272,7 @@ Une *condition* est un tuple $C = (P_C, "VAL", f, "NEXT")$ tel que :
 + $P_C subset.eq P$ est l'ensemble des propriétées devant respecter la condition.
 + $"VAL" in {"constante", P}$ est la valeur de comparaison. La "constante" peut être tout type de données (non atomique comprises).
 + $f: (N union E, P_C, "VAL") -> "Booléen"$, est une fonction permetant de vérifier la condition sur un objet (ex. "$=$", "$<$", "$in$", etc.). On notera par la suite $C(o)$ le fait que l'objet $o$ vérifie $f(o, P_C, "VAL")$ sachant $P_C$ et $"VAL"$ définit dans $C$.
-+ $"NEXT" in {emptyset, ("Condition", "Opérateur booléen")}$ est une deuxième condition devant être vérifiée (permettant ainsi de la combiner avec la première avec l' "Opérateur booléen").
++ $"NEXT" in {emptyset, ("Condition", "Opérateur booléen")}$ est une deuxième condition (optionnelle) devant être vérifiée (permettant ainsi de la combiner avec la première avec l' "Opérateur booléen").
 *Définition 2.3.3*\
 Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $C$ une condition (cf. @def2.3.2[Définition]) et $X, Y subset.eq P$, on définit par $(O, L_O, C, X -> Y)$ une *CFD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ et $C(o_1) = "Vrai"$ et $C(o_2) = "Vrai"$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
 
@@ -206,10 +299,10 @@ Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de donné
 + *Existence de propriétés* :\
   Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$.
 + *Type des valeurs de propriétés* :\
-  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$.
+  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$.
 Notons que ces contraintes peuvent être définies en *Cypher* (le language de requếtes de *Neo4j*).
 === Validité des Index
-L'idée est la suivante : des valeurs manquante sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de donnée graphe.
+L'intuition est la suivante : des valeurs manquante sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de donnée graphe.\
 *Définition 2.4.1*\
 Soit $i: (N times E) -> "BITSET"$ des propriétées indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$.
 
@@ -217,9 +310,9 @@ Soit $i: (N times E) -> "BITSET"$ des propriétées indexées, $forall o in (N u
 Algorithme :\
 
 #let PG_3FN = [#algo(
-  main-text-styles: (size: 12pt),
+  main-text-styles: (size: 11pt),
   block-align: none,
-  title: [#text(size: 14pt)[PG_3FN]],
+  title: [#text(size: 12pt)[PG_3FN]],
   parameters: (
     [#text(size: 12pt)[$G$ PG.,$F$ FD set,$L$ Label set]],
   ),
@@ -249,9 +342,9 @@ Algorithme :\
 ]]
 
 #let Min_cover_fn = [#algo(
-  main-text-styles: (size: 12pt),
+  main-text-styles: (size: 11pt),
   block-align: none,
-  title: [#text(size: 14pt)[get_min_cover]],
+  title: [#text(size: 12pt)[get_min_cover]],
   parameters: (
     [#text(size: 12pt)[$F$ FD set]],
   ),
@@ -291,11 +384,11 @@ L'unicité mesure la redondance d'une base de données graphe.
 
 === Doublons d'arcs
 *Définition 2.5.1*\
-$forall r_1, r_2 in E^2$, $r_1$ et $r_2$ sont des doublons si et seulement si : $rho(r_1) = rho(r_2)$, $lambda(r_1) = lambda(r_2)$ et $sigma(r_1, P) = sigma(r_2, P)$.
+$forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$.
 
 === Doublons de noeuds
 *Définition 2.5.2*\
-$forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(r_1) = lambda(r_2)$ et $sigma(r_1, P) = sigma(r_2, P)$.\
+$forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$.\
 Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
 
 = Profilage d'un Graphe de Propriété
