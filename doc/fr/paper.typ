@@ -23,14 +23,16 @@
   width: 100%,
 )
 
+#let alinea = [#h(1.5em)]
+
 *Abstract*: L'état de l'art des *Graphes de Propriété*...
 
 = Introduction
 
-Cette étude a pour objectif de déterminer des critères de qualité de donnée pour les bases de données graphe. On considerera ici les *Graphes de Propriété* (_Property Graph_) disposant d'*étiquettes* (_labels_).
+#alinea Cette étude a pour objectif de déterminer des critères de qualité de donnée pour les bases de données graphe. On considerera ici les *Graphes de Propriété* (_Property Graph_) disposant d'*étiquettes* (_labels_).
 
 *Définition 1.*\
-Un graphe de propriété est un tuple $G = (N, E, rho, lambda, sigma)$ tel que :
+#alinea Un graphe de propriété est un tuple $G = (N, E, rho, lambda, sigma)$ tel que :
 + $N$ est un ensemble fini de noeuds (_nodes_), aussi appellé sommets (_vertices_).
 + $E$ est un ensemble fini d'arc (on parlera d'arrête lorsque la direction n'est pas prise en compte).
 + $rho: E -> (N times N)$ est une fonction totale qui associe pour chaque arc dans $E$ une pair $(n_"source", n_"destination")$. Cette pair de noeuds est donc non commutative car $(n_A, n_B) in rho(E)$ n'implique pas nécessairement $(n_B, n_A) in rho(E)$.
@@ -40,55 +42,55 @@ Un graphe de propriété est un tuple $G = (N, E, rho, lambda, sigma)$ tel que :
 = Qualité de donnée d'un Graphe de Propriété
 == Complétude
 *Définition 2.1.0*\
-La Complétude mesure la quantité de données manquantes d'une base de données graphe @cai2016challenges.
+#alinea La Complétude mesure la quantité de données manquantes d'une base de données graphe @cai2016challenges.
 
 === Existence de composantes
-L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
-Plus intuitivement vérifier l'existance de composantes entre des ensembles de noeuds et d'arcs permet par exemple d'exprimer des contraîntes de chemins (resp. chaînes). Naturellement l'ajout de contraintes comme la longueur des chemins, l'appartenance d'un ensemble d'étiquettes à ceux-ci constitutent de solides outils pour capturer un sens sémantique complexe.
+#alinea L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
+#alinea Plus intuitivement vérifier l'existance de composantes entre des ensembles de noeuds et d'arcs permet par exemple d'exprimer des contraîntes de chemins (resp. chaînes). Naturellement l'ajout de contraintes comme la longueur des chemins, l'appartenance d'un ensemble d'étiquettes à ceux-ci constitutent de solides outils pour capturer un sens sémantique complexe.
 
 *Définition 2.1.1*\
-Soit $G_p$ un graph pattern (_patron de graphe_) modélisant une composante connexe (resp. fortement connexe), un ensemble $O$ tel que $O in {N, E, N union E}$ et $L_O subset.eq L$ est un ensemble d'étiquettes. Tel que $forall (G_p, O, L_O)$ on a $forall o in O$ tel que $lambda(o) = L_O$, $exists$ au moins une occurence de $G_p$ pour $o$.
+#alinea Soit $G_p$ un graph pattern (_patron de graphe_) modélisant une composante connexe (resp. fortement connexe), un ensemble $O$ tel que $O in {N, E, N union E}$ et $L_O subset.eq L$ est un ensemble d'étiquettes. Tel que $forall (G_p, O, L_O)$ on a $forall o in O$ tel que $lambda(o) = L_O$, $exists$ au moins une occurence de $G_p$ pour $o$.
 
 === Le degré des noeuds
-La complétude des données peut aussi s'exprimer par le degré des noeuds et ainsi exprimer des contraintes de cardinalitées.
+#alinea La complétude des données peut aussi s'exprimer par le degré des noeuds et ainsi exprimer des contraintes de cardinalitées.
 
 *Définition 2.1.2*\
-Soit $L_O subset.eq L$ est un ensemble d'étiquettes et les ensembles $D_s, D_e subset RR^2$, représentant respectivement l'ensemble des degrés sortant et entrant. Tel que $forall n in N$ tel que $lambda(n) = L_O$ vérifie $d^+(n) in D_s$ et $d^-(n) in D_e$.
+#alinea Soit $L_O subset.eq L$ est un ensemble d'étiquettes et les ensembles $D_s, D_e subset RR^2$, représentant respectivement l'ensemble des degrés sortant et entrant. Tel que $forall n in N$ tel que $lambda(n) = L_O$ vérifie $d^+(n) in D_s$ et $d^-(n) in D_e$.
 
 == Conformité
 *Définition 2.2.0*\
-La Conformité mesure la validité du format des données.
+#alinea La Conformité mesure la validité du format des données.
 
 === Format des chaînes de caractère
 *Définition 2.2.1*\
-Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *Regex* codant le format attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Regex") = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *Regex* codant le format attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Regex") = "Vrai"$.
 
 === Format des dates
 *Définition 2.2.2*\
-Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *$"Date"_"fmt"$* codant le format de date attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Date"_"fmt") = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *$"Date"_"fmt"$* codant le format de date attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Date"_"fmt") = "Vrai"$.
 
 === Ensemble fini de données
 *Définition 2.2.3*\
-Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$, $I$ un ensemble de données (non atomique comprises) et $C$ une contrainte optionnelle (cf. @def2.3.2[Définition]). Tel que $forall o in O$ on vérifie $"SET"(sigma(o, X)) subset.eq I and C(o) = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$, $I$ un ensemble de données (non atomique comprises) et $C$ une contrainte optionnelle (cf. @def2.3.2[Définition]). Tel que $forall o in O$ on vérifie $"SET"(sigma(o, X)) subset.eq I and C(o) = "Vrai"$.
 
 === Étiquetage Ensembliste
 *Définition 2.2.4*\
-Soit $O in {N, E, N union E}$, $L_X, L_Y subset.eq L$ et $"Op"_"ens" in { subset, subset.eq, \\ }$ un opérateur ensembliste. Tel que $forall o in O$ tel que $L_X subset.eq lambda(o)$ vérifie $lambda(o) "Op"_"ens" L_Y = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_X, L_Y subset.eq L$ et $"Op"_"ens" in { subset, subset.eq, \\ }$ un opérateur ensembliste. Tel que $forall o in O$ tel que $L_X subset.eq lambda(o)$ vérifie $lambda(o) "Op"_"ens" L_Y = "Vrai"$.
 
-Notons que seule l'implémentation partielle de cette définition à du sens dans le cadre de la base de donnée graphe *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
+#alinea Notons que seule l'implémentation partielle de cette définition à du sens dans le cadre de la base de donnée graphe *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
 
 === Étiquetage par Regroupement (clustering)
-L'intuition est la suivante : des noeuds similaire doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaire pour détecter les erreurs d'étiquetage. L'approche qui suit est inspiré d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
-+ Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une pair de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
+#alinea L'intuition est la suivante : des noeuds similaire doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaire pour détecter les erreurs d'étiquetage. L'approche qui suit est inspiré d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
++ #alinea Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une pair de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
   Serait traduit par "OUT:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
-+ Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexe par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
-+ Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jacard* pour calculer la similarité entre deux noeuds sur le critère des ensembles détiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = (|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
++ #alinea Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexe par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
++ #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jacard* pour calculer la similarité entre deux noeuds sur le critère des ensembles détiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = (|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
   On définit $"tokens": N -> "SET"("Tokens")$ une fonction partielle qui associe à un noeud son ensemble de _Tokens_. La similarité entre deux noeuds sur le critère des _Tokens_ est calculée comme suit, $forall n_1, n_2 in N^2$, $"Similarité"_"Tokens" = (sum_(i = 0)^(|"tokens"(n_1)|) sum_(j = 0)^(|"tokens"(n_2)|) "Similarité_Levenshtein"("tokens"(n_1)_i, "tokens"(n_2)_j))/(|"tokens"(n_1)| + |"tokens"(n_2)|)$.
 
 On définit donc les algorithmes suivant :\
-L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
-L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeud connexe représentant l'ensemble des _Token_ distinct générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque pair de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
+#alinea L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
+#alinea L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeud connexe représentant l'ensemble des _Token_ distinct générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque pair de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
 
 #let Tokenization = [#algo(
   main-text-styles: (size: 11pt),
@@ -232,24 +234,24 @@ L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeud connexe r
   gutter: 1em,
   [
     #Tokenization
-    L'algorithme _Tokenization_ à une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens_ à une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = |N| + |E|$).
+    #alinea L'algorithme _Tokenization_ à une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens_ à une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = |N| + |E|$).
   ],
   [
     #CreateTokens
   ],
 )
 
-Une fois les algorithmes _Tokenization_ et _CreateTokens_ ont peut analyser les regroupement de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jacard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée à partir de deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient être intéressantes). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_ et qui à un impact direct sur la création ou non d'un arc "Merge" / "Split".
+#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ ont peut analyser les regroupement de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jacard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée à partir de deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient être intéressantes). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_ et qui à un impact direct sur la création ou non d'un arc "Merge" / "Split".
 
 #Merge
 
-L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autre terme l'algorithme détecte les noeuds qui de part leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).
+#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autre terme l'algorithme détecte les noeuds qui de part leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).
 
 #grid(
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    Cet algorithme peut être aisément modifié pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensemble d'étiquettes aussi similaire. Pour opérer les changement nécessaire il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
+    #alinea Cet algorithme peut être aisément modifié pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensemble d'étiquettes aussi similaire. Pour opérer les changement nécessaire il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
   ],
   [
     #Split
@@ -258,42 +260,42 @@ L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pa
 
 == Cohérence
 *Définition 2.3.0*\
-La Cohérence mesure la validité des relations de la base de données graphe.
+#alinea La Cohérence mesure la validité des relations de la base de données graphe.
 
 === Dépendance Fonctionnelle (FD)
 #label("def2.3.1")
 *Définition 2.3.1*\
-Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, X -> Y)$ une *FD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, X -> Y)$ une *FD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
 
 === Dépendance Fonctionnelle Conditionnelle (CFD)
 #label("def2.3.2")
 *Définition 2.3.2*\
-Une *condition* est un tuple $C = (P_C, "VAL", f, "NEXT")$ tel que :
+#alinea Une *condition* est un tuple $C = (P_C, "VAL", f, "NEXT")$ tel que :
 + $P_C subset.eq P$ est l'ensemble des propriétées devant respecter la condition.
 + $"VAL" in {"constante", P}$ est la valeur de comparaison. La "constante" peut être tout type de données (non atomique comprises).
 + $f: (N union E, P_C, "VAL") -> "Booléen"$, est une fonction permetant de vérifier la condition sur un objet (ex. "$=$", "$<$", "$in$", etc.). On notera par la suite $C(o)$ le fait que l'objet $o$ vérifie $f(o, P_C, "VAL")$ sachant $P_C$ et $"VAL"$ définit dans $C$.
 + $"NEXT" in {emptyset, ("Condition", "Opérateur booléen")}$ est une deuxième condition (optionnelle) devant être vérifiée (permettant ainsi de la combiner avec la première avec l' "Opérateur booléen").
 *Définition 2.3.3*\
-Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $C$ une condition (cf. @def2.3.2[Définition]) et $X, Y subset.eq P$, on définit par $(O, L_O, C, X -> Y)$ une *CFD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ et $C(o_1) = "Vrai"$ et $C(o_2) = "Vrai"$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $C$ une condition (cf. @def2.3.2[Définition]) et $X, Y subset.eq P$, on définit par $(O, L_O, C, X -> Y)$ une *CFD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ et $C(o_1) = "Vrai"$ et $C(o_2) = "Vrai"$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
 
 === Dépendance d’un Graph pattern (GFD)
 *Définition 2.3.4*\
-Soit $G_p$ un graph pattern à partir duquel on déduit $G'(N', E')$, sous graphe de $G$ correspondant à $G_p$; $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, G_p, X -> Y)$ une *GFD*. Tel que $forall o_1, o_2 in O^2$ tel que $o_1, o_2 in G'$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.\
+#alinea Soit $G_p$ un graph pattern à partir duquel on déduit $G'(N', E')$, sous graphe de $G$ correspondant à $G_p$; $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, G_p, X -> Y)$ une *GFD*. Tel que $forall o_1, o_2 in O^2$ tel que $o_1, o_2 in G'$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.\
 Une autre approche (très différente) nommé _gFD_ @Manouvrier2024PGFD consiste a exclure tous les noeuds qui n'ont pas toutes les propriétées ($X union Y$) définit par la _FD_.
 
 === Validation par requête
-Les dépendances fonctionnelles (_FD_, _CFD_ et _GFD_) sont des outils très puissant. Mais ils sont complexe à étendre pour parvenir à capturer l'ensemble du sens sémantique offert par les requêtes. C'est pourquoi une approche de validation supplémentaire consisterai --- sur le modèle de _dbt_ --- à valider ou invalider des requêtes écrites par l'utilisateur.\
+#alinea Les dépendances fonctionnelles (_FD_, _CFD_ et _GFD_) sont des outils très puissant. Mais ils sont complexe à étendre pour parvenir à capturer l'ensemble du sens sémantique offert par les requêtes. C'est pourquoi une approche de validation supplémentaire consisterai --- sur le modèle de _dbt_ --- à valider ou invalider des requêtes écrites par l'utilisateur.\
 *Définition 2.3.5*\
-Ce système de validation par requête est défini par un tuple _dgt_ $= (R, B)$ tel que :
+#alinea Ce système de validation par requête est défini par un tuple _dgt_ $= (R, B)$ tel que :
 + $R$ est une requête, aussi riche que le language de requêtage le permet; qui renvoie (ou non) des objets.
 + $B$ est un booléen indiquant si $R$ doit renvoyer des objets pour valider la contrainte définit par celle-ci.
 
 == Intégrité
 *Définition 2.4.0*\
-L’intégrité mesure la validité structurelle d'une base de données graphe.
+#alinea L’intégrité mesure la validité structurelle d'une base de données graphe.
 
 === Validité du schéma de propriété
-Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de données graphe. On va donc définir trois contraintes d'intégrité :
+#alinea Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de données graphe. On va donc définir trois contraintes d'intégrité :
 + *Unicité de propriétés* :\
   Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o_1, o_2 in O^2$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double o_1 = o_2$.
 + *Existence de propriétés* :\
@@ -302,9 +304,9 @@ Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de donné
   Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$.
 Notons que ces contraintes peuvent être définies en *Cypher* (le language de requếtes de *Neo4j*).
 === Validité des Index
-L'intuition est la suivante : des valeurs manquante sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de donnée graphe.\
+#alinea L'intuition est la suivante : des valeurs manquante sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de donnée graphe.\
 *Définition 2.4.1*\
-Soit $i: (N times E) -> "BITSET"$ des propriétées indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$.
+#alinea Soit $i: (N times E) -> "BITSET"$ des propriétées indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$.
 
 === Forme normale d'un Graphe de propriété
 Algorithme :\
@@ -376,19 +378,19 @@ Algorithme :\
   ],
 )
 
-L'algorithme est définit dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), semblent avoir moins de sens dans un contexte de normalisation car l'algorithme normaliserai en 3NF seulement un fragment de la base de donnée.
+#alinea L'algorithme est définit dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), semblent avoir moins de sens dans un contexte de normalisation car l'algorithme normaliserai en 3NF seulement un fragment de la base de donnée.
 
 == Unicité
 *Définition 2.5.0*\
-L'unicité mesure la redondance d'une base de données graphe.
+#alinea L'unicité mesure la redondance d'une base de données graphe.
 
 === Doublons d'arcs
 *Définition 2.5.1*\
-$forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$.
+#alinea $forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$.
 
 === Doublons de noeuds
 *Définition 2.5.2*\
-$forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$.\
+#alinea $forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$.\
 Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
 
 = Profilage d'un Graphe de Propriété
