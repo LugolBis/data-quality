@@ -8,6 +8,7 @@
 
 #set align(left)
 #set text(
+  font: "New Computer Modern",
   lang: "fr",
 )
 
@@ -73,6 +74,7 @@
 *Abstract*: L'état de l'art des *Graphes de Propriété*...
 
 = Introduction
+#label("def1")
 
 #alinea Cette étude a pour objectif de déterminer des critères de qualité de données pour les bases de données graphe. On considérera ici les *Graphes de Propriété* (_Property Graph_) disposant d'*étiquettes* (_labels_).
 
@@ -354,7 +356,7 @@ Une autre approche (très différente) nommée _gFD_ @Manouvrier2024PGFD consist
 Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requếtes de *Neo4j*).
 === Validité des Index
 #alinea L'intuition est la suivante : des valeurs manquantes sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de données graphe.\
-*Définition 2.4.1*\
+*Définition 2.4.2*\
 #alinea Soit $i: (N times E) -> "BITSET"$ des propriétés indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$.
 
 === Forme normale d'un Graphe de propriété
@@ -427,9 +429,8 @@ Algorithme :\
   ],
 )
 
-#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), semblent avoir moins de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de donnée.
+#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de donnée.
 
-#pagebreak()
 == Unicité
 *Définition 2.5.0*\
 #alinea L'unicité mesure la redondance d'une base de données graphe.
@@ -490,15 +491,17 @@ Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, 
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-
+#alinea *Neo4j* est une base de donnée graphe mature implémentant les oncepts clés des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". Dans *Neo4j* l'ensemble des concepts est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
 == Méthodes de test
-== Exemples ?
 
-= Questions ouvertes
+= Questions ouvertes ?
 
 = Conclusion
+#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressant et adapté a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structuré de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des base de données graphe est un enjeu de taille du fait de la pluraité des usages de celles-ci.\
+#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être effectuées à l'aide d'un _DDL_) ou encore les formes normales d'une base de donnée graphe.
 
-= Annexe ?
+= Annexe
+#alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
 
 // References
 #pagebreak()
