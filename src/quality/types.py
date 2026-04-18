@@ -3,7 +3,13 @@ from typing import TYPE_CHECKING, Any
 
 from models.enums import Entity
 from models.types import Violation
-from quality.enums import BoolOperator, ConditionOp, ConditionType, SetRelation
+from quality.enums import (
+    BoolOperator,
+    ConditionOp,
+    ConditionType,
+    LabelAction,
+    SetRelation,
+)
 
 if TYPE_CHECKING:
     from models.enums import Degree, Entity
@@ -184,3 +190,15 @@ class Condition:
             f"{_ENTITY_CONDITION_ALIAS}['{self.property_}'] {self.operator!s}"
             f" {self.value!s}"
         )
+
+
+@dataclass(slots=True, frozen=True, eq=False)
+class LabelErr:
+    suggestion: LabelAction
+    labels_similarity: float
+    tokens_similarity: float
+    node_id_x: str
+    node_id_y: str
+
+    def __str__(self) -> str:
+        return f"{self.suggestion} | {self.node_id_x} - {self.node_id_y}"

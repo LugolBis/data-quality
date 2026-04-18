@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from models.enums import Entity
 from profiling.validity import check_properties_type
 from quality.enums import ConditionOp, ConditionType, DateFmt, SetRelation
+from quality.labeling import labeling_clustering
 from quality.types import Condition, ConditionValue
 from quality.validity import (
     check_date_format,
@@ -50,6 +51,7 @@ def main(session: Neo4jSession) -> None:
         ConditionOp.CONTAINS,
         None,
     )
+
     ni_errs = numerical_interval(
         session,
         Entity.NODE,
@@ -59,6 +61,8 @@ def main(session: Neo4jSession) -> None:
         1_000_000,
         condition,
     )
+
+    lblg_clusters = labeling_clustering(session, 0.6, 0.6)
 
     types: list[PairPropertiesType] | None = check_properties_type(session)
 
@@ -77,6 +81,10 @@ def main(session: Neo4jSession) -> None:
     if some(ni_errs):
         print("\n")
         print("\n".join([str(ni) for ni in ni_errs]))
+
+    if some(lblg_clusters):
+        print("\n")
+        print("\n".join([str(lg) for lg in lblg_clusters]))
 
     if some(types):
         print("\n".join([t.__repr__() for t in types]))

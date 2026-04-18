@@ -54,3 +54,8 @@ class SetRelation(str, Enum):
     INCLUDE = "⊂"
     INCLUDE_EQ = "⊆"
     EXCLUDE = "⊥"
+
+
+class LabelAction(Enum):
+    SPLIT = "SPLIT"
+    MERGE = "MERGE"
