@@ -1,5 +1,6 @@
 #import "@preview/algo:0.3.6": algo, code, comment, d, i
 #import table: cell, header
+#import "../assets/annexe.typ": *
 
 #set page(
   numbering: "1",
@@ -15,6 +16,7 @@
 #set heading(numbering: "1.1 -")
 
 #set par(justify: true)
+#show figure.where(kind: "custom-fig"): it => it.body
 
 #let code = content => block(
   [#text(content, font: "JetBrains Mono", size: 10pt)],
@@ -92,41 +94,49 @@
 #alinea La Complétude mesure la quantité de données manquantes d'une base de données graphe @cai2016challenges.
 
 === Existence de composantes
+#label("def2.1.1")
 #alinea L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
 #alinea Plus intuitivement vérifier l'existence de composantes entre des ensembles de noeuds et d'arcs permet par exemple d'exprimer des contraintes de chemins (resp. chaînes). Naturellement l'ajout de contraintes comme la longueur des chemins, l'appartenance d'un ensemble d'étiquettes à ceux-ci constituent de solides outils pour capturer un sens sémantique complexe.
 
 *Définition 2.1.1*\
-#alinea Soit $G_p$ un graph pattern (_patron de graphe_) modélisant une composante connexe (resp. fortement connexe), un ensemble $O$ tel que $O in {N, E, N union E}$ et $L_O subset.eq L$ est un ensemble d'étiquettes. Tel que $forall (G_p, O, L_O)$ on a $forall o in O$ tel que $lambda(o) = L_O$, $exists$ au moins une occurrence de $G_p$ pour $o$.
+#alinea Soit $G_p$ un graph pattern (_patron de graphe_) modélisant une composante connexe (resp. fortement connexe), un ensemble $O$ tel que $O in {N, E, N union E}$ et $L_O subset.eq L$ est un ensemble d'étiquettes. Tel que $forall (G_p, O, L_O)$ on a $forall o in O$ tel que $lambda(o) = L_O$, $exists$ au moins une occurrence de $G_p$ pour $o$. Cf. *@fig1[Figure]* en annexe.
 
 === Le degré des noeuds
+#label("def2.1.2")
 #alinea La complétude des données peut aussi s'exprimer par le degré des noeuds et ainsi exprimer des contraintes de cardinalités.
 
 *Définition 2.1.2*\
-#alinea Soit $L_O subset.eq L$ est un ensemble d'étiquettes et les ensembles $D_s, D_e subset RR^2$, représentant respectivement l'ensemble des degrés sortant et entrant. Tel que $forall n in N$ tel que $lambda(n) = L_O$ vérifie $d^+(n) in D_s$ et $d^-(n) in D_e$.
+#alinea Soit $L_O subset.eq L$ est un ensemble d'étiquettes et les ensembles $D_s, D_e subset RR^2$, représentant respectivement l'ensemble des degrés sortant et entrant. Tel que $forall n in N$ tel que $lambda(n) = L_O$ vérifie $d^+(n) in D_s$ et $d^-(n) in D_e$. Cf. *@fig2[Figure]* en annexe.
 
 == Conformité
+#label("def2.2.0")
 *Définition 2.2.0*\
 #alinea La Conformité mesure la validité du format des données.
 
 === Format des chaînes de caractère
+#label("def2.2.1")
 *Définition 2.2.1*\
-#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *Regex* codant le format attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Regex") = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *Regex* codant le format attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Regex") = "Vrai"$. Cf. *@fig3[Figure]* en annexe.
 
 === Format des dates
+#label("def2.2.2")
 *Définition 2.2.2*\
-#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *$"Date"_"fmt"$* codant le format de date attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Date"_"fmt") = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *$"Date"_"fmt"$* codant le format de date attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Date"_"fmt") = "Vrai"$. Cf. *@fig4[Figure]* en annexe.
 
 === Ensemble fini de données
+#label("def2.2.3")
 *Définition 2.2.3*\
-#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$, $I$ un ensemble de données (non atomique comprises) et $C$ une contrainte optionnelle (cf. @def2.3.2[Définition]). Tel que $forall o in O$ on vérifie $"SET"(sigma(o, X)) subset.eq I and C(o) = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$, $I$ un ensemble de données (non atomique comprises) et $C$ une contrainte optionnelle (cf. @def2.3.2[Définition]). Tel que $forall o in O$ on vérifie $"SET"(sigma(o, X)) subset.eq I and C(o) = "Vrai"$. Cf. *@fig5[Figure]* en annexe.
 
 === Étiquetage Ensembliste
+#label("def2.2.4")
 *Définition 2.2.4*\
-#alinea Soit $O in {N, E, N union E}$, $L_X, L_Y subset.eq L$ et $"Op"_"ens" in { subset, subset.eq, \\ }$ un opérateur ensembliste. Tel que $forall o in O$ tel que $L_X subset.eq lambda(o)$ vérifie $lambda(o) "Op"_"ens" L_Y = "Vrai"$.
+#alinea Soit $O in {N, E, N union E}$, $L_X, L_Y subset.eq L$ et $"Op"_"ens" in { subset, subset.eq, \\ }$ un opérateur ensembliste. Tel que $forall o in O$ tel que $L_X subset.eq lambda(o)$ vérifie $lambda(o) "Op"_"ens" L_Y = "Vrai"$. Cf. *@fig6[Figure]* en annexe.
 
-#alinea Notons que seule l'implémentation partielle de cette définition à du sens dans le cadre de la base de données graphe *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
+#alinea Notons que seule l'implémentation partielle de cette définition à du sens dans le cadre des bases de données graphe *Neo4j*, car les arcs (_Relationships_) ne peuvent avoir qu'une seule étiquette.
 
 === Étiquetage par Regroupement (clustering)
+#label("def2.2.5")
 #alinea L'intuition est la suivante : des noeuds similaires doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaires pour détecter les erreurs d'étiquetage. L'approche qui suit est inspirée d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
 + #alinea Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une paire de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
@@ -292,7 +302,7 @@ On définit donc les algorithmes suivants :\
 
 #Merge
 
-#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autres termes l'algorithme détecte les noeuds qui de par leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés).\
+#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autres termes l'algorithme détecte les noeuds qui de par leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés). Cf. *@fig7[Figure]* en annexe.\
 \
 
 #grid(
@@ -314,32 +324,34 @@ On définit donc les algorithmes suivants :\
 === Dépendance Fonctionnelle (FD)
 #label("def2.3.1")
 *Définition 2.3.1*\
-#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, X -> Y)$ une *FD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, X -> Y)$ une *FD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$. Cf. *@fig8[Figure]* en annexe.
 
 === Dépendance Fonctionnelle Conditionnelle (CFD)
 #label("def2.3.2")
-*Définition 2.3.2*\
+*Définition 2.3.2.a*\
 #alinea Une *condition* est un tuple $C = (P_C, "VAL", f, "NEXT")$ tel que :
 + $P_C subset.eq P$ est l'ensemble des propriétés devant respecter la condition.
 + $"VAL" in {"constante", P}$ est la valeur de comparaison. La "constante" peut être tout type de données (non atomique comprises).
 + $f: (N union E, P_C, "VAL") -> "Booléen"$, est une fonction permettant de vérifier la condition sur un objet (ex. "$=$", "$<$", "$in$", etc.). On notera par la suite $C(o)$ le fait que l'objet $o$ vérifie $f(o, P_C, "VAL")$ sachant $P_C$ et $"VAL"$ définit dans $C$.
 + $"NEXT" in {emptyset, ("Condition", "Opérateur booléen")}$ est une deuxième condition (optionnelle) devant être vérifiée (permettant ainsi de la combiner avec la première avec l' "Opérateur booléen").
-*Définition 2.3.3*\
-#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $C$ une condition (cf. @def2.3.2[Définition]) et $X, Y subset.eq P$, on définit par $(O, L_O, C, X -> Y)$ une *CFD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ et $C(o_1) = "Vrai"$ et $C(o_2) = "Vrai"$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
+*Définition 2.3.2.b*\
+#alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $C$ une condition (cf. @def2.3.2[Définition]) et $X, Y subset.eq P$, on définit par $(O, L_O, C, X -> Y)$ une *CFD*. Tel que $forall o_1, o_2 in O^2$ tel que $lambda(o_1) = L_O$ et $lambda(o_2) = L_O$ et $C(o_1) = "Vrai"$ et $C(o_2) = "Vrai"$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$. Cf. *@fig9[Figure]* en annexe.
 
 === Dépendance d’un Graph pattern (GFD)
-*Définition 2.3.4*\
-#alinea Soit $G_p$ un graph pattern à partir duquel on déduit $G'(N', E')$, sous graphe de $G$ correspondant à $G_p$; $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, G_p, X -> Y)$ une *GFD*. Tel que $forall o_1, o_2 in O^2$ tel que $o_1, o_2 in G'$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.\
-Une autre approche (très différente) nommée _gFD_ @Manouvrier2024PGFD consiste à exclure tous les noeuds qui n'ont pas toutes les propriétés ($X union Y$) définies par la _FD_.
+#label("def2.3.3")
+*Définition 2.3.3*\
+#alinea Soit $G_p$ un graph pattern à partir duquel on déduit $G'(N', E')$, sous graphe de $G$ correspondant à $G_p$; $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, G_p, X -> Y)$ une *GFD*. Tel que $forall o_1, o_2 in O^2$ tel que $o_1, o_2 in G'$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$. Cf. *@fig10[Figure]* en annexe.\
+#alinea Une autre approche (très différente) nommée _gFD_ @Manouvrier2024PGFD consiste à exclure tous les noeuds qui n'ont pas toutes les propriétés ($X union Y$) définies par la _FD_.
 
 === Validation par requête
+#label("def2.3.4")
 #alinea Les dépendances fonctionnelles (_FD_, _CFD_ et _GFD_) sont des outils très puissants. Mais ils sont complexes à étendre pour parvenir à capturer l'ensemble du sens sémantique offert par les requêtes. C'est pourquoi une approche de validation supplémentaire consisterait --- sur le modèle de _dbt_ --- à valider ou invalider des requêtes écrites par l'utilisateur.\
-*Définition 2.3.5*\
+*Définition 2.3.4*\
 #alinea Ce système de validation par requête est défini par un tuple _dgt_ $= (R, B)$ tel que :
 + $R$ est une requête, aussi riche que le langage de requêtage le permet; qui renvoie (ou non) des objets.
-+ $B$ est un booléen indiquant si $R$ doit renvoyer des objets pour valider la contrainte définie par celle-ci.
++ $B$ est un booléen indiquant si $R$ doit renvoyer des objets pour valider la contrainte définie par celle-ci.\
+Cf. *@fig11[Figure]* en annexe.
 
-#pagebreak()
 == Intégrité
 *Définition 2.4.0*\
 #alinea L’intégrité mesure la validité structurelle d'une base de données graphe.
@@ -348,18 +360,21 @@ Une autre approche (très différente) nommée _gFD_ @Manouvrier2024PGFD consist
 #label("def2.4.1")
 #alinea Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de données graphe. On va donc définir trois contraintes d'intégrité :
 + *Unicité de propriétés* :\
-  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o_1, o_2 in O^2$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double o_1 = o_2$.
+  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o_1, o_2 in O^2$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double o_1 = o_2$. Cf. *@fig12[Figure]* en annexe.
 + *Existence de propriétés* :\
-  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$.
+  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$. Cf. *@fig13[Figure]* en annexe.
 + *Type des valeurs de propriétés*  :\
-  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$.
+  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$. Cf. *@fig14[Figure]* en annexe.
 Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requếtes de *Neo4j*).
+
 === Validité des Index
+#label("def2.4.2")
 #alinea L'intuition est la suivante : des valeurs manquantes sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de données graphe.\
 *Définition 2.4.2*\
-#alinea Soit $i: (N times E) -> "BITSET"$ des propriétés indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$.
+#alinea Soit $i: (N times E) -> "BITSET"$ des propriétés indexées, $forall o in (N union E)$ on vérifie $"NULL" in.not i(o) dot.o sigma(o, P)$. Cf. *@fig15[Figure]* en annexe.
 
 === Forme normale d'un Graphe de propriété
+#label("def2.4.3")
 Algorithme :\
 
 #let PG_3FN = [#algo(
@@ -429,19 +444,21 @@ Algorithme :\
   ],
 )
 
-#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de donnée.
+#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de donnée. Cf. *@fig16[Figure]* en annexe.
 
 == Unicité
 *Définition 2.5.0*\
 #alinea L'unicité mesure la redondance d'une base de données graphe.
 
 === Doublons d'arcs
+#label("def2.5.1")
 *Définition 2.5.1*\
-#alinea $forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$.
+#alinea $forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$. Cf. *@fig17[Figure]* en annexe.
 
 === Doublons de noeuds
+#label("def2.5.2")
 *Définition 2.5.2*\
-#alinea $forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$.\
+#alinea $forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$. Cf. *@fig18[Figure]* en annexe.\
 Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au-dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
 
 #pagebreak()
@@ -502,6 +519,179 @@ Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, 
 
 = Annexe
 #alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
+
+#fig-wrap[
+  #cmp(
+    Graph-211-1,
+    Graph-211-2,
+  )
+  #figh([Figure 1 : Exemple pour la _@def2.1.1[Définition]_], [#Example-211])
+] <fig1>
+
+#fig-wrap[
+  #cmp(
+    Graph-212-1,
+    Graph-212-2,
+  )
+  #figh([Figure 2 : Exemple pour la _@def2.1.2[Définition]_], [#Example-212])
+] <fig2>
+
+#pagebreak()
+
+#fig-wrap[
+  #cmp(
+    Graph-221-1,
+    Graph-221-2,
+  )
+  #figh([Figure 3 : Exemple pour la _@def2.2.1[Définition]_], [#Example-221])
+] <fig3>
+
+#fig-wrap[
+  #cmp(
+    Graph-222-1,
+    Graph-222-2,
+  )
+  #figh([Figure 4 : Exemple pour la _@def2.2.2[Définition]_], [#Example-222])
+] <fig4>
+
+#fig-wrap[
+  #cmp(
+    Graph-223-1,
+    Graph-223-2,
+  )
+  #figh([Figure 5 : Exemple pour la _@def2.2.3[Définition]_], [#Example-223])
+] <fig5>
+
+
+#pagebreak()
+#fig-wrap[
+  #cmp(
+    Graph-224-1,
+    Graph-224-2,
+  )
+  #figh([Figure 6 : Exemple pour la _@def2.2.4[Définition]_], [#Example-224])
+] <fig6>
+
+
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
+    _Token_ similaires ("OUT:STUDY_AT:University", "OUT:COMES_FROM:City").\
+    On observe deux ensembles d'étiquettes avec une faible similarité, paradoxalement à la forte similarité des _Token_ de ces noeuds.
+    #v(5pt)
+    #Graph-225-1
+  ]
+
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: sp-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: sp-s, weight: "bold")[⊖ Suggestion SPLIT]\
+    Étiquettes identiques (:Person).\
+    On observe des _Token_ différents pour des noeuds partageant le même ensemble d'étiquettes.
+    #text(style: "italic")[\ ]
+    #text(style: "italic")[\ ]
+    #v(5pt)
+    #Graph-225-2
+  ]
+  #figh([Figure 7 : Exemple pour la _@def2.2.5[Définition]_], [], display_desc: false)
+] <fig7>
+
+#fig-wrap[
+  #cmp(
+    Graph-231-1,
+    Graph-231-2,
+  )
+  #figh([Figure 8 : Exemple pour la _@def2.3.1[Définition]_], [#Example-231])
+] <fig8>
+
+#fig-wrap[
+  #cmp(
+    Graph-232-1,
+    Graph-232-2,
+  )
+  #figh([Figure 9 : Exemple pour la _@def2.3.2[Définition]_], [#Example-232])
+] <fig9>
+
+#fig-wrap[
+  #cmp(
+    Graph-233-1,
+    Graph-233-2,
+  )
+  #figh([Figure 10 : Exemple pour la _@def2.3.3[Définition]_], [#Example-233])
+] <fig10>
+
+
+#fig-wrap[
+  #cmp(
+    Graph-234-1,
+    Graph-234-2,
+  )
+  #figh([Figure 11 : Exemple pour la _@def2.3.4[Définition]_], [#Example-234])
+] <fig11>
+
+#fig-wrap[
+  #cmp(
+    Graph-241-1,
+    Graph-241-2,
+  )
+  #figh([Figure 12 : Exemple pour la _@def2.4.1[Définition 1 de]_], [#Example-241a])
+] <fig12>
+
+#fig-wrap[
+  #cmp(
+    Graph-241-3,
+    Graph-241-4,
+  )
+  #figh([Figure 13 : Exemple pour la _@def2.4.1[Définition 2 de]_], [#Example-241b])
+] <fig13>
+
+
+#pagebreak()
+#fig-wrap[
+  #cmp(
+    Graph-241-5,
+    Graph-241-6,
+  )
+  #figh([Figure 14 : Exemple pour la _@def2.4.1[Définition 3 de]_], [#Example-241c])
+] <fig14>
+
+#fig-wrap[
+  #cmp(
+    Graph-242-1,
+    Graph-242-2,
+  )
+  #figh([Figure 15 : Exemple pour la _@def2.4.2[Définition]_], [#Example-242])
+] <fig15>
+
+#pagebreak()
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: err-s, thickness: 0.5pt), radius: 3pt)[
+    #text(size: 7.5pt, fill: err-s, weight: "bold")[✗ Non normalisé]
+    #v(5pt)
+    #Graph-243-2
+  ]
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: ok-s, thickness: 0.5pt), radius: 3pt)[
+    #text(size: 7.5pt, fill: ok-s, weight: "bold")[✓ Normalisé (3NF)]
+    #v(5pt)
+    #Graph-243-1
+  ]
+  #figh([Figure 16 : Exemple pour la _@def2.4.3[Définition]_], [], display_desc: false)
+] <fig16>
+
+#fig-wrap[
+  #cmp(
+    Graph-251-1,
+    Graph-251-2,
+  )
+  #figh([Figure 17 : Exemple pour la _@def2.5.1[Définition]_], [], display_desc: false)
+] <fig17>
+
+#fig-wrap[
+  #cmp(
+    Graph-252-1,
+    Graph-252-2,
+  )
+  #figh([Figure 18 : Exemple pour la _@def2.5.2[Définition]_], [], display_desc: false)
+] <fig18>
+
 
 // References
 #pagebreak()
