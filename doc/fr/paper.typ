@@ -280,7 +280,7 @@ On définit donc les algorithmes suivants :\
   if $"Similarité"_"Étiquettes" <= t_e$ do\
   #comment("[...]", inline: true)\
   #comment("Ligne 21 :", inline: true)\
-  if $"Similarité"_"Tokens" >= t_t$#i\
+  if $"Similarité"_"Tokens" <= t_t$#i\
   #comment("[...]", inline: true)\
   #comment("Ligne 25 :", inline: true)\
   $lambda(e) <- {"SPLIT"}$#d\
