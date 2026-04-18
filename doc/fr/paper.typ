@@ -466,7 +466,11 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 #alinea L'objectif du profilage d'une base de données graphe est d'avoir un tableau de bord sur la distribution des données. Cette section regroupe donc des indicateurs intéressants pour caractériser les données d'un graphe de propriété. Ces indicateurs ne constituent pas des éléments de qualité de données car la nature généraliste de ceux-ci ne saurait capturer les usages métier intrinsèques à une base de données graphe.
 == Complétude
 === Composants faiblement connectés
+*Définition 3.1.1*\
+#alinea Détection des composantes connexe du graphe avec l'algorithme *WCC*.
 === Composants fortement connectés
+*Définition 3.1.2*\
+#alinea Détection des composantes fortement connexe du graphe avec l'algorithme *SCC* (on ne consière ici que les chemins).
 == Conformité
 === Détection de types distincts pour des propriétés
 *Définition 3.2.1*\
@@ -481,12 +485,12 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 === Distribution des propriétés des arcs
 *Définition 3.3.3*\
 #alinea Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.\
-Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
+#alinea Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
 == Étiquetage
 === Détection d'anomalies par regroupement (clustering)
 *Définition 3.4.1*\
-// TODO : FIX ME
-#alinea Regroupement des noeuds de la base de donnée graphe à l'aide de l'algorithme *KNN*. La similarité des noeuds repose sur
+#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétées numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné.\
+#alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitué de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communeauté avec l'algorithme de *Louvain* seraient envisageable pour cet usage de profilage.
 == Lisibilité
 === Distribution du degré des noeuds
 *Définition 3.5.1*\
@@ -511,14 +515,14 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-#alinea *Neo4j* est une base de donnée graphe mature implémentant les concepts clés des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". Dans *Neo4j* l'ensemble des concepts est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
+#alinea *Neo4j* est une base de donnée graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
 == Méthodes de test
 
 = Questions ouvertes ?
 
 = Conclusion
-#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressant et adapté a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structuré de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des base de données graphe est un enjeu de taille du fait de la pluraité des usages de celles-ci.\
-#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être effectuées à l'aide d'un _DDL_) ou encore les formes normales d'une base de donnée graphe.
+#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressant et adapté a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structuré de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluraité des usages de celles-ci.\
+#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de donnée graphe.
 
 = Annexe
 #alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
@@ -538,8 +542,6 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   )
   #figh([Figure 2 : Exemple pour la _@def2.1.2[Définition]_], [#Example-212])
 ] <fig2>
-
-#pagebreak()
 
 #fig-wrap[
   #cmp(
@@ -565,8 +567,6 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   #figh([Figure 5 : Exemple pour la _@def2.2.3[Définition]_], [#Example-223])
 ] <fig5>
 
-
-#pagebreak()
 #fig-wrap[
   #cmp(
     Graph-224-1,
@@ -646,8 +646,6 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   #figh([Figure 13 : Exemple pour la _@def2.4.1[Définition 2 de]_], [#Example-241b])
 ] <fig13>
 
-
-#pagebreak()
 #fig-wrap[
   #cmp(
     Graph-241-5,
