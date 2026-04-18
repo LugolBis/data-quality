@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from models.enums import Degree
-from models.utils import format_label
+from models.utils import get_label
 from profiling.types import Eccentricity, MultiGraphEdges, NodeDegrees, Statistics
 from profiling.utils import _compute_statistics
 from utils.utils import logger, some
@@ -78,8 +78,8 @@ def check_multigraph_edges(session: Neo4jSession) -> list[MultiGraphEdges] | Non
     result: Result = session.run_query(query)
     df: pd.DataFrame = result.to_df()
 
-    df["labels_from"] = df["labels_from"].apply(format_label)
-    df["labels_to"] = df["labels_to"].apply(format_label)
+    df["labels_from"] = df["labels_from"].apply(get_label)
+    df["labels_to"] = df["labels_to"].apply(get_label)
 
     edges: list[MultiGraphEdges] = []
     for _idx, row in df.iterrows():
@@ -163,7 +163,7 @@ def _compute_node_degree(result: Result, degree: Degree) -> list[NodeDegrees] | 
     :rtype: list[NodeDegrees] | None
     """
     df: pd.DataFrame = result.to_df()
-    df["label"] = df["label"].apply(format_label)
+    df["label"] = df["label"].apply(get_label)
 
     df_aggregated: pd.DataFrame = pd.DataFrame(
         df.groupby("label", as_index=False)["degree"].agg(list),

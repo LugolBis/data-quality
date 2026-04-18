@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import streamlit as st
 from streamlit import session_state as app_st
 
-from models.utils import format_label
+from models.utils import get_label
 from ui.components.dynamic import _button, _static_score
 from ui.enums import WidgetState
 from ui.layout import _SECTIONS
@@ -46,7 +46,7 @@ def _cached_data() -> None:
         " COUNT(*) AS count, max(props) AS count_props"
     )
     df = session.run_query(query).to_df()
-    df["label"] = df["label"].apply(format_label)
+    df["label"] = df["label"].apply(get_label)
     app_st[_KEY_NODE] = df
 
     query = (

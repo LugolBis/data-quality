@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from models.enums import Entity
-from models.utils import format_label
+from models.utils import get_label
 from profiling.types import EntityProperties, EntityStats
 from utils.utils import logger
 
@@ -42,7 +42,7 @@ def distr_nodes_properties(session: Neo4jSession) -> list[EntityStats] | None:
     for label_tuple in labels_uniques:
         groupe: pd.DataFrame = df[df["Label_Combo"] == label_tuple]
         total_nodes: int = groupe["Nombre"].sum()
-        label_str: str = format_label(label_tuple)
+        label_str: str = get_label(label_tuple)
 
         properties: list[EntityProperties] = []
 

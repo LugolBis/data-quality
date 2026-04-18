@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, LiteralString
 
 from models.enums import WILDCARD, Entity
-from models.utils import build_match, format_label
+from models.utils import build_match, get_label
 from quality.types import MultivaluedDuplicate, NodeDuplicate, RelationshipDuplicate
 from utils.utils import logger, some
 
@@ -88,7 +88,7 @@ def duplicate_nodes(
         node_id_y: int = record.get("n2_id")
 
         if some(label) and some(node_id_x) and some(node_id_y):
-            label: str = format_label(label)
+            label: str = get_label(label)
             analysis.append(
                 NodeDuplicate(label, node_id_x, node_id_y),
             )

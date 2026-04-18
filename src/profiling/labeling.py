@@ -66,7 +66,6 @@ def detect_label_anomalies_by_features(
             f" {projection_config_str}) YIELD graphName"
         )
 
-        logger.info(gds_query)
         session.run_query(
             gds_query,  # ty:ignore[invalid-argument-type]
         )

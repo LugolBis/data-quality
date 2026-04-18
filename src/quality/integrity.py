@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from models.enums import Entity
-from models.utils import build_match, format_label
+from models.utils import build_match, get_label
 from quality.enums import Constraint
 from quality.types import ConstraintViolation, IndexViolation
 from utils.utils import logger, some
@@ -35,7 +35,7 @@ def check_index_violation(session: Neo4jSession) -> list[IndexViolation] | None:
     result: Result = session.run_query(query)
     df: pd.DataFrame = result.to_df()
 
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(get_label)
     df_exploded: pd.DataFrame = df.explode("properties")
 
     df_grouped: pd.DataFrame = pd.DataFrame(
@@ -98,7 +98,7 @@ def check_constraint_violation(
     df: pd.DataFrame = result.to_df()
 
     df["type"] = df["type"].apply(lambda x: x.split("_")[-1])
-    df["labelsOrTypes"] = df["labelsOrTypes"].apply(format_label)
+    df["labelsOrTypes"] = df["labelsOrTypes"].apply(get_label)
 
     violations: list[ConstraintViolation] = []
     for _idx, row in df.iterrows():

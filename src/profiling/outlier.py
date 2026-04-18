@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from models.utils import format_label
+from models.utils import get_label
 from profiling.types import (
     CentralityScore,
     LabelCentralityStats,
@@ -44,7 +44,7 @@ def detecter_outliers_numeriques(
 
     groups: dict[str, list] = defaultdict(list)
     for node in nodes:
-        label_key = format_label(node["Labels"])
+        label_key = get_label(node["Labels"])
         groups[label_key].append(node)
 
     detected_outliers: list[NumericalOutlier] = []
@@ -132,7 +132,7 @@ def measure_eigenvector_centrality(
             node = record["node"]
             score: float = float(record["score"])
 
-            labels: str = format_label(list(node.labels))
+            labels: str = get_label(list(node.labels))
 
             display_name: str = str(
                 node.get("name") or node.get("title") or "<Unnamed>",
@@ -199,7 +199,7 @@ def measure_average_centrality_by_label(
             avg_score: float = float(record["avgScore"])
             max_score: float = float(record["maxScore"])
 
-            label_str: str = format_label(raw_labels) if raw_labels else "UNLABELED"
+            label_str: str = get_label(raw_labels) if raw_labels else "UNLABELED"
 
             stats_list.append(
                 LabelCentralityStats(

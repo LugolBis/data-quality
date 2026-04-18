@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from models.enums import Entity
-from models.utils import build_match, format_label
+from models.utils import build_match, get_label
 from profiling.types import PairPropertiesType
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ def check_properties_type(session: Neo4jSession) -> list[PairPropertiesType] | N
         label: str
         match entity:
             case Entity.NODE:
-                label = format_label(row["label"])
+                label = get_label(row["label"])
             case Entity.RELATIONSHIP:
                 label = str(row["label"]).split(":")[-1].replace("`", "")
 
