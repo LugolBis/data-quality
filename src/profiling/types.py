@@ -87,7 +87,6 @@ class CircularComponentsReport:
 
 @dataclass(slots=True, frozen=True, eq=False)
 class AnomalyDetail:
-    entity_type: str
     similarity: float
     id1: str
     labels1: str
@@ -96,7 +95,7 @@ class AnomalyDetail:
 
     def __repr__(self) -> str:
         return (
-            f"[{self.entity_type}] Sim: {self.similarity:.4f} | "
+            f"Sim: {self.similarity:.4f} | "
             f"('{self.labels1}' id:{self.id1}) <---> ('{self.labels2}' id:{self.id2})"
         )
 

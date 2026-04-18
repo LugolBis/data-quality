@@ -102,14 +102,13 @@ def detect_label_anomalies_by_features(
         WHERE similarity >= {similarity_threshold}
           AND elementId(n1) < elementId(n2)
         WITH n1, n2, similarity, labels(n1) AS l1, labels(n2) AS l2
-        RETURN n1.__entity AS entity_type, l1 AS labels1, l2 AS labels2,
+        RETURN l1 AS labels1, l2 AS labels2,
             elementId(n1) AS id1, elementId(n2) AS id2, similarity
         ORDER BY similarity DESC
         """
         result: Result = session.run_query(knn_query)  # ty:ignore[invalid-argument-type]
 
         for record in result:
-            entity_type = record["entity_type"]
             similarity = float(record["similarity"])
             id1 = str(record["id1"])
             id2 = str(record["id2"])
@@ -126,7 +125,6 @@ def detect_label_anomalies_by_features(
 
             anomalies_list.append(
                 AnomalyDetail(
-                    entity_type=entity_type,
                     similarity=similarity,
                     id1=id1,
                     labels1=labels1_str,
@@ -138,6 +136,13 @@ def detect_label_anomalies_by_features(
     except Exception as error:
         logger.error(f"Feature Comparison Error: {error}")
         return None
+    finally:
+        try:
+            session.run_query(
+                f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName",
+            )
+        except Exception as cleanup_error:
+            logger.error(f"Failed during cleanup: {cleanup_error}")
 
     if len(anomalies_list) > 0:
         return [

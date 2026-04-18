@@ -484,6 +484,9 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
 == Étiquetage
 === Détection d'anomalies par regroupement (clustering)
+*Définition 3.4.1*\
+// TODO : FIX ME
+#alinea Regroupement des noeuds de la base de donnée graphe à l'aide de l'algorithme *KNN*. La similarité des noeuds repose sur
 == Lisibilité
 === Distribution du degré des noeuds
 *Définition 3.5.1*\
@@ -503,12 +506,12 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 === Analyse de l'influence transitive des noeuds
 *Définition 3.6.2*\
 #alinea L'influence transitive d'un noeud est déterminée en calculant sa centralité de vecteur propre (_Eigenvector Centrality_); qui est une mesure utilisée en théorie des graphes pour évaluer l'influence d'un noeud. Celle-ci est calculée en tenant compte du nombre de connexions d'un noeud et de l'importance des noeuds auxquels il est connecté.\
-Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, le cas échéant, ceux dont l’influence ne correspond pas au domaine modélisé.
+#alinea Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, le cas échéant, ceux dont l’influence ne correspond pas au domaine modélisé.
 === Analyse de l'influence transitive moyenne
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-#alinea *Neo4j* est une base de donnée graphe mature implémentant les oncepts clés des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". Dans *Neo4j* l'ensemble des concepts est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
+#alinea *Neo4j* est une base de donnée graphe mature implémentant les concepts clés des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". Dans *Neo4j* l'ensemble des concepts est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
 == Méthodes de test
 
 = Questions ouvertes ?
