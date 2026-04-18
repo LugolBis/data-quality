@@ -34,7 +34,7 @@ def get_label(iterable: Iterable[str]) -> str:
     This function is an extension of `format_label` that support `WILDCARD`.
     """
     label_set = set(iterable)
-    if WILDCARD in label_set:
+    if (WILDCARD in label_set) or (len(label_set) < 1):
         return WILDCARD
     return format_label(label_set)
 
