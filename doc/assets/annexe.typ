@@ -74,6 +74,13 @@
   v(40pt)
 }
 
+#let fig-wrap(body) = figure(
+  kind: "custom-fig",
+  supplement: "Figure",
+  caption: none,
+  body,
+)
+
 // TITLE
 #align(center)[
   #text(size: 13pt, weight: "bold")[
@@ -94,14 +101,14 @@
   myn((0, 0), (":Order", "id: C1", "total: 50€"), "vc1", ok-f, ok-s),
   myn((0.5, 1), (":Order", "id: C2", "total: 120€"), "vc2", ok-f, ok-s),
   myn((2, 0), (":Client", "id: U7", "name: \"Dupont\""), "vcl", neu-f, neu-s),
-  edge(<vc1>, <vcl>, "->", el[:ORDERED_BY]),
-  edge(<vc2>, <vcl>, "->", el[:ORDERED_BY]),
+  edge(<vc1>, <vcl>, "-|>", el[:ORDERED_BY]),
+  edge(<vc2>, <vcl>, "-|>", el[:ORDERED_BY]),
 ))
 #let Graph-211-2 = graf((
   myn((0, 0), (":Order", "id: C1", "total: 50€"), "kc1", err-f, err-s),
   myn((0, 1), (":Order", "id: C2", "total: 120€"), "kc2", ok-f, ok-s),
   myn((2, 1), (":Client", "id: U7", "name: \"Dupont\""), "kcl", neu-f, neu-s),
-  edge(<kc2>, <kcl>, "->", el[ORDERED_BY]),
+  edge(<kc2>, <kcl>, "-|>", el[ORDERED_BY]),
 ))
 
 #let Example-212 = [$(L_O, D_s, D_e) = ({"Author"}, {1, 2, 3}, {0})$]
@@ -111,15 +118,15 @@
   myn((0, 2), (":Author", "name: \"Hugo\""), "va2", ok-f, ok-s),
   myn((2, 0), (":Book", "title: \"Germinal\""), "vl1", neu-f, neu-s),
   myn((2, 2), (":Book", "title: \"Les Misérables\""), "vl2", neu-f, neu-s),
-  edge(<va1>, <vl1>, "->", el[WRITE]),
-  edge(<va2>, <vl2>, "->", el[WRITE]),
+  edge(<va1>, <vl1>, "-|>", el[WRITE]),
+  edge(<va2>, <vl2>, "-|>", el[WRITE]),
 ))
 
 #let Graph-212-2 = graf((
   myn((0, 0), (":Author", "name: \"Zola\""), "ka1", err-f, err-s),
   myn((0, 2), (":Author", "name: \"Hugo\""), "ka2", ok-f, ok-s),
   myn((2, 2), (":Book", "title: \"Les Misérables\""), "kl2", neu-f, neu-s),
-  edge(<ka2>, <kl2>, "->", el[WRITE]),
+  edge(<ka2>, <kl2>, "-|>", el[WRITE]),
 ))
 
 #let Example-221 = [$(O, L_O, X, "Regex") = (N, {"User"}, {"email"}, "\"/^[\w.]+\@[\w.]+\.[a-z]{2,}\"")$]
@@ -176,10 +183,10 @@
   myn((2, 0), (":Student", "name: \"Léa\""), "sm1", mg-f, mg-s),
   myn((2, 2), (":Apprentice", "surname: \"Tom\"", "age:18"), "sm2", mg-f, mg-s),
   myn((4, 1), (":University", "name: \"UVSQ\""), "smu", neu-f, neu-s),
-  edge(<sm1>, <c1>, "->", el[COMES_FROM]),
-  edge(<sm2>, <c2>, "->", el[COMES_FROM]),
-  edge(<sm1>, <smu>, "->", el[STUDY_AT]),
-  edge(<sm2>, <smu>, "->", el[STUDY_AT]),
+  edge(<sm1>, <c1>, "-|>", el[COMES_FROM]),
+  edge(<sm2>, <c2>, "-|>", el[COMES_FROM]),
+  edge(<sm1>, <smu>, "-|>", el[STUDY_AT]),
+  edge(<sm2>, <smu>, "-|>", el[STUDY_AT]),
   edge(<sm1>, <sm2>, "<->", el[MERGE ?], stroke: (paint: mg-s, dash: "dashed", thickness: 0.8pt)),
 ))
 
@@ -188,8 +195,8 @@
   myn((0, 0), (":Team", "name: \"R&D\""), "st1", neu-f, neu-s),
   myn((3.5, 0), (":Person", "name: \"Bob\""), "ss2", sp-f, sp-s),
   myn((5, 0), (":Product", "ref: \"P42\""), "st2", neu-f, neu-s),
-  edge(<ss1>, <st1>, "->", el[MANAGE]),
-  edge(<ss2>, <st2>, "->", el[BUY]),
+  edge(<ss1>, <st1>, "-|>", el[MANAGE]),
+  edge(<ss2>, <st2>, "-|>", el[BUY]),
   edge(<ss1>, <ss2>, "<->", el[SPLIT ?], stroke: (paint: sp-s, dash: "dashed", thickness: 0.8pt)),
 ))
 
@@ -205,7 +212,7 @@
   myn((2, 0), (":Adress", "postal_code: 75001", "city: \"Marseille\""), "n2", err-f, err-s),
 ))
 
-#let Example-232 = [$(O, L_O, C, X -> Y) = (N, {"Adress"}, ({"country"}, "France", =, emptyset), {"postal_code"} -> {"city"})$]
+#let Example-232 = [$(O, L_O, C, X -> Y) = (N, {"Adress"}, ({"country"}, "\"FR\"", =, emptyset), {"postal_code"} -> {"city"})$]
 
 #let Graph-232-1 = graf((
   myn((0, 0), (":Adress", "country: \"FR\"", "postal_code: 75001", "region: \"IDF\""), "n1", ok-f, ok-s),
@@ -222,13 +229,13 @@
 #let Graph-233-1 = graf((
   myn((0, 0), (":Movie", "title: \"Amélie\"", "language: \"FR\"", "VO: \"FR\""), "n1", ok-f, ok-s),
   myn((2, 0), (":Director", "name: \"Jeunet\""), "n2", neu-f, neu-s),
-  edge(<n1>, <n2>, "->", el[DIRECTED_BY]),
+  edge(<n1>, <n2>, "-|>", el[DIRECTED_BY]),
 ))
 
 #let Graph-233-2 = graf((
   myn((0, 0), (":Movie", "title: \"Amélie\"", "language: \"FR\"", "VO: \"EN\""), "n1", err-f, err-s),
   myn((2, 0), (":Director", "name: \"Jeunet\""), "n2", err-f, err-s),
-  edge(<n1>, <n2>, "->", el[DIRECTED_BY]),
+  edge(<n1>, <n2>, "-|>", el[DIRECTED_BY]),
 ))
 
 #let Example-234 = [$(R, B) = ("\"MATCH (n:Product) WHERE n.prix IS NULL\"", "False")$]
@@ -294,14 +301,14 @@
   myn((1, 1), (":Evt_Mgt", "name: \"No Socks\"", "company: \"Cactus\""), "n231", ok-f, ok-s),
   myn((3, 1), (":Evt_Detail", "name: \"No Socks\"", "venue: \"Vault\"", "date: 06/01"), "n22", ok-f, ok-s),
   myn((3, 0), (":Evt_Comp", "company: \"Cactus\"", "venue: \"Vault\"", "date: 06/01"), "n23", ok-f, ok-s),
-  edge(<n1>, <n2>, "->", el[ATTENDS]),
-  edge(<n1>, <n3>, "->", el[ATTENDS]),
-  edge(<n23>, <n2>, "->", el[_l_]),
-  edge(<n22>, <n2>, "->", el[_l_]),
-  edge(<n231>, <n2>, "->", el[_l_]),
-  edge(<n231>, <n3>, "->", el[_l_]),
-  edge(<n32>, <n3>, "->", el[_l_]),
-  edge(<n33>, <n3>, "->", el[_l_]),
+  edge(<n1>, <n2>, "-|>", el[ATTENDS]),
+  edge(<n1>, <n3>, "-|>", el[ATTENDS]),
+  edge(<n23>, <n2>, "-|>", el[_l_]),
+  edge(<n22>, <n2>, "-|>", el[_l_]),
+  edge(<n231>, <n2>, "-|>", el[_l_]),
+  edge(<n231>, <n3>, "-|>", el[_l_]),
+  edge(<n32>, <n3>, "-|>", el[_l_]),
+  edge(<n33>, <n3>, "-|>", el[_l_]),
 ))
 
 #let Graph-243-2 = graf((
@@ -320,21 +327,21 @@
     err-f,
     err-s,
   ),
-  edge(<n1>, <n2>, "->", el[ATTENDS]),
-  edge(<n1>, <n3>, "->", el[ATTENDS]),
+  edge(<n1>, <n2>, "-|>", el[ATTENDS]),
+  edge(<n1>, <n3>, "-|>", el[ATTENDS]),
 ))
 
 #let Graph-251-1 = graf((
   myn((0, 0), (":Person", "name: \"Alice\""), "n1", ok-f, ok-s),
   myn((2, 0), (":Movie", "title: \"Matrix\""), "n2", ok-f, ok-s),
-  edge(<n1>, <n2>, "->", el[AIME]),
+  edge(<n1>, <n2>, "-|>", el[AIME]),
 ))
 
 #let Graph-251-2 = graf((
   myn((0, 0), (":Person", "name: \"Alice\""), "n1", err-f, err-s),
   myn((2, 0), (":Movie", "title: \"Matrix\""), "n2", err-f, err-s),
-  edge(<n1>, <n2>, "->", el[AIME], bend: 18deg),
-  edge(<n1>, <n2>, "->", el[AIME], bend: -18deg),
+  edge(<n1>, <n2>, "-|>", el[AIME], bend: 18deg),
+  edge(<n1>, <n2>, "-|>", el[AIME], bend: -18deg),
 ))
 
 #let Graph-252-1 = graf((
