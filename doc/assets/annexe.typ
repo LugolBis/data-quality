@@ -64,12 +64,14 @@
 }
 
 // Definition figure header
-#let figh(title, desc) = {
+#let figh(title, desc, display_desc: true) = {
   v(5pt)
+  if display_desc {
+    desc
+    linebreak()
+  }
   text(weight: "bold")[#title]
-  linebreak()
-  desc
-  v(5pt)
+  v(40pt)
 }
 
 // TITLE
@@ -120,7 +122,7 @@
   edge(<ka2>, <kl2>, "->", el[WRITE]),
 ))
 
-#let Example-221 = [$(O, L_O, X, "Regex") = (N, {"User"}, {"email"}, "/^[\w.]+\@[\w.]+\.[a-z]{2,}")$]
+#let Example-221 = [$(O, L_O, X, "Regex") = (N, {"User"}, {"email"}, "\"/^[\w.]+\@[\w.]+\.[a-z]{2,}\"")$]
 
 #let Graph-221-1 = graf((
   myn((0, 0), (":User", "email: \"alice@mail.fr\""), "n1", ok-f, ok-s),
@@ -132,7 +134,7 @@
   myn((1.5, 0), (":User", "email: \"bob_mail\""), "n2", err-f, err-s),
 ))
 
-#let Example-222 = [$(O, L_O, X, "Regex") = (N, {"Event"}, {"date"}, "YYYY-MM-DD")$]
+#let Example-222 = [$(O, L_O, X, "Date"_"fmt") = (N, {"Event"}, {"date"}, "\"YYYY-MM-DD\"")$]
 
 #let Graph-222-1 = graf((
   myn((0, 0), (":Event", "name: \"Conférence\"", "date: \"2024-06-15\""), "n1", ok-f, ok-s),
@@ -203,11 +205,6 @@
   myn((2, 0), (":Adress", "postal_code: 75001", "city: \"Marseille\""), "n2", err-f, err-s),
 ))
 
-#cmp(
-  Graph-231-1,
-  Graph-231-2,
-)
-
 #let Example-232 = [$(O, L_O, C, X -> Y) = (N, {"Adress"}, ({"country"}, "France", =, emptyset), {"postal_code"} -> {"city"})$]
 
 #let Graph-232-1 = graf((
@@ -219,11 +216,6 @@
   myn((0, 0), (":Adress", "country: \"FR\"", "postal_code: 75001", "region: \"IDF\""), "n1", ok-f, ok-s),
   myn((1, 0), (":Adress", "country: \"FR\"", "postal_code: 75001", "region: \"PACA\""), "n2", err-f, err-s),
 ))
-
-#cmp(
-  Graph-232-1,
-  Graph-232-2,
-)
 
 #let Example-233 = [$(G_p, O, L_O, X -> Y) = (({:"Movie"})-[{:"DIRECTED_BY"}:1]->({:"Director"}), {N}, {"language"} -> {"VO"})$]
 
@@ -239,11 +231,6 @@
   edge(<n1>, <n2>, "->", el[DIRECTED_BY]),
 ))
 
-#cmp(
-  Graph-233-1,
-  Graph-233-2,
-)
-
 #let Example-234 = [$(R, B) = ("\"MATCH (n:Product) WHERE n.prix IS NULL\"", "False")$]
 
 #let Graph-234-1 = graf((
@@ -255,11 +242,6 @@
   myn((0, 0), (":Product", "ref: \"P01\"", "prix: 29.99"), "n1", ok-f, ok-s),
   myn((2, 0), (":Product", "ref: \"P02\""), "n2", err-f, err-s),
 ))
-
-#cmp(
-  Graph-234-1,
-  Graph-234-2,
-)
 
 #let Example-241a = [$(O, L_O, X) = (N, {"Person"}, {"id"})$]
 
@@ -273,11 +255,6 @@
   myn((2, 0), (":Person", "id: 1", "name: \"Bob\""), "n2", err-f, err-s),
 ))
 
-#cmp(
-  Graph-241-1,
-  Graph-241-2,
-)
-
 #let Example-241b = [$(O, L_O, X) = (N, {"Person"}, {"name"})$]
 
 #let Graph-241-3 = graf((
@@ -287,11 +264,6 @@
 #let Graph-241-4 = graf((
   myn((0, 0), (":Person", "age: 30"), "n1", err-f, err-s),
 ))
-
-#cmp(
-  Graph-241-3,
-  Graph-241-4,
-)
 
 #let Example-241c = [$(O, L_O, X, Y) = (N, {"Person"}, {"age"}, {"Integer"})$]
 
@@ -303,11 +275,6 @@
   myn((0, 0), (":Person", "name: \"Bob\"", "age: 17"), "n1", err-f, err-s),
 ))
 
-#cmp(
-  Graph-241-5,
-  Graph-241-6,
-)
-
 #let Example-242 = [$(O, L_O, "Index", X) = (N, {"User"}, {"email"}, {"email"})$]
 
 #let Graph-242-1 = graf((
@@ -315,23 +282,18 @@
 ))
 
 #let Graph-242-2 = graf((
-  myn((0, 0), (":User", "name: \"Bob\""), "n1", ok-f, ok-s),
+  myn((0, 0), (":User", "name: \"Bob\""), "n1", err-f, err-s),
 ))
 
-#cmp(
-  Graph-242-1,
-  Graph-242-2,
-)
-
 #let Graph-243-1 = graf((
-  myn((0, 4), (":Person", "name: \"Neo\""), "n1", neu-f, neu-s),
-  myn((1, 7), ([:Event\ :Confimed],), "n3", ok-f, ok-s),
-  myn((1, 2), (":Event",), "n2", ok-f, ok-s),
-  myn((6, 10), (":Evt_Comp", "company: \"Cactus\"", "venue: \"Vault\"", "date: 13/07"), "n33", ok-f, ok-s),
-  myn((6, 7), (":Evt_Detail", "name: \"No Socks\"", "venue: \"Vault\"", "date: 13/07"), "n32", ok-f, ok-s),
-  myn((6, 4), (":Evt_Mgt", "name: \"No Socks\"", "company: \"Cactus\""), "n231", ok-f, ok-s),
-  myn((6, 2), (":Evt_Detail", "name: \"No Socks\"", "venue: \"Vault\"", "date: 06/01"), "n22", ok-f, ok-s),
-  myn((6, 0), (":Evt_Comp", "company: \"Cactus\"", "venue: \"Vault\"", "date: 06/01"), "n23", ok-f, ok-s),
+  myn((0, 1), (":Person", "name: \"Neo\""), "n1", neu-f, neu-s),
+  myn((1, 3), ([:Event\ :Confimed],), "n3", ok-f, ok-s),
+  myn((1, 0), (":Event",), "n2", ok-f, ok-s),
+  myn((3, 3), (":Evt_Comp", "company: \"Cactus\"", "venue: \"Vault\"", "date: 13/07"), "n33", ok-f, ok-s),
+  myn((3, 2), (":Evt_Detail", "name: \"No Socks\"", "venue: \"Vault\"", "date: 13/07"), "n32", ok-f, ok-s),
+  myn((1, 1), (":Evt_Mgt", "name: \"No Socks\"", "company: \"Cactus\""), "n231", ok-f, ok-s),
+  myn((3, 1), (":Evt_Detail", "name: \"No Socks\"", "venue: \"Vault\"", "date: 06/01"), "n22", ok-f, ok-s),
+  myn((3, 0), (":Evt_Comp", "company: \"Cactus\"", "venue: \"Vault\"", "date: 06/01"), "n23", ok-f, ok-s),
   edge(<n1>, <n2>, "->", el[ATTENDS]),
   edge(<n1>, <n3>, "->", el[ATTENDS]),
   edge(<n23>, <n2>, "->", el[_l_]),
@@ -343,16 +305,16 @@
 ))
 
 #let Graph-243-2 = graf((
-  myn((0, 1), (":Person", "name: \"Neo\""), "n1", neu-f, neu-s),
+  myn((3, 0), (":Person", "name: \"Neo\""), "n1", neu-f, neu-s),
   myn(
-    (1, 0),
+    (0, 0),
     (":Event", "name: \"No Socks\"", "company: \"Cactus\"", "venue: \"Vault\"", "date: 06/01"),
     "n2",
     err-f,
     err-s,
   ),
   myn(
-    (1, 2),
+    (6, 0),
     (":Event:Confirmed", "name: \"No Socks\"", "company: \"Cactus\"", "venue: \"Vault\"", "date: 13/07"),
     "n3",
     err-f,
@@ -361,20 +323,6 @@
   edge(<n1>, <n2>, "->", el[ATTENDS]),
   edge(<n1>, <n3>, "->", el[ATTENDS]),
 ))
-
-#block(width: 100%, inset: 8pt, fill: white, stroke: (paint: ok-s, thickness: 0.5pt), radius: 3pt)[
-  #text(size: 7.5pt, fill: ok-s, weight: "bold")[✓ Normalisé (3NF)]
-  #text(size: 7pt, style: "italic")[\ Chaque nœud ne contient que ses propres attributs]
-  #v(5pt)
-  #Graph-243-1
-],
-
-#block(width: 100%, inset: 8pt, fill: white, stroke: (paint: err-s, thickness: 0.5pt), radius: 3pt)[
-  #text(size: 7.5pt, fill: err-s, weight: "bold")[✗ Non normalisé]
-  #text(size: 7pt, style: "italic")[\ Dép. transitive : id → nameStudent dans :Registration]
-  #v(5pt)
-  #Graph-243-2
-]
 
 #let Graph-251-1 = graf((
   myn((0, 0), (":Person", "name: \"Alice\""), "n1", ok-f, ok-s),
@@ -389,11 +337,6 @@
   edge(<n1>, <n2>, "->", el[AIME], bend: -18deg),
 ))
 
-#cmp(
-  Graph-251-1,
-  Graph-251-2,
-)
-
 #let Graph-252-1 = graf((
   myn((0, 0), (":Person", "name: \"Alice\"", "email: \"a@x.fr\""), "n1", ok-f, ok-s),
   myn((2, 0), (":Person", "name: \"Bob\"", "email: \"b@x.fr\""), "n2", ok-f, ok-s),
@@ -403,8 +346,3 @@
   myn((0, 0), (":Person", "name: \"Alice\"", "email: \"a@x.fr\""), "n1", err-f, err-s),
   myn((2, 0), (":Person", "name: \"Alice\"", "email: \"a@x.fr\""), "n1", err-f, err-s),
 ))
-
-#cmp(
-  Graph-252-1,
-  Graph-252-2,
-)
