@@ -140,7 +140,7 @@
 #alinea L'intuition est la suivante : des noeuds similaires doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaires pour détecter les erreurs d'étiquetage. L'approche qui suit est inspirée d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
 + #alinea Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une paire de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
-  Serait traduit par "OUT:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
+  Serait traduit par "OU:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
 + #alinea Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexes par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
 + #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jaccard* pour calculer la similarité entre deux noeuds sur le critère des ensembles d'étiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = 1-(|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
   #alinea La similarité entre deux noeuds sur le critère des _Tokens_ est calculée avec la similarité *Monge-Elkan* (ME), tel qu'on a $forall n_1, n_2 in N^2$, $"ME"(n_1, n_2) = 1 / abs(sigma(n_1, {"Tokens"})) sum_(t_1 in sigma(n_1, {"Tokens"})) max_(t_2 in sigma(n_2, {"Tokens"})) ("simimarité_levenshtein"(t_1, t_2))$ (resp. $"ME"(n_2, n_1)$),
@@ -573,7 +573,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
     #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
-    _Token_ similaires ("OUT:STUDY_AT:University", "OUT:COMES_FROM:City").\
+    _Token_ similaires ("OU:STUDY_AT:University", "OU:COMES_FROM:City").\
     On observe deux ensembles d'étiquettes avec une faible similarité, paradoxalement à la forte similarité des _Token_ de ces noeuds.
     #v(5pt)
     #Graph-225-1
