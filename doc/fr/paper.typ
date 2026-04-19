@@ -95,7 +95,7 @@
 
 === Existence de composantes
 #label("def2.1.1")
-#alinea L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. De fait les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
+#alinea L'existence de composantes connexes ou fortement connexes est une méthode pour vérifier la complétude des données. En effet, les arcs modélisent une grande partie des relations entre les objets et sont porteurs d'un sens sémantique important.\
 #alinea Plus intuitivement vérifier l'existence de composantes entre des ensembles de noeuds et d'arcs permet par exemple d'exprimer des contraintes de chemins (resp. chaînes). Naturellement l'ajout de contraintes comme la longueur des chemins, l'appartenance d'un ensemble d'étiquettes à ceux-ci constituent de solides outils pour capturer un sens sémantique complexe.
 
 *Définition 2.1.1*\
@@ -148,7 +148,7 @@
 
 On définit donc les algorithmes suivants :\
 #alinea L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
-#alinea L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeud connexe représentant l'ensemble des _Token_ distinct générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque paire de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
+#alinea L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeuds connexes représentant l'ensemble des _Token_ distincts générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque paire de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
 
 #let Tokenization = [#algo(
   main-text-styles: (size: 11pt),
@@ -292,18 +292,18 @@ On définit donc les algorithmes suivants :\
   ],
 )
 
-#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée avec deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient présenter des erreurs d'étiquetage). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_, déterminant la création (ou non) d'un arc "Merge" / "Split".
+#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée avec deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les paires de noeuds qui pourraient présenter des erreurs d'étiquetage). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_, déterminant la création (ou non) d'un arc "Merge" / "Split".
 
 #Merge
 
-#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les pairs de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autres termes l'algorithme détecte les noeuds qui de par leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés). Cf. *@fig7[Figure]* en annexe.\
+#alinea L'algorithme _Merge_ détaillé ci-dessus permet donc de détecter toutes les paires de noeuds dont la similarité des étiquettes est $<$ au seuil $t_e$; et pour lesquelles la similarité des _Token_ est $>=$ au seuil $t_t$. En d'autres termes l'algorithme détecte les noeuds qui de par leur similarité de relations (_Token_), devraient avoir un ensemble d'étiquettes plus similaire (donc ils devraient être rassemblés). Cf. *@fig7[Figure]* en annexe.\
 \
 
 #grid(
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    #alinea Cet algorithme peut être aisément adapté pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensembles d'étiquettes similaires. Pour opérer les changements nécessaires il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
+    #alinea Cet algorithme peut être aisément adapté pour détecter l'inverse : "Split" désignant les paires de noeuds qui ne devraient pas avoir des ensembles d'étiquettes similaires. Pour opérer les changements nécessaires il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
   ],
   [
     #Split
@@ -461,10 +461,10 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 == Complétude
 === Composants faiblement connectés
 *Définition 3.1.1*\
-#alinea Détection des composantes connexe du graphe avec l'algorithme *WCC*.
+#alinea Détection des composantes connexes du graphe avec l'algorithme *WCC*.
 === Composants fortement connectés
 *Définition 3.1.2*\
-#alinea Détection des composantes fortement connexe du graphe avec l'algorithme *SCC* (on ne consière ici que les chemins).
+#alinea Détection des composantes fortement connexes du graphe avec l'algorithme *SCC* (on ne considère ici que les chemins).
 == Conformité
 === Détection de types distincts pour des propriétés
 *Définition 3.2.1*\
@@ -483,15 +483,15 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 == Étiquetage
 === Détection d'anomalies par regroupement (clustering)
 *Définition 3.4.1*\
-#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétées numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à ceux des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
-#alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitué de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communeauté avec l'algorithme de *Louvain* seraient envisageable pour cet usage de profilage.
+#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à ceux des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
+#alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitué de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageable pour cet usage de profilage.
 == Lisibilité
 === Distribution du degré des noeuds
 *Définition 3.5.1*\
 #alinea Analyse de la distribution des degrés (entrant et sortant), des noeuds regroupés selon leur ensemble d'étiquettes.
 === Détection des arcs formant un multi-graphe
 *Définition 3.5.2*\
-#alinea Détection d'arcs partageant le même noeud source et le même noeud destination, formant ainsi un multi-graphe. Un tableau de bord concis sur l'ensemble d'étiquettes du noeud source et celui du noeud destination, ainsi que l'ensemble des étiquettes des arcs est construit à partit de cette détection.
+#alinea Détection d'arcs partageant le même noeud source et le même noeud destination, formant ainsi un multi-graphe. Un tableau de bord concis sur l'ensemble d'étiquettes du noeud source et celui du noeud destination, ainsi que l'ensemble des étiquettes des arcs est construit à partir de cette détection.
 === Analyse de l'excentricité du graphe
 *Définition 3.5.3*\
 #alinea Analyse de l'excentricité du graphe : calcul du rayon et du diamètre du graphe.\
@@ -509,14 +509,14 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-#alinea *Neo4j* est une base de donnée graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
+#alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
 == Méthodes de test
 
 = Questions ouvertes ?
 
 = Conclusion
-#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressant et adapté a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structuré de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluraité des usages de celles-ci.\
-#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de donnée graphe.
+#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
+#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
 
 = Annexe
 #alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
