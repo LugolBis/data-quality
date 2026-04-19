@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 _TOKENIZATION: str = """
     MATCH (n)-[r]-(m)
     WITH n,
-    CASE WHEN startNode(r) = n THEN 'OUT:' ELSE 'IN:' END
+    CASE WHEN startNode(r) = n THEN 'OU:' ELSE 'IN:' END
     + type(r) + ':' +
     CASE size(labels(m)) WHEN 0 THEN 'UNLABELLED'
         ELSE apoc.text.join(apoc.coll.sort(labels(m)), '')
@@ -111,7 +111,7 @@ _ANALYSIS: str = """
            SET c.labels_sim = labels_sim,
                c.sim_t      = sim_t',
 
-        { batchSize: $batch_size, parallel: false }
+        { batchSize: $batch_size, parallel: true }
     )
     YIELD batches, total, errorMessages
     RETURN batches, total, errorMessages;

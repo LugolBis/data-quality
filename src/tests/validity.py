@@ -62,7 +62,7 @@ def main(session: Neo4jSession) -> None:
         condition,
     )
 
-    lblg_clusters = labeling_clustering(session, 0.4, 0.64, 0.7, 0.4, 125)
+    lblg_clusters = labeling_clustering(session, 0.4, 0.60, 0.7, 0.4, 50)
 
     types: list[PairPropertiesType] | None = check_properties_type(session)
 
