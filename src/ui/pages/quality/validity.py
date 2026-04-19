@@ -7,6 +7,7 @@ import streamlit as st
 from models.enums import Entity
 from models.utils import get_label
 from quality.enums import DateFmt, SetRelation
+from quality.labeling import labeling_clustering
 from quality.validity import (
     check_date_format,
     check_string_format,
@@ -14,7 +15,7 @@ from quality.validity import (
     numerical_interval,
 )
 from scoring.validity import invalid_ratio
-from ui.components.dynamic import _editor_analyze, _score_call
+from ui.components.dynamic import _analyze_call, _editor_analyze, _score_call
 from ui.pages.quality.configs import (
     _COL_ENTITY,
     _COL_LABELS,
@@ -26,7 +27,7 @@ from ui.pages.quality.utils import (
     _CONDITIONAL_DF_TEMPLATE,
     _generate_condition,
 )
-from ui.utils import _lazy_func
+from ui.utils import _SIMILARITY_SLIDER, _lazy_func
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
 from streamlit import session_state as app_st
 
-from ui.components.analysis import _dataframe_analysis
+from ui.components.analysis import _dataframe_analysis, _dynamic_analysis
 
 _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
     "VSFMT_score": _lazy_func(
@@ -45,6 +46,17 @@ _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
         func=invalid_ratio,
         key="VSFMT",
         lazy_func_args={"df": "VSFMT_res"},
+    ),
+    "VLBC": _lazy_func(
+        _analyze_call,
+        func=labeling_clustering,
+        key="VLBC",
+        lazy_func_args={
+            "tsl_merge": "_v_tsl_merge",
+            "tsk_merge": "_v_tsk_merge",
+            "tsl_split": "_v_tsl_split",
+            "tsk_split": "_v_tsl_split",
+        },
     ),
 }
 _CONDITION_EDITOR_KEY: str = "_ql_validity_condition_editor_key"
@@ -57,9 +69,11 @@ def render() -> None:
     st.divider()
     _date_render()
     st.divider()
+    _interval_render()
+    st.divider()
     _lblg_set_render()
     st.divider()
-    _interval_render()
+    _lblg_cluster_render()
 
 
 def _headers() -> None:
@@ -383,4 +397,49 @@ def _interval_render() -> None:
         df_template=df_template,
         editor_config=editor_config,
         lazy_renders=[lazy_render],
+    )
+
+
+def _lblg_cluster_render() -> None:
+    lazy_render1: Callable[[], Any] = _lazy_func(
+        st.select_slider,
+        label="Select label similarity threshold for Merge :",
+        options=_SIMILARITY_SLIDER,
+        value=0.40,
+        key="_v_tsl_merge",
+    )
+
+    lazy_render2: Callable[[], Any] = _lazy_func(
+        st.select_slider,
+        label="Select token similarity threshold for Merge :",
+        options=_SIMILARITY_SLIDER,
+        value=0.60,
+        key="_v_tsk_merge",
+    )
+
+    lazy_render3: Callable[[], Any] = _lazy_func(
+        st.select_slider,
+        label="Select label similarity threshold for Split :",
+        options=_SIMILARITY_SLIDER,
+        value=0.70,
+        key="_v_tsl_split",
+    )
+
+    lazy_render4: Callable[[], Any] = _lazy_func(
+        st.select_slider,
+        label="Select token similarity threshold for Split :",
+        options=_SIMILARITY_SLIDER,
+        value=0.40,
+        key="_v_tsk_split",
+    )
+
+    _dynamic_analysis(
+        "Analysis of **Nodes** labeling.",
+        (
+            "Make suggestion of action to improved the labeling of nodes."
+            "'Merge' stands for nodes who should have label set more similar "
+            "(and 'Split' for the opposite)."
+        ),
+        "VLBC",
+        lazy_renders=[lazy_render1, lazy_render2, lazy_render3, lazy_render4],
     )

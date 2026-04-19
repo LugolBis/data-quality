@@ -220,10 +220,10 @@ def _split(
 
 def labeling_clustering(
     session: Neo4jSession,
-    tsl_merge: float,
-    tsk_merge: float,
-    tsl_split: float,
-    tsk_split: float,
+    tsl_merge: float = 0.40,
+    tsk_merge: float = 0.60,
+    tsl_split: float = 0.70,
+    tsk_split: float = 0.40,
     batch_size: int = 150,
 ) -> list[LabelErr] | None:
     """
