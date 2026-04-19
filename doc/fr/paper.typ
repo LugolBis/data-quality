@@ -142,8 +142,9 @@
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
   Serait traduit par "OUT:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
 + #alinea Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexes par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
-+ #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jaccard* pour calculer la similarité entre deux noeuds sur le critère des ensembles d'étiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = (|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
-  On définit $"tokens": N -> "SET"("Tokens")$ une fonction partielle qui associe à un noeud son ensemble de _Tokens_. La similarité entre deux noeuds sur le critère des _Tokens_ est calculée comme suit, $forall n_1, n_2 in N^2$, $"Similarité"_"Tokens" = (sum_(i = 0)^(|"tokens"(n_1)|) sum_(j = 0)^(|"tokens"(n_2)|) "Similarité_Levenshtein"("tokens"(n_1)_i, "tokens"(n_2)_j))/(|"tokens"(n_1)| + |"tokens"(n_2)|)$.
++ #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jaccard* pour calculer la similarité entre deux noeuds sur le critère des ensembles d'étiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = 1-(|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
+  #alinea La similarité entre deux noeuds sur le critère des _Tokens_ est calculée avec la similarité *Monge-Elkan* (ME), tel qu'on a $forall n_1, n_2 in N^2$, $"ME"(n_1, n_2) = 1 / abs(sigma(n_1, {"Tokens"})) sum_(t_1 in sigma(n_1, {"Tokens"})) max_(t_2 in sigma(n_2, {"Tokens"})) ("simimarité_levenshtein"(t_1, t_2))$ (resp. $"ME"(n_2, n_1)$),
+  tel que $"Similarité"_"Tokens" = ("ME"(n_1, n_2) + "ME"(n_2, n_1))/2$. La similarité des _Tokens_ pourrait aussi être calculée à l'aide de l'algorithme *Fuzzy Jaccard* (moins précis) ou encore de l'algorithme de *Kuhn-Munkres* (optimal mais en $O(|N|^3)$).
 
 On définit donc les algorithmes suivants :\
 #alinea L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
@@ -167,7 +168,7 @@ On définit donc les algorithmes suivants :\
   #comment("Étape - 1", inline: true)\
   for $e$ in $E$ do#i\
   $(n_s, n_d) <- rho(e)$\
-  $c_s <-$ 'OUT:' $+ lambda(e) +$ ':' $+ lambda(n_d)$\
+  $c_s <-$ 'OU:' $+ lambda(e) +$ ':' $+ lambda(n_d)$\
   $c_d <-$ 'IN:' $+ lambda(e) +$ ':' $+ lambda(n_s)$\
   $t_s <- sigma(n_s, {"Tokens"})$\
   $t_d <- sigma(n_d, {"Tokens"})$\
@@ -197,7 +198,7 @@ On définit donc les algorithmes suivants :\
   $"tokens" <- sigma(n, {"Tokens"})$\
   if $"tokens" eq.not "NULL"$ do#i\
   $"vocab" <- "vocab" union "tokens"$#d#d\
-  for $"idx"$ in $[0;|"tokens"|-1]$ do#i\
+  for $"idx"$ in $[0;|"tokens"| -1]$ do#i\
   $n <- "newNode"()$\
   $N <- N union {n}$\
   $lambda(n) <- {"TOKEN"}$\
@@ -242,20 +243,13 @@ On définit donc les algorithmes suivants :\
   skip this iteration;#d\
   end\
   \
-  $"Similarité"_"Tokens" <- 0.0$\
-  for $"token"_1$ in $sigma(n_1, {"Tokens"})$ do#i\
-  $"nt"_1 <- n in N "where" lambda(n) = {"Token"} and sigma(n, {"VAL"}) = "token"_1$\
-  for $"token"_2$ in $sigma(n_2, {"Tokens"})$ do#i\
-  $"nt"_2 <- n in N "where" lambda(n) = {"Token"} and sigma(n, {"VAL"}) = "token"_2$\
-  $e <- e in E "where" rho(e) in {("nt"_1, "nt"_2), ("nt"_2, "nt"_1)}$\
-  $"Similarité"_"Tokens" <- "Similarité"_"Tokens" + sigma(e, {"SCORE"})$#d#d\
-  end\
-  $"Similarité"_"Tokens" <- "Similarité"_"Tokens" + sigma(e, {"SCORE"})$\
+  $"Similarité"_"Tokens" <- ("ME"(n_1, n_2), "ME"(n_2, n_1))/2$\
   if $"Similarité"_"Tokens" >= t_t$ do#i\
   $e <- "newEdge"()$\
   $E <- E union {e}$\
   $rho(e) <- (n_1, n_2)$\
-  $lambda(e) <- {"MERGE"}$#d#d\
+  $lambda(e) <- {"MERGE"}$#d\
+  end#d\
   end#d\
   end
 ]]
@@ -291,14 +285,14 @@ On définit donc les algorithmes suivants :\
   gutter: 1em,
   [
     #Tokenization
-    #alinea L'algorithme _Tokenization_ a une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens_ a une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = |N| + |E|$).
+    #alinea L'algorithme _Tokenization_ a une complexité temporelle linéaire en $O(n)$ (avec $n = |E|$) et une complexité spatiale dans le pire cas (très rare) en $O(n times m)$ (avec $n = |N|$ et $m = |L|$). L'algorithme _CreateTokens_ a une complexité temporelle polynomiale en $O(n^2)$ (avec $n = |N|$) et une complexité spatiale dans le pire cas (très rare) en $O(n^2)$ (avec $n = 2|E|$).
   ],
   [
     #CreateTokens
   ],
 )
 
-#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée à partir de deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient être intéressantes). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_ et qui à un impact direct sur la création ou non d'un arc "Merge" / "Split".
+#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée avec deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les pairs de noeuds qui pourraient présenter des erreurs d'étiquetage). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_, déterminant la création (ou non) d'un arc "Merge" / "Split".
 
 #Merge
 
@@ -309,7 +303,7 @@ On définit donc les algorithmes suivants :\
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    #alinea Cet algorithme peut être aisément modifié pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensembles d'étiquettes aussi similaires. Pour opérer les changements nécessaires il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
+    #alinea Cet algorithme peut être aisément adapté pour détecter l'inverse : "Split" désignant les pairs de noeuds qui ne devraient pas avoir des ensembles d'étiquettes similaires. Pour opérer les changements nécessaires il suffirait de modifier comme suit les lignes [8, 21, 25] de l'algorithme _Merge_.
   ],
   [
     #Split
@@ -489,7 +483,7 @@ Cette définition pourrait être assouplie en prenant aussi en compte les arcs d
 == Étiquetage
 === Détection d'anomalies par regroupement (clustering)
 *Définition 3.4.1*\
-#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétées numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné.\
+#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétées numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à ceux des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
 #alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitué de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communeauté avec l'algorithme de *Louvain* seraient envisageable pour cet usage de profilage.
 == Lisibilité
 === Distribution du degré des noeuds
