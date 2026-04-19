@@ -201,4 +201,8 @@ class LabelErr:
     node_id_y: str
 
     def __str__(self) -> str:
-        return f"{self.suggestion} | {self.node_id_x} - {self.node_id_y}"
+        return (
+            f"{self.suggestion} | {self.node_id_x} - {self.node_id_y}"
+            f"\n\tSim_labels = {self.labels_similarity} |"
+            f" Sim_tokens = {self.tokens_similarity}"
+        )
