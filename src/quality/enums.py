@@ -59,3 +59,6 @@ class SetRelation(str, Enum):
 class LabelAction(Enum):
     SPLIT = "SPLIT"
     MERGE = "MERGE"
+
+    def __str__(self) -> str:
+        return self.value
