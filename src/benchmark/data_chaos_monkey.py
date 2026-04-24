@@ -109,37 +109,48 @@ def degrade_label_accuracy(session, seed: int):
     """
     fetch_labels_query = """
     CALL db.labels() YIELD label 
-    WHERE NOT label STARTS WITH 'Corrupted_' 
     RETURN label
     """
     labels_result = session.run_query(fetch_labels_query)
     labels = [record["label"] for record in labels_result]
     
+    if len(labels) < 2:
+        print("[-] Label accuracy degradation: Not enough unique labels in the database to swap.")
+        return
+        
     total_modified = 0
     
     for label in labels:
+        other_labels = [l for l in labels if l != label]
+        
         query = f"""
         MATCH (n:`{label}`)
-        WITH n, apoc.util.md5([toString(id(n)), toString($seed), $label_str, "label_degrade"]) AS hash
+        WITH n, apoc.util.md5([elementId(n), toString($seed), $label_str, "label_degrade"]) AS hash
         WHERE substring(hash, 0, 4) < '051e'
-        WITH n
-        CALL apoc.create.addLabels(n, ['Corrupted_' + $label_str]) YIELD node
-        CALL apoc.create.removeLabels(node, [$label_str]) YIELD node AS finalNode
-        RETURN count(finalNode) AS modified_count
+        WITH n, (apoc.text.charAt(hash, 4) + apoc.text.charAt(hash, 5)) % size($other_labels) AS random_idx
+        WITH n, $other_labels[random_idx] AS wrong_label
+        SET n:$([wrong_label])
+        REMOVE n:$([$label_str])
+        
+        RETURN count(n) AS modified_count
         """
         
-        result = session.run_query(query, parameters={"seed": seed, "label_str": label})
+        result = session.run_query(query, parameters={
+            "seed": seed, 
+            "label_str": label,
+            "other_labels": other_labels
+        })
         record = result.single()
         
         count = record["modified_count"] if record else 0
         if count > 0:
-            print(f"[-] Label accuracy degradation (Seed {seed}): Changed {count} '{label}' nodes to 'Corrupted_{label}'.")
+            print(f"[-] Label accuracy degradation (Seed {seed}): Changed {count} '{label}' nodes into other random existing labels.")
             total_modified += count
             
     if total_modified > 0:
-        print(f"    -> Total label corruptions: {total_modified} nodes affected.")
+        print(f"    -> Total label corruptions: {total_modified} nodes assigned wrong labels.")
     else:
-        print(f"[-] Label accuracy degradation (Seed {seed}): No nodes modified (dataset might be too small for a 2% hit rate).")
+        print(f"[-] Label accuracy degradation (Seed {seed}): No nodes modified.")
 
 def run_all_degradations(session, seed: int = 42):
     """
