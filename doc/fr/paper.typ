@@ -67,10 +67,12 @@
 ]
 
 #pagebreak()
+#set par(leading: 0.55em)
 #outline(
   title: "Table des matières",
   depth: 3,
 )
+#set par(leading: 0.65em)
 #pagebreak()
 
 #alinea *Résumé* : L'essor du numérique et la multiplication des sources de données hétérogènes ont conduit à une adoption croissante des bases de données orientées graphes, et plus particulièrement du modèle de graphe de propriétés (Property Graph). Ce modèle se distingue par sa richesse sémantique et sa flexibilité structurelle : en permettant d'associer à chaque noeud et à chaque arc un ensemble d'étiquettes et de propriétés. Cela offre une représentation naturelle et expressive des entités et de leurs relations au sein de domaines variés tels que les réseaux sociaux, la bioinformatique, la gestion de connaissances à grande échelle ou encore les systèmes d'intelligence artificielle.\
@@ -454,7 +456,7 @@ Algorithme :\
 #label("def2.5.2")
 *Définition 2.5.2*\
 #alinea $forall n_1, n_2 in N^2$, $n_1$ et $n_2$ sont des doublons si et seulement si : $lambda(n_1) = lambda(n_2)$ et $sigma(n_1, P) = sigma(n_2, P)$. Cf. *@fig18[Figure]* en annexe.\
-Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au-dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
+#alinea Cette définition pourrait être assouplie en prenant aussi en compte les arcs des noeuds et ainsi stipuler qu'au-dessus d'un certain seuil d'arcs en commun, ceux-ci sont considérés comme des doublons.
 
 #pagebreak()
 = Profilage d'un Graphe de Propriété
@@ -520,6 +522,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
 #alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
 
+#pagebreak()
 = Annexe
 #alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
 
@@ -642,6 +645,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   #figh([Figure 13 : Exemple pour la _@def2.4.1[Définition 2 de]_], [#Example-241b])
 ] <fig13>
 
+#pagebreak()
 #fig-wrap[
   #cmp(
     Graph-241-5,
