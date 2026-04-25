@@ -73,7 +73,8 @@
 )
 #pagebreak()
 
-*Abstract*: L'état de l'art des *Graphes de Propriété*...
+#alinea *Résumé* : L'essor du numérique et la multiplication des sources de données hétérogènes ont conduit à une adoption croissante des bases de données orientées graphes, et plus particulièrement du modèle de graphe de propriétés (Property Graph). Ce modèle se distingue par sa richesse sémantique et sa flexibilité structurelle : en permettant d'associer à chaque noeud et à chaque arc un ensemble d'étiquettes et de propriétés. Cela offre une représentation naturelle et expressive des entités et de leurs relations au sein de domaines variés tels que les réseaux sociaux, la bioinformatique, la gestion de connaissances à grande échelle ou encore les systèmes d'intelligence artificielle.\
+#alinea Bien que l'état de l'art et la standardisation des graphes de propriété a beaucoup évolué, les aspects de qualité de données demeurent largement inexplorés. Or, à l'instar des environnements de données massives (_Big Data_), la valeur extraite d'une base de données graphe repose fondamentalement sur la fiabilité, la cohérence, la complétude et l'exactitude des données qu'elle contient. La présente étude propose d'analyser et d'adapter les cadres existants d'évaluation de la qualité des données au contexte spécifique des graphes de propriétés, en tenant compte des contraintes propres à ce modèle — notamment l'absence de schéma rigide, la multiplicité des sources et la diversité des types de données. Nous formulons un ensemble de dimensions et d'indicateurs de qualité pertinents pour ce contexte, et discutons des méthodes d'évaluation envisageables, posant ainsi les bases d'un processus d'assurance qualité adapté aux bases de données graphes.
 
 = Introduction
 #label("def1")
@@ -511,11 +512,12 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 = Implémentation - Neo4j
 #alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
 == Méthodes de test
+#alinea Dans l'objectif d'évaluer la pertinence des critères de qualité de données que nous avons établit, nous avons testé ceux-ci sur diverses bases de données graphe. Celles-ci comportent des base de données graphe dont la qualité est irréprochable comme les bases de données utilisées dans la documentation de *Neo4j*. Bien sûr nous avions besoin de données chaotique, moins synthétique, nous avons donc utilisé des bases de données graphe résultant de la transformation de bases de données de connaissances (comme _YAGO_) et dégradées les données.
 
 = Questions ouvertes ?
 
 = Conclusion
-#alinea Au terme de cette études de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
+#alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
 #alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
 
 = Annexe
