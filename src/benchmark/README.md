@@ -19,23 +19,7 @@ You can use the following bash script to automatically download and extract the 
 *Requirements: `wget` and `p7zip` (`7z`) must be installed on your system.*
 
 ```bash
-#!/bin/bash
-
-URL="[https://yago-knowledge.org/data/yago3/yago-3.0.2-native.7z](https://yago-knowledge.org/data/yago3/yago-3.0.2-native.7z)"
-ARCHIVE_NAME="yago-3.0.2-native.7z"
-TARGET_FILE="yagoDateFacts.tsv"
-
-echo "📥 Downloading YAGO3 data (this may take a while depending on your connection)..."
-wget -O "$ARCHIVE_NAME" "$URL"
-
-echo "📦 Extracting $TARGET_FILE from the archive..."
-# Extracts only the specific target file, ignoring the full folder structure (-r searches recursively)
-7z e "$ARCHIVE_NAME" "*$TARGET_FILE" -r
-
-echo "🧹 Cleaning up the archive..."
-rm "$ARCHIVE_NAME"
-
-echo "✅ Done! $TARGET_FILE is ready to use."
+chmod +x yago.sh && ./yago.sh 
 ```
 
 ---

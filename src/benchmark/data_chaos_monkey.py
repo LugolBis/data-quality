@@ -1,6 +1,9 @@
 import os
+
 from dotenv import load_dotenv
+
 from driver.neo4j_driver import Neo4jSession
+
 
 def degrade_completeness(session, seed: int):
     """
@@ -17,7 +20,10 @@ def degrade_completeness(session, seed: int):
     """
     result = session.run_query(query, parameters={"seed": seed})
     record = result.single()
-    print(f"[-] Completeness degradation (Seed {seed}): Deleted {record['deleted_count']} Order-Product relationships.")
+    print(
+        f"[-] Completeness degradation (Seed {seed}): Deleted {record['deleted_count']} Order-Product relationships."
+    )
+
 
 def degrade_date_conformity(session, seed: int):
     """
@@ -34,12 +40,15 @@ def degrade_date_conformity(session, seed: int):
     """
     result = session.run_query(query, parameters={"seed": seed})
     record = result.single()
-    print(f"[-] Conformity degradation (Seed {seed}): Corrupted the date format of {record['modified_count']} orders.")
+    print(
+        f"[-] Conformity degradation (Seed {seed}): Corrupted the date format of {record['modified_count']} orders."
+    )
+
 
 def degrade_fd_consistency(session, seed: int):
     """
     Consistency
-    Degradation logic: Break the dependency between Postal Code -> City. 
+    Degradation logic: Break the dependency between Postal Code -> City.
     Randomly modify the city of 5% of the customers without changing their postal code.
     """
     query = """
@@ -52,7 +61,10 @@ def degrade_fd_consistency(session, seed: int):
     """
     result = session.run_query(query, parameters={"seed": seed})
     record = result.single()
-    print(f"[-] Consistency degradation (Seed {seed}): Created {record['modified_count']} customer records with FD conflicts.")
+    print(
+        f"[-] Consistency degradation (Seed {seed}): Created {record['modified_count']} customer records with FD conflicts."
+    )
+
 
 def degrade_schema_integrity(session, seed: int):
     """
@@ -69,7 +81,7 @@ def degrade_schema_integrity(session, seed: int):
     """
     res1 = session.run_query(query_missing, parameters={"seed": seed})
     record1 = res1.single()
-    
+
     query_type = """
     MATCH (p:Product)
     WHERE p.unitsInStock IS NOT NULL
@@ -80,8 +92,11 @@ def degrade_schema_integrity(session, seed: int):
     """
     res2 = session.run_query(query_type, parameters={"seed": seed})
     record2 = res2.single()
-    
-    print(f"[-] Schema validity degradation (Seed {seed}): Removed 'unitPrice' from {record1['modified_count']} products, changed 'unitsInStock' for {record2['modified_count']}.")
+
+    print(
+        f"[-] Schema validity degradation (Seed {seed}): Removed 'unitPrice' from {record1['modified_count']} products, changed 'unitsInStock' for {record2['modified_count']}."
+    )
+
 
 def degrade_uniqueness_duplicates(session, seed: int):
     """
@@ -99,7 +114,10 @@ def degrade_uniqueness_duplicates(session, seed: int):
     """
     result = session.run_query(query, parameters={"seed": seed})
     record = result.single()
-    print(f"[-] Uniqueness degradation (Seed {seed}): Forcefully cloned {record['duplicated_count']} duplicate customer nodes.")
+    print(
+        f"[-] Uniqueness degradation (Seed {seed}): Forcefully cloned {record['duplicated_count']} duplicate customer nodes."
+    )
+
 
 def degrade_label_accuracy(session, seed: int):
     """
@@ -113,16 +131,18 @@ def degrade_label_accuracy(session, seed: int):
     """
     labels_result = session.run_query(fetch_labels_query)
     labels = [record["label"] for record in labels_result]
-    
+
     if len(labels) < 2:
-        print("[-] Label accuracy degradation: Not enough unique labels in the database to swap.")
+        print(
+            "[-] Label accuracy degradation: Not enough unique labels in the database to swap."
+        )
         return
-        
+
     total_modified = 0
-    
+
     for label in labels:
         other_labels = [l for l in labels if l != label]
-        
+
         query = f"""
         MATCH (n:`{label}`)
         WITH n, apoc.util.md5([elementId(n), toString($seed), $label_str, "label_degrade"]) AS hash
@@ -134,29 +154,40 @@ def degrade_label_accuracy(session, seed: int):
         
         RETURN count(n) AS modified_count
         """
-        
-        result = session.run_query(query, parameters={
-            "seed": seed, 
-            "label_str": label,
-            "other_labels": other_labels
-        })
+
+        result = session.run_query(
+            query,
+            parameters={
+                "seed": seed,
+                "label_str": label,
+                "other_labels": other_labels,
+            },
+        )
         record = result.single()
-        
+
         count = record["modified_count"] if record else 0
         if count > 0:
-            print(f"[-] Label accuracy degradation (Seed {seed}): Changed {count} '{label}' nodes into other random existing labels.")
+            print(
+                f"[-] Label accuracy degradation (Seed {seed}): Changed {count} '{label}' nodes into other random existing labels."
+            )
             total_modified += count
-            
+
     if total_modified > 0:
-        print(f"    -> Total label corruptions: {total_modified} nodes assigned wrong labels.")
+        print(
+            f"    -> Total label corruptions: {total_modified} nodes assigned wrong labels."
+        )
     else:
         print(f"[-] Label accuracy degradation (Seed {seed}): No nodes modified.")
+
 
 def run_all_degradations(session, seed: int = 42):
     """
     Executes all data degradation functions in sequence.
     """
-    print(f"Starting to inject dirty test data into the database (Seed: {seed})...\n" + "-"*60)
+    print(
+        f"Starting to inject dirty test data into the database (Seed: {seed})...\n"
+        + "-" * 60
+    )
     degrade_completeness(session, seed)
     degrade_date_conformity(session, seed)
     degrade_fd_consistency(session, seed)
@@ -165,6 +196,7 @@ def run_all_degradations(session, seed: int = 42):
     degrade_label_accuracy(session, seed)
     print("-" * 60 + "\nData degradation complete.")
 
+
 if __name__ == "__main__":
     load_dotenv()
 
@@ -172,8 +204,10 @@ if __name__ == "__main__":
     NEO4J_USER = os.getenv("DB_USER")
     NEO4J_PASSWORD = os.getenv("DB_PW")
     DB_NAME = os.getenv("DB_NAME", "neo4j")
-    
-    GLOBAL_SEED = 42 
 
-    with Neo4jSession(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, database=DB_NAME) as session:
+    GLOBAL_SEED = 42
+
+    with Neo4jSession(
+        uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, database=DB_NAME
+    ) as session:
         run_all_degradations(session, seed=GLOBAL_SEED)
