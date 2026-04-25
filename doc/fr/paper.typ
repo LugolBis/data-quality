@@ -35,7 +35,7 @@
 ]
 
 #align(center)[
-  #image("../assets/img/logo-UVSQ-2020-RVB.jpg", height: 17%)
+  #image("../assets/img/logoups.svg", height: 16%)
   #v(2cm)
 
   #text(size: 25pt, weight: "bold")[
