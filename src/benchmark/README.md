@@ -55,12 +55,6 @@ The scripts in this project rely on the **Northwind** knowledge base, specifical
 Run the following streamlined Cypher queries sequentially in your Neo4j Browser to fully populate the Northwind graph:
 
 ```cypher
-CREATE INDEX FOR (p:Product) ON (p.productID);
-CREATE INDEX FOR (c:Category) ON (c.categoryID);
-CREATE INDEX FOR (s:Supplier) ON (s.supplierID);
-CREATE INDEX FOR (cu:Customer) ON (cu.customerID);
-CREATE INDEX FOR (o:Order) ON (o.orderID);
-
 LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/products.csv" AS row
 CREATE (n:Product) 
 SET n = row, 
