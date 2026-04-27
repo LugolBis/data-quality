@@ -61,7 +61,7 @@ CREATE INDEX FOR (s:Supplier) ON (s.supplierID);
 CREATE INDEX FOR (cu:Customer) ON (cu.customerID);
 CREATE INDEX FOR (o:Order) ON (o.orderID);
 
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/products.csv](https://data.neo4j.com/northwind/products.csv)" AS row
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/products.csv" AS row
 CREATE (n:Product) 
 SET n = row, 
     n.unitPrice = toFloat(row.unitPrice), 
@@ -70,16 +70,16 @@ SET n = row,
     n.reorderLevel = toInteger(row.reorderLevel), 
     n.discontinued = (row.discontinued <> "0");
 
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/categories.csv](https://data.neo4j.com/northwind/categories.csv)" AS row CREATE (n:Category) SET n = row;
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/suppliers.csv](https://data.neo4j.com/northwind/suppliers.csv)" AS row CREATE (n:Supplier) SET n = row;
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/customers.csv](https://data.neo4j.com/northwind/customers.csv)" AS row CREATE (n:Customer) SET n = row;
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/orders.csv](https://data.neo4j.com/northwind/orders.csv)" AS row CREATE (n:Order) SET n = row;
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/categories.csv" AS row CREATE (n:Category) SET n = row;
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/suppliers.csv" AS row CREATE (n:Supplier) SET n = row;
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/customers.csv" AS row CREATE (n:Customer) SET n = row;
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/orders.csv" AS row CREATE (n:Order) SET n = row;
 
 MATCH (p:Product),(c:Category) WHERE p.categoryID = c.categoryID CREATE (p)-[:PART_OF]->(c);
 MATCH (p:Product),(s:Supplier) WHERE p.supplierID = s.supplierID CREATE (s)-[:SUPPLIES]->(p);
 MATCH (cu:Customer),(o:Order) WHERE cu.customerID = o.customerID CREATE (cu)-[:PURCHASED]->(o);
 
-LOAD CSV WITH HEADERS FROM "[https://data.neo4j.com/northwind/order-details.csv](https://data.neo4j.com/northwind/order-details.csv)" AS row
+LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/order-details.csv" AS row
 MATCH (p:Product), (o:Order) 
 WHERE p.productID = row.productID AND o.orderID = row.orderID
 CREATE (o)-[details:ORDERS]->(p) 
