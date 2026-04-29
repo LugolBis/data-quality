@@ -61,7 +61,7 @@
   #v(0.5cm)
 
   #text(size: 14pt)[
-    Université Versailles Saint-Quentin-en-Yvelines\
+    Université Paris-Saclay -- UVSQ\
     Année universitaire 2025–2026
   ]
 ]
@@ -76,7 +76,7 @@
 #pagebreak()
 
 #alinea *Résumé* : L'essor du numérique et la multiplication des sources de données hétérogènes ont conduit à une adoption croissante des bases de données orientées graphes, et plus particulièrement du modèle de graphe de propriétés (Property Graph). Ce modèle se distingue par sa richesse sémantique et sa flexibilité structurelle : en permettant d'associer à chaque noeud et à chaque arc un ensemble d'étiquettes et de propriétés. Cela offre une représentation naturelle et expressive des entités et de leurs relations au sein de domaines variés tels que les réseaux sociaux, la bioinformatique, la gestion de connaissances à grande échelle ou encore les systèmes d'intelligence artificielle.\
-#alinea Bien que l'état de l'art et la standardisation des graphes de propriété a beaucoup évolué, les aspects de qualité de données demeurent largement inexplorés. Or, à l'instar des environnements de données massives (_Big Data_), la valeur extraite d'une base de données graphe repose fondamentalement sur la fiabilité, la cohérence, la complétude et l'exactitude des données qu'elle contient. La présente étude propose d'analyser et d'adapter les cadres existants d'évaluation de la qualité des données au contexte spécifique des graphes de propriétés, en tenant compte des contraintes propres à ce modèle — notamment l'absence de schéma rigide, la multiplicité des sources et la diversité des types de données. Nous formulons un ensemble de dimensions et d'indicateurs de qualité pertinents pour ce contexte, et discutons des méthodes d'évaluation envisageables, posant ainsi les bases d'un processus d'assurance qualité adapté aux bases de données graphes.
+#alinea Bien que l'état de l'art et la standardisation des graphes de propriété a beaucoup évolué, les aspects de qualité de données demeurent largement inexplorés. Or, à l'instar des environnements de données massives (_Big Data_), la valeur extraite d'une base de données graphe repose fondamentalement sur la fiabilité, la cohérence, la complétude et l'exactitude des données qu'elle contient. La présente étude propose d'analyser et d'adapter les cadres existants d'évaluation de la qualité des données au contexte spécifique des graphes de propriétés, en tenant compte des contraintes propres à ce modèle — notamment l'absence de schéma rigide, la multiplicité des sources et la diversité des types de données. Nous formulons un ensemble de dimensions et d'indicateurs de qualité pertinents pour ce contexte, et discutons des méthodes d'évaluation envisageables, posant ainsi les bases d'un processus d'évaluation de la qualité des données adapté aux bases de données graphes.
 
 = Introduction
 #label("def1")
