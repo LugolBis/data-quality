@@ -353,3 +353,9 @@
   myn((0, 0), (":Person", "name: \"Alice\"", "email: \"a@x.fr\""), "n1", err-f, err-s),
   myn((2, 0), (":Person", "name: \"Alice\"", "email: \"a@x.fr\""), "n1", err-f, err-s),
 ))
+
+#let Merge_A = image("img/fig_merge_a.png")
+#let Merge_B = image("img/fig_merge_b.png", height: 30%)
+#let Merge_C = image("img/fig_merge_c.png", height: 30%)
+
+#let Split_Img = image("img/fig_split.png")
