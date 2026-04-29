@@ -512,11 +512,25 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-#alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette.
+#alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette. Notons que l'implémentation du _framework_ de qualité de donnée établit dans la présente étude à été implémenté cf. @lugolbis2026github.
 == Méthodes de test
-#alinea Dans l'objectif d'évaluer la pertinence des critères de qualité de données que nous avons établit, nous avons testé ceux-ci sur diverses bases de données graphe. Celles-ci comportent des base de données graphe dont la qualité est irréprochable comme les bases de données utilisées dans la documentation de *Neo4j*. Bien sûr nous avions besoin de données chaotique, moins synthétique, nous avons donc utilisé des bases de données graphe résultant de la transformation de bases de données de connaissances (comme _YAGO_) et dégradées les données.
+#alinea Dans l'objectif d'évaluer la pertinence des critères de qualité de données que nous avons établit, nous avons testé ceux-ci sur diverses bases de données graphe. Celles-ci comportent des base de données graphe dont la qualité est irréprochable comme les bases de données utilisées dans la documentation de *Neo4j*. Bien sûr nous avions besoin de données chaotique, moins synthétique, nous avons donc utilisé des bases de données graphe résultant de la transformation de bases de données de connaissances (comme _YAGO Knowledge Base_) et dégradé les données.\
 
-= Questions ouvertes ?
+
+#alinea Nous n'avons pas utilisé de bases de données graphe résultant de la transformation d'une base de donnée relationnelle afin de s'émanciper du modèle relationnel. De plus nous n'avons pas menés de tests approfondis sur des bases de données *RDF* comme _DBpedia_ qui s'est avéré trop pauvre en sémantique, que ce soit par son manque de diversité d'étiquettes ou de propriétés.\
+
+== Résultats des tests
+=== Northwind
+#label("northwind")
+#alinea Nous avons utilisé la base de donnée _Northwind_ notamment utilisée dans la documentation de *Neo4j*. Les données de celle-ci présentent de nombreux avantages comme la richesse sémantique -- notamment des étiquettes -- et nous a permi de tester certains des indicateurs les plus complexe (comme l'@def2.2.5[Étiquetage par regroupement -]). Nous avons donc dégradé les données pour simuler une base de donnée dynamique et non synthétique.\
+#alinea Ces dégradations comportent la suppression de 5% des arcs, la corruption de 5% des formats de date, l'invalidation de 5% des contraintes (*FD*, existence, type et unicité) et le changement de l'ensemble d'étiquettes de 2% des noeuds de chaque ensemble distinct d'étiquettes.\
+\
+#alinea Les résultats pour la graîne (_seed_) 42 ont été concluant pour la détection d'arcs manquant via l'approche de la @def2.1.1[définition], de même que pour les indicateurs des définitions : @def2.2.2[], @def2.3.1[], @def2.3.2[], @def2.3.3[], @def2.3.4[], @def2.4.1[]. L'Étiquetage par regroupement c'est lui aussi avéré concluant, bien que l'expérimentation démontre certaines faiblesse de son approche.\
+\
+#alinea En effet pour une base de donnée graphe dont tous les noeuds n'ont qu'une seule étiquette qui leur est associé, le filtrage de la similarité entre ensembles d'étiquettes pour les algorithmes _Merge_ et _Split_ se polarise en restreignant les valeurs possible pour la $"Similarité"_"Étiquettes"$ à 0.0 et 1.0. Cela réduit la flexibilité de l'indicateur et peut mener -- inévitablement -- à des faux positif (détection d'erreurs qui n'en sont pas). Néanmoins cette approche reste dans la majorité des cas performante pour capturer un sens sémantique complexe et détecter les erreurs d'étiquetage.\
+#alinea La *@fig19[Figure]* exhibe une exécution de l'algorithme _Merge_ pour laquelle chaque couleur distincte de noeud correspond à un ensemble distinct d'étiquettes. Il est intéressant de voir que la détection d'erreurs d'étiquetage s'illustre par le degré élevé des noeuds. Notons que le graphe présenté est restreint aux arcs $e$ tel que $lambda(e) = {"Merge"}$. L'observation plus fine des *@fig20[Figure]* et *@fig21[Figure]* démontre bien que les noeuds dont l'étiquetage à été dégradé sont détectés comme fortement similaire à leur véritable étiquetage via la dimension sémantique intacte de leurs relations -- les arcs. Bien que notre indicateur construit le graphe en entier et n'exclu aucune relation de similitude; on pourrait aisément imaginer une solution d'analyse basée par exemple sur le degré moyen des noeuds ou encore une méthode de regroupement (_clustering_) pour réduire la quantité de noeuds à analyser.\
+\
+#alinea Enfin la *@fig22[Figure]* illustre bien l'erreur d'étiquetage détectée par l'algorithme _Split_. Le noeud central auquel sont liés tous les autres démontre une erreur d'étiquetage manifeste car tous les noeuds qui lui sont liés partagent le même ensemble d'étiquettes. En d'autre termes les noeuds dont les arcs $e$ tel que $lambda(e) = {"Split"}$ sont sortant, sont similaires deux à deux. En toute hypothèse l'indicateur que nous avons définit est donc un outil solide pour analyser la qualité de l'étiquetage d'une base de données graphe.
 
 = Conclusion
 #alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
@@ -524,7 +538,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 
 #pagebreak()
 = Annexe
-#alinea Cette annexe rassemble des figures de graphes mettant en lumière les définitions précédemment établies.
+#alinea Cette annexe rassemble des figures de graphes illustrant les définitions précédemment établies.
 
 #fig-wrap[
   #cmp(
@@ -693,6 +707,49 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   #figh([Figure 18 : Exemple pour la _@def2.5.2[Définition]_], [], display_desc: false)
 ] <fig18>
 
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
+    #Merge_A
+  ]
+  #figh(
+    [Figure 19 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
+    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+  )
+] <fig19>
+
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
+    #Merge_B
+  ]
+  #figh(
+    [Figure 20 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
+    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+  )
+] <fig20>
+
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
+    #Merge_C
+  ]
+  #figh(
+    [Figure 21 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
+    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+  )
+] <fig21>
+
+#fig-wrap[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: sp-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: sp-s, weight: "bold")[⊖ Suggestion SPLIT]\
+    #Split_Img
+  ]
+  #figh(
+    [Figure 22 : Exécution de l'algorithme _Split_ sur la base de données _Northwind_],
+    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Split_ exécuté avec les arguments $(t_e, t_t) = (0.7, 0.4)$.],
+  )
+] <fig22>
 
 // References
 #pagebreak()
