@@ -17,7 +17,7 @@ Automated quality profiling helps:
 
 ## Getting started
 
-Requires Python 3.10+ and [uv](https://github.com/astral-sh/uv).
+Requires Python 3.14 and [uv](https://github.com/astral-sh/uv).
 
 ```bash
 # Clone the repository
@@ -25,15 +25,14 @@ git clone https://github.com/LugolBis/data-quality.git
 cd data-quality
 
 # Create virtual environment and install dependencies
-uv venv
-uv pip install -e .
+uv venv .venv && source .venv/bin/activate && uv sync
 ```
 
 Create a ```.env``` file and configure it :
 ```bash
 echo '' > .env
 ```
-and copy-paste
+and copy-paste in it
 ```plaintext
 URI="neo4j://127.0.0.1:7687"
 DB_USER="your_neo4j_user"
