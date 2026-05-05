@@ -42,6 +42,26 @@ python3 yago_data_sampler.py
 ```
 
 ---
+
+## 🗄️ Database Population (Cypher)
+
+After running the data processing script, you can load the resulting dataset (`sampled_dates_dirty.tsv`) into your Neo4j instance. Run the following Cypher query in your Neo4j Browser to create the necessary constraints and populate the graph:
+
+```cypher
+CREATE CONSTRAINT IF NOT EXISTS FOR (e:Entity) REQUIRE e.uri IS UNIQUE;
+
+LOAD CSV FROM 'file:///sampled_dates_dirty.tsv' AS row FIELDTERMINATOR '\t'
+WITH row[1] AS subject, row[2] AS predicate, row[3] AS object, row[4] AS date_value
+WHERE subject IS NOT NULL AND predicate IS NOT NULL
+
+MERGE (s:Entity {uri: subject})
+MERGE (o:Entity {uri: object})
+MERGE (s)-[r:FACT_RELATION]->(o)
+SET r.predicate_type = predicate,
+    r.date_value = date_value;
+```
+
+---
 ---
 
 # 📊 Northwind Data Acquisition & Setup
