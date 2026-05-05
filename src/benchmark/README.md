@@ -56,9 +56,10 @@ WHERE subject IS NOT NULL AND predicate IS NOT NULL
 
 MERGE (s:Entity {uri: subject})
 MERGE (o:Entity {uri: object})
-MERGE (s)-[r:FACT_RELATION]->(o)
-SET r.predicate_type = predicate,
-    r.date_value = date_value;
+
+WITH s, o, predicate, date_value
+CALL apoc.create.relationship(s, predicate, {date_value: date_value}, o) YIELD rel
+RETURN count(*);
 ```
 
 ---
