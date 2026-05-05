@@ -43,7 +43,7 @@ Once the raw `yagoDateFacts.tsv` file is downloaded, it must be processed. We pr
 Run the following command, providing the path to the folder containing `yagoDateFacts.tsv` (use `.` if it's in the current directory):
 
 ```bash
-python3 yago_data_sampler.py .
+python3 src/benchmark.py -yago .
 ```
 
 > **Note:** The script will automatically execute the `LOAD CSV` and `apoc.create.relationship` Cypher queries to populate your graph. You do not need to run any manual Cypher queries for YAGO.
@@ -101,5 +101,5 @@ Once your Neo4j database is populated, you can run the Chaos Monkey script to si
 Ensure you have a `.env` file configured in your working directory with your Neo4j credentials (`URI`, `DB_USER`, `DB_PW`, `DB_NAME`). Then, execute the script:
 
 ```bash
-python3 data_chaos_monkey.py
+python3 src/benchmark.py -northwind
 ```

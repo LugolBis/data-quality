@@ -2,7 +2,9 @@ import os
 import random
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
+
 from driver.neo4j_driver import Neo4jSession
 
 load_dotenv()
@@ -20,20 +22,29 @@ Args :
         The path of the folder who contains `yagoDateFacts.tsv`.
 """
 
-def main(input_folder: str, uri: str, user: str, password: str, database: str) -> None:
+
+def pipeline(
+    input_folder: str,
+    uri: str,
+    user: str,
+    password: str,
+    database: str,
+) -> None:
     input_file = Path(input_folder) / IN_FILENAME
     if not input_file.exists():
         print(f"Error : the following path doesn't exist `{input_file}`")
         return
 
     print("Connecting to Neo4j to retrieve the import folder path...")
-    
+
     with Neo4jSession(uri, user, password, database) as session:
         home_folder = session.get_home_folder()
         if home_folder is None:
-            print("Error: Could not retrieve Neo4j home folder. Check your connection or database config.")
+            print(
+                "Error: Could not retrieve Neo4j home folder. Check your connection or database config.",
+            )
             return
-            
+
         import_folder = home_folder / "import"
         import_folder.mkdir(parents=True, exist_ok=True)
         output_file = import_folder / OUT_FILENAME
@@ -67,7 +78,9 @@ def main(input_folder: str, uri: str, user: str, password: str, database: str) -
     print(f"File successfully saved to: {output_file.resolve()}")
 
     print("Creating constraints in Neo4j...")
-    constraint_query = "CREATE CONSTRAINT IF NOT EXISTS FOR (e:Entity) REQUIRE e.uri IS UNIQUE;"
+    constraint_query = (
+        "CREATE CONSTRAINT IF NOT EXISTS FOR (e:Entity) REQUIRE e.uri IS UNIQUE;"
+    )
     session.run_query(constraint_query)
 
     print("Loading data into Neo4j via Cypher")
@@ -83,30 +96,37 @@ def main(input_folder: str, uri: str, user: str, password: str, database: str) -
     CALL apoc.create.relationship(s, predicate, {date_value: date_value}, o) YIELD rel
     RETURN count(*) AS count;
     """
-    
+
     result = session.run_query(load_query)
     record = result.single()
-    
+
     if record:
         print(f"Success! Loaded {record['count']} relationships into Neo4j.")
     else:
         print("Data load query executed successfully.")
 
 
-if __name__ == "__main__":
-    args: list[str] = sys.argv[1:]
+def main(args: list[str] | None = None) -> None:
+    if args is None:
+        args: list[str] = sys.argv[1:]
 
     if ("--help" in args) or ("-help" in args) or len(args) < 1:
         print(USAGE)
     else:
         input_folder = args[0]
-        
+
         uri = os.getenv("URI")
         user = os.getenv("DB_USER")
         password = os.getenv("DB_PW")
         database = os.getenv("DB_NAME")
 
         if not all([uri, user, password, database]):
-            print("Error: Missing Neo4j connection details. Please provide them in the .env file or via CLI.")
+            print(
+                "Error: Missing Neo4j connection details. Please provide them in the .env file or via CLI.",
+            )
         else:
-            main(input_folder, uri, user, password, database)
+            pipeline(input_folder, uri, user, password, database)  # ty:ignore[invalid-argument-type]
+
+
+if __name__ == "__main__":
+    main()
