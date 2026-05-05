@@ -24,43 +24,29 @@ chmod +x yago.sh && ./yago.sh
 
 ---
 
-## 🧹 Data Processing & Transformation
+## 🧹 Data Processing, Transformation & Auto-Import
 
-Once the raw `yagoDateFacts.tsv` file is downloaded, it must be processed. We provide a Python script (`yago_data_sampler.py`) that samples, cleans, and artificially injects noise into the dataset for testing purposes.
+Once the raw `yagoDateFacts.tsv` file is downloaded, it must be processed. We provide an automated Python script (`yago_data_sampler.py`) that samples the dataset, cleans it, artificially injects noise for testing purposes, and **automatically loads it into your Neo4j database**.
 
 **Specifically, the script performs the following operations:**
 1. **Truncation:** Limits the output to the first 50,000 records.
 2. **Data Cleaning:** Removes YAGO type identifiers (e.g., stripping values after `^^`) and clears surrounding quotation marks.
-3. **Anomaly Injection:** Introduces a 1% probability of altering the date field (column 5) to `"3000-01-01"`, creating an ideal dataset for testing data validation and error-handling pipelines.
+3. **Anomaly Injection:** Introduces a 1% probability of altering the date field (column 5) to `"3000-01-01"`, creating an ideal dataset for testing data validation pipelines.
+4. **Automated Database Import:** Automatically connects to your Neo4j instance, saves the processed file directly into the Neo4j `import` folder, and executes the necessary Cypher queries to build the graph.
 
 ### Usage
 
-Ensure that `yagoDateFacts.tsv` is in your working directory, then run the following command:
+**Prerequisites:**
+1. Ensure your Neo4j instance is running and the **APOC plugin** is installed and enabled.
+2. Install the required Python packages (e.g., `python-dotenv`, `neo4j`).
+
+Run the following command, providing the path to the folder containing `yagoDateFacts.tsv` (use `.` if it's in the current directory):
 
 ```bash
-python3 yago_data_sampler.py
+python3 yago_data_sampler.py .
 ```
 
----
-
-## 🗄️ Database Population (Cypher)
-
-After running the data processing script, you can load the resulting dataset (`sampled_dates_dirty.tsv`) into your Neo4j instance. Run the following Cypher query in your Neo4j Browser to create the necessary constraints and populate the graph:
-
-```cypher
-CREATE CONSTRAINT IF NOT EXISTS FOR (e:Entity) REQUIRE e.uri IS UNIQUE;
-
-LOAD CSV FROM 'file:///sampled_dates_dirty.tsv' AS row FIELDTERMINATOR '\t'
-WITH row[1] AS subject, row[2] AS predicate, row[3] AS object, row[4] AS date_value
-WHERE subject IS NOT NULL AND predicate IS NOT NULL
-
-MERGE (s:Entity {uri: subject})
-MERGE (o:Entity {uri: object})
-
-WITH s, o, predicate, date_value
-CALL apoc.create.relationship(s, predicate, {date_value: date_value}, o) YIELD rel
-RETURN count(*);
-```
+> **Note:** The script will automatically execute the `LOAD CSV` and `apoc.create.relationship` Cypher queries to populate your graph. You do not need to run any manual Cypher queries for YAGO.
 
 ---
 ---
