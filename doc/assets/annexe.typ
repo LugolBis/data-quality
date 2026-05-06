@@ -359,3 +359,10 @@
 #let Merge_C = image("img/fig_merge_c.png", height: 30%)
 
 #let Split_Img = image("img/fig_split.png")
+
+#let Yago1 = image("img/fig_yago1.png")
+#let Yago2 = image("img/fig_yago2.png")
+#let Yago3 = image("img/fig_yago3.png")
+
+#let Profiling_Properties = image("img/profiling_properties_distribution.png")
+#let Query_Validation = image("img/query_validation.png")
