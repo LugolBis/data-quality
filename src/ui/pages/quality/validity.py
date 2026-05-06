@@ -56,6 +56,7 @@ _LAZY_FUNCS: dict[str, Callable[[], Any]] = {
             "tsk_merge": "_v_tsk_merge",
             "tsl_split": "_v_tsl_split",
             "tsk_split": "_v_tsl_split",
+            "batch_size": "_v_batch_size",
         },
     ),
 }
@@ -433,6 +434,16 @@ def _lblg_cluster_render() -> None:
         key="_v_tsk_split",
     )
 
+    lazy_render5: Callable[[], Any] = _lazy_func(
+        st.number_input,
+        min_value=1,
+        value=75,
+        step=1,
+        label="Select the batch size used by Neo4j to perform the queries :",
+        placeholder="batch size",
+        key="_v_batch_size",
+    )
+
     _dynamic_analysis(
         "Analysis of **Nodes** labeling.",
         (
@@ -441,5 +452,11 @@ def _lblg_cluster_render() -> None:
             "(and 'Split' for the opposite)."
         ),
         "VLBC",
-        lazy_renders=[lazy_render1, lazy_render2, lazy_render3, lazy_render4],
+        lazy_renders=[
+            lazy_render1,
+            lazy_render2,
+            lazy_render3,
+            lazy_render4,
+            lazy_render5,
+        ],
     )
