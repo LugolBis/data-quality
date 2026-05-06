@@ -54,8 +54,6 @@ _SECTIONS = {
     },
 }
 
-from ui.pages import overview  # noqa: E402
-
 
 def _get_pages(section: str, mods: dict[str, Any], code: int) -> list[Any]:
     res = []
@@ -68,11 +66,6 @@ def _get_pages(section: str, mods: dict[str, Any], code: int) -> list[Any]:
             if code > 1:
                 _config_section(title, mod)
 
-    if code > 1:
-        return [
-            st.Page(**_config_page("Data Quality", "Overview", overview.render)),
-            *res,
-        ]
     return res
 
 
