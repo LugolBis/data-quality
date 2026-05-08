@@ -537,13 +537,13 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #label("yago3")
 #alinea La seconde base de données que nous avons utilisé pour tester nos critères de qualité de données est _Yago3_ @mahdisoltani2014yago3. Afin d'avoir un élément de comparaison significatif nous n'avons effectué qu'une minorité de dégradation sur celle-ci. En effet nous avons dégradé la valeur de $1%$ des arcs et avons réduit l'échantillon aux $50 000$ premières lignes (pour lesquelles nous obtenons $63 563$ noeuds pour $50 000$ arcs). De plus nous avons utilisé les prédicats des arcs pour étiqueter ceux-ci.\
 \
-#alinea Les résultats des tests conduit ont été particulièrement concluant, ceux-ci ont démontrés que nos indicateurs ne détectaient ici aucun problème de qualité de données. Et pour cause : la qualité des donnée de celle-ci est exemplaire. Les figures *@fig23[]*, *@fig24[]* et *@fig25[]* présentent un infime échantillon (représentatif) des données. L'homogéinité des données est telle que les algorithmes _Merge_ et _Split_ de l'étiquetage par regroupement n'ont détectés aucune erreur d'étiquetage.\
+#alinea Les résultats des tests conduit ont été particulièrement concluant, ceux-ci ont démontrés que nos indicateurs ne détectent aucun problème de qualité de données. Et pour cause : la qualité des donnée de celle-ci est exemplaire. Les figures *@fig23[]*, *@fig24[]* et *@fig25[]* présentent un infime échantillon (représentatif) des données. L'homogéinité des données est telle que les algorithmes _Merge_ et _Split_ de l'étiquetage par regroupement n'ont détectés aucune erreur.\
 \
-#alinea Le profilage de la @def3.3.3[Distribution des propriétés des arcs --], à révélé l'absence d'une propriété importante pour une infime partie des noeuds (\~$0.40%$) comme l'illustre la *@fig26[Figure]*. Enfin la *@fig27[Figure]* illustre l'utilisation de la @def2.3.4[validation par requête --], afin de détecter les données précédemment dégradées.
+#alinea Le profilage de la @def3.3.3[Distribution des propriétés des arcs --], à révélé l'absence d'une propriété importante pour une infime partie des arcs (\~$0.40%$) comme l'illustre la *@fig26[Figure]*. Enfin la *@fig27[Figure]* illustre l'utilisation de la @def2.3.4[validation par requête --], afin de détecter les données précédemment dégradées.
 
 = Conclusion
 #alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
-#alinea Néanmoins certains défis subsistent, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
+#alinea Certains défis subsistent donc, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
 
 #pagebreak()
 = Annexe
@@ -763,7 +763,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #Yago1
   #figh(
-    [Figure 23 : Échantillon de la base de donnée @yago3[_YAGO3_ --]],
+    [Figure 23 : Échantillon de la base de données @yago3[_YAGO3_ --]],
     [],
     display_desc: false,
   )
@@ -772,15 +772,15 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #Yago2
   #figh(
-    [Figure 24 : Échantillon de la base de donnée @yago3[_YAGO3_ --]],
-    [Les segments blanc sont ici les arcs et les noeuds forment le cercle.],
+    [Figure 24 : Échantillon de la base de données @yago3[_YAGO3_ --]],
+    [Les segments blanc modélisent les arcs et les noeuds forment le cercle.],
   )
 ] <fig24>
 
 #fig-wrap[
   #Yago3
   #figh(
-    [Figure 25 : Échantillon de la base de donnée @yago3[_YAGO3_ --]],
+    [Figure 25 : Échantillon de la base de données @yago3[_YAGO3_ --]],
     [],
     display_desc: false,
   )
@@ -789,7 +789,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #Profiling_Properties
   #figh(
-    [Figure 26 : Profilage des propriétés des arcs de la base de donnée @yago3[_YAGO3_ --]],
+    [Figure 26 : Profilage des propriétés des arcs de la base de données @yago3[_YAGO3_ --]],
     [Illustration de l'interface utilisateur de *data-quality* @lugolbis2026github.],
   )
 ] <fig26>
@@ -797,7 +797,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #Query_Validation
   #figh(
-    [Figure 27 : @def2.3.4[Validation par requête] -- de la base de donnée @yago3[_YAGO3_ --]],
+    [Figure 27 : @def2.3.4[Validation par requête] -- de la base de données @yago3[_YAGO3_ --]],
     [Illustration de l'interface utilisateur de *data-quality* @lugolbis2026github.],
   )
 ] <fig27>
