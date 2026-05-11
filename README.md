@@ -33,7 +33,8 @@ flowchart TD
     TSV -->|ETL / Ingestion| NEO4J
     OTHER -->|ETL / Ingestion| NEO4J
 
-    NEO4J <-->|Analyzes & Improves| DQ
+    NEO4J -->|Analyzes & Improves| DQ
+    DQ -->|Analyzes & Improves| NEO4J
 
     NEO4J -->|Feeds| AI
     NEO4J -->|Feeds| CRM
