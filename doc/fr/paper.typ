@@ -116,7 +116,7 @@
 *Définition 2.2.0*\
 #alinea La Conformité mesure la validité du format des données.
 
-=== Format des chaînes de caractère
+=== Format des chaînes de caractères
 #label("def2.2.1")
 *Définition 2.2.1*\
 #alinea Soit $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et *Regex* codant le format attendu. Tel que $forall o in O$ on vérifie que $forall v in sigma(o, X)$, $"match"(v, "Regex") = "Vrai"$. Cf. *@fig3[Figure]* en annexe.
@@ -140,18 +140,18 @@
 
 === Étiquetage par Regroupement (clustering)
 #label("def2.2.5")
-#alinea L'intuition est la suivante : des noeuds similaires doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage on cherche donc à regrouper les noeuds similaires pour détecter les erreurs d'étiquetage. L'approche qui suit est inspirée d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
-+ #alinea Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une paire de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractère. Ainsi l'arc suivant :\
+#alinea L'intuition est la suivante : des noeuds similaires doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage, on cherche donc à regrouper les noeuds similaires pour détecter les erreurs d'étiquetage. L'approche qui suit est inspirée d'un système d'embeddings motivé par l'article @Giot2015VisualGraph. L'approche proposée est la suivante :
++ #alinea Déterminer un critère de similarité entre deux noeuds : on s'intéresse ici aux étiquettes des noeuds donc au sens sémantique de celles-ci. Notre intérêt se porte donc sur les relations entre les différents ensembles d'étiquettes. Ces relations sont ici modélisées par un concept riche en sémantique : les arcs. En effet les arcs sont caractérisés par une paire de noeuds (disposant d'une direction) et un ensemble d'étiquettes. On propose donc de traduire ce sens sémantique par des chaînes de caractères. Ainsi l'arc suivant :\
   #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})])
-  Serait traduit par "OU:Inscrit:Université" (que l'on nomme un _Token_) du point de vu de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
-+ #alinea Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexes par une chaîne de caractère, l'utilisation de distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
-+ #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jaccard* pour calculer la similarité entre deux noeuds sur le critère des ensembles d'étiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = 1-(|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
+  Serait traduit par "OU:Inscrit:Université" (que l'on nomme un _Token_) du point de vue de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
++ #alinea Déterminer une méthode de calcul de similarité entre deux _Token_. Sachant qu'un _Token_ traduit des relations sémantiques complexes par une chaîne de caractères, l'utilisation de la distance d'édition (_Edit distance_) semble le plus adapté. On utilise donc la similarité de *Levenshtein* pour calculer la similarité entre deux _Token_.
++ #alinea Déterminer une méthode de calcul de similarité entre deux noeuds. On s'intéresse à leurs relations et à leurs étiquettes, on va donc combiner un score de similarité de ces deux dimensions. On utilise l'indice de *Jaccard* pour calculer la similarité entre deux noeuds sur le critère des ensembles d'étiquettes, tel qu'on a $forall n_1, n_2 in N^2$, $"Similarité"_"Étiquettes" = 1-(|lambda(n_1) inter lambda(n_2)|)/(|lambda(n_1) union lambda(n_2)|)$.\
   #alinea La similarité entre deux noeuds sur le critère des _Tokens_ est calculée avec la similarité *Monge-Elkan* (ME), tel qu'on a $forall n_1, n_2 in N^2$, $"ME"(n_1, n_2) = 1 / abs(sigma(n_1, {"Tokens"})) sum_(t_1 in sigma(n_1, {"Tokens"})) max_(t_2 in sigma(n_2, {"Tokens"})) ("simimarité_levenshtein"(t_1, t_2))$ (resp. $"ME"(n_2, n_1)$),
   tel que $"Similarité"_"Tokens" = ("ME"(n_1, n_2) + "ME"(n_2, n_1))/2$. La similarité des _Tokens_ pourrait aussi être calculée à l'aide de l'algorithme *Fuzzy Jaccard* (moins précis) ou encore de l'algorithme de *Kuhn-Munkres* (optimal mais en $O(|N|^3)$).
 
 On définit donc les algorithmes suivants :\
-#alinea L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tel qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
-#alinea L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeuds connexes représentant l'ensemble des _Token_ distincts générés par l'algorithme _Tokenization_. Une fois ces noeuds créés l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque paire de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
+#alinea L'algorithme _Tokenization_ permet de générer un ensemble de _Token_ (représentant les relations d'un noeud) pour tous les noeuds tels qu'il existe un arc entrant ou sortant de ceux-ci. Autrement formulé : tout noeud ayant un degré entrant ou sortant non nul dispose d'une propriété "Tokens" sauvegardant l'ensemble de des _Token_ générés le concernant.\
+#alinea L'algorithme _CreateTokens_ quant à lui génère un ensemble de noeuds connexes représentant l'ensemble des _Token_ distincts générés par l'algorithme _Tokenization_. Une fois ces noeuds créés, l'algorithme _CreateTokens_ calcule la similarité de *Levenshtein* entre chaque paire de _Token_ et la sauvegarde sous forme d'arc entre ceux-ci.
 
 #let Tokenization = [#algo(
   main-text-styles: (size: 11pt),
@@ -295,7 +295,7 @@ On définit donc les algorithmes suivants :\
   ],
 )
 
-#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leur étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée avec deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les paires de noeuds qui pourraient présenter des erreurs d'étiquetage). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_, déterminant la création (ou non) d'un arc "Merge" / "Split".
+#alinea Une fois les algorithmes _Tokenization_ et _CreateTokens_ on peut analyser les regroupements de noeuds avec leur similarité entre ensemble de _Token_, et sur la similarité de *Jaccard* pour calculer la similarité entre leurs étiquettes. Le regroupement s'effectue par paire de noeuds et on ne sauvegarde qu'un simple arc liant les noeuds qui devraient être "Merge" (ceux-ci devraient avoir un ensemble similaire d'étiquettes) ou "Split" (ceux-ci ne devraient pas avoir un ensemble similaire d'étiquettes). Cette sélection est déterminée avec deux seuils de similarité, le premier concerne la similarité entre les étiquettes (cela permet de filtrer les paires de noeuds qui pourraient présenter des erreurs d'étiquetage). Ainsi qu'un deuxième seuil concernant la similarité des _Tokens_, déterminant la création (ou non) d'un arc "Merge" / "Split".
 
 #Merge
 
@@ -357,11 +357,11 @@ Cf. *@fig11[Figure]* en annexe.
 #label("def2.4.1")
 #alinea Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de données graphe. On va donc définir trois contraintes d'intégrité :
 + *Unicité de propriétés* :\
-  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o_1, o_2 in O^2$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double o_1 = o_2$. Cf. *@fig12[Figure]* en annexe.
+  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que $forall o_1, o_2 in O^2$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double o_1 = o_2$. Cf. *@fig12[Figure]* en annexe.
 + *Existence de propriétés* :\
-  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que on vérifie que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$. Cf. *@fig13[Figure]* en annexe.
+  Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$. Cf. *@fig13[Figure]* en annexe.
 + *Type des valeurs de propriétés*  :\
-  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que on vérifie que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$. Cf. *@fig14[Figure]* en annexe.
+  Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$. Cf. *@fig14[Figure]* en annexe.
 Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requếtes de *Neo4j*).
 
 === Validité des Index
@@ -441,7 +441,7 @@ Algorithme :\
   ],
 )
 
-#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de donnée. Cf. *@fig16[Figure]* en annexe.
+#alinea L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (cf. @def2.3.1[Définition]). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de données. Cf. *@fig16[Figure]* en annexe.
 
 == Unicité
 *Définition 2.5.0*\
@@ -487,15 +487,15 @@ Algorithme :\
 == Étiquetage
 === Détection d'anomalies par regroupement (clustering)
 *Définition 3.4.1*\
-#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont en suite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminé on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à ceux des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
-#alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitué de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageable pour cet usage de profilage.
+#alinea On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont ensuite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminés on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à celles des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
+#alinea Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitués de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageables pour cet usage de profilage.
 == Lisibilité
 === Distribution du degré des noeuds
 *Définition 3.5.1*\
 #alinea Analyse de la distribution des degrés (entrant et sortant), des noeuds regroupés selon leur ensemble d'étiquettes.
-=== Détection des arcs formant un multi-graphe
+=== Détection des arcs formant un multigraphe
 *Définition 3.5.2*\
-#alinea Détection d'arcs partageant le même noeud source et le même noeud destination, formant ainsi un multi-graphe. Un tableau de bord concis sur l'ensemble d'étiquettes du noeud source et celui du noeud destination, ainsi que l'ensemble des étiquettes des arcs est construit à partir de cette détection.
+#alinea Détection d'arcs partageant le même noeud source et le même noeud destination, formant ainsi un multigraphe. Un tableau de bord concis sur l'ensemble d'étiquettes du noeud source et celui du noeud destination, ainsi que l'ensemble des étiquettes des arcs est construit à partir de cette détection.
 === Analyse de l'excentricité du graphe
 *Définition 3.5.3*\
 #alinea Analyse de l'excentricité du graphe : calcul du rayon et du diamètre du graphe.\
@@ -513,37 +513,37 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 *Définition 3.6.3*\
 #alinea Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
 = Implémentation - Neo4j
-#alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommé des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette. Notons que l'implémentation du _framework_ de qualité de donnée établit dans la présente étude à été implémenté cf. @lugolbis2026github.
+#alinea *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommés des "Nodes" et les arcs sont nommés des "Relationships". L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction (cf. @def1[Définition]), à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette. Notons que l'implémentation du _framework_ de qualité de données établi dans la présente étude a été implémentée cf. @lugolbis2026github.
 == Méthodes de test
-#alinea Dans l'objectif d'évaluer la pertinence des critères de qualité de données que nous avons établit, nous avons testé ceux-ci sur diverses bases de données graphe. Celles-ci comportent des bases de données graphe dont la qualité est irréprochable comme les bases de données utilisées dans la documentation de *Neo4j*. Bien sûr nous avions besoin de données chaotique, moins synthétique, nous avons donc utilisé des bases de données graphe résultant de la transformation de bases de données de connaissances (comme _YAGO3 Knowledge Base_) et dégradé les données.\
+#alinea Dans l'objectif d'évaluer la pertinence des critères de qualité de données que nous avons établis, nous avons testé ceux-ci sur diverses bases de données graphe. Celles-ci comportent des bases de données graphe dont la qualité est irréprochable comme les bases de données utilisées dans la documentation de *Neo4j*. Nous avions besoin de données chaotiques, moins synthétiques, nous avons donc utilisé des bases de données graphe résultant de la transformation de bases de données de connaissances (comme _YAGO3 Knowledge Base_) et dégradé les données.\
 
 
-#alinea Nous n'avons pas utilisé de bases de données graphe résultant de la transformation d'une base de donnée relationnelle afin de s'émanciper du modèle relationnel. De plus nous n'avons pas menés de tests approfondis sur des bases de données *RDF* comme _DBpedia_ qui s'est avéré trop pauvre en sémantique, que ce soit par son manque de diversité d'étiquettes ou de propriétés.\
+#alinea Nous n'avons pas utilisé de bases de données graphe résultant de la transformation d'une base de données relationnelle afin de s'émanciper du modèle relationnel. De plus nous n'avons pas mené de tests approfondis sur des bases de données *RDF* comme _DBpedia_ qui s'est avéré trop pauvre en sémantique, que ce soit par son manque de diversité d'étiquettes ou de propriétés.\
 
 == Résultats des tests
 === Northwind
 #label("northwind")
-#alinea Nous avons utilisé la base de donnée _Northwind_ notamment utilisée dans la documentation de *Neo4j*. Les données de celle-ci présentent de nombreux avantages comme la richesse sémantique -- notamment des étiquettes -- et nous a permi de tester certains des indicateurs les plus complexe (comme l'@def2.2.5[Étiquetage par regroupement -]). Nous avons donc dégradé les données pour simuler une base de donnée dynamique et non synthétique.\
+#alinea Nous avons utilisé la base de données _Northwind_ notamment utilisée dans la documentation de *Neo4j*. Les données de celle-ci présentent de nombreux avantages comme la richesse sémantique -- notamment des étiquettes -- et nous ont permis de tester certains des indicateurs les plus complexes (comme l'@def2.2.5[Étiquetage par regroupement -]). Nous avons donc dégradé les données pour simuler une base de données dynamique et non synthétique.\
 #alinea Ces dégradations comportent la suppression de 5% des arcs, la corruption de 5% des formats de date, l'invalidation de 5% des contraintes (*FD*, existence, type et unicité) et le changement de l'ensemble d'étiquettes de 2% des noeuds de chaque ensemble distinct d'étiquettes.\
 \
-#alinea Les résultats pour la graîne (_seed_) 42 ont été concluant pour la détection d'arcs manquant via l'approche de la @def2.1.1[définition], de même que pour les indicateurs des définitions : @def2.2.2[], @def2.3.1[], @def2.3.2[], @def2.3.3[], @def2.3.4[], @def2.4.1[]. L'Étiquetage par regroupement c'est lui aussi avéré concluant, bien que l'expérimentation démontre certaines faiblesse de son approche.\
+#alinea Les résultats pour la graine (_seed_) 42 ont été concluants pour la détection d'arcs manquants via l'approche de la @def2.1.1[définition], de même que pour les indicateurs des définitions : @def2.2.2[], @def2.3.1[], @def2.3.2[], @def2.3.3[], @def2.3.4[], @def2.4.1[]. L'Étiquetage par regroupement s'est lui aussi avéré concluant, bien que l'expérimentation démontre certaines faiblesses de son approche.\
 \
-#alinea En effet pour une base de donnée graphe dont tous les noeuds n'ont qu'une seule étiquette qui leur est associé, le filtrage de la similarité entre ensembles d'étiquettes pour les algorithmes _Merge_ et _Split_ se polarise en restreignant les valeurs possible pour la $"Similarité"_"Étiquettes"$ à 0.0 et 1.0. Cela réduit la flexibilité de l'indicateur et peut mener -- inévitablement -- à des faux positif (détection d'erreurs qui n'en sont pas). Néanmoins cette approche reste dans la majorité des cas performante pour capturer un sens sémantique complexe et détecter les erreurs d'étiquetage.\
-#alinea La *@fig19[Figure]* exhibe une exécution de l'algorithme _Merge_ pour laquelle chaque couleur distincte de noeud correspond à un ensemble distinct d'étiquettes. Il est intéressant de voir que la détection d'erreurs d'étiquetage s'illustre par le degré élevé des noeuds. Notons que le graphe présenté est restreint aux arcs $e$ tel que $lambda(e) = {"Merge"}$. L'observation plus fine des *@fig20[Figure]* et *@fig21[Figure]* démontre bien que les noeuds dont l'étiquetage à été dégradé sont détectés comme fortement similaire à leur véritable étiquetage via la dimension sémantique intacte de leurs relations -- les arcs. Bien que notre indicateur construit le graphe en entier et n'exclu aucune relation de similitude; on pourrait aisément imaginer une solution d'analyse basée par exemple sur le degré moyen des noeuds ou encore une méthode de regroupement (_clustering_) pour réduire la quantité de noeuds à analyser.\
+#alinea En effet pour une base de données graphe dont tous les noeuds n'ont qu'une seule étiquette qui leur est associée, le filtrage de la similarité entre ensembles d'étiquettes pour les algorithmes _Merge_ et _Split_ se polarise en restreignant les valeurs possibles pour la $"Similarité"_"Étiquettes"$ à 0.0 et 1.0. Cela réduit la flexibilité de l'indicateur et peut mener -- inévitablement -- à des faux positifs (détection d'erreurs qui n'en sont pas). Néanmoins cette approche reste dans la majorité des cas performante pour capturer un sens sémantique complexe et détecter les erreurs d'étiquetage.\
+#alinea La *@fig19[Figure]* exhibe une exécution de l'algorithme _Merge_ pour laquelle chaque couleur distincte de noeud correspond à un ensemble distinct d'étiquettes. Il est intéressant de voir que la détection d'erreurs d'étiquetage s'illustre par le degré élevé des noeuds. Notons que le graphe présenté est restreint aux arcs $e$ tels que $lambda(e) = {"Merge"}$. L'observation plus fine des *@fig20[Figure]* et *@fig21[Figure]* démontre bien que les noeuds dont l'étiquetage a été dégradé sont détectés comme fortement similaires à leur véritable étiquetage via la dimension sémantique intacte de leurs relations -- les arcs. Bien que notre indicateur construise le graphe en entier et n'exclue aucune relation de similitude; on pourrait aisément imaginer une solution d'analyse basée par exemple sur le degré moyen des noeuds ou encore une méthode de regroupement (_clustering_) pour réduire la quantité de noeuds à analyser.\
 \
-#alinea Enfin la *@fig22[Figure]* illustre bien l'erreur d'étiquetage détectée par l'algorithme _Split_. Le noeud central auquel sont liés tous les autres démontre une erreur d'étiquetage manifeste car tous les noeuds qui lui sont liés partagent le même ensemble d'étiquettes. En d'autre termes les noeuds dont les arcs $e$ tel que $lambda(e) = {"Split"}$ sont sortant, sont similaires deux à deux. En toute hypothèse l'indicateur que nous avons définit est donc un outil solide pour analyser la qualité de l'étiquetage d'une base de données graphe.
+#alinea Enfin la *@fig22[Figure]* illustre bien l'erreur d'étiquetage détectée par l'algorithme _Split_. Le noeud central auquel sont liés tous les autres démontre une erreur d'étiquetage manifeste car tous les noeuds qui lui sont liés partagent le même ensemble d'étiquettes. En d'autres termes, les noeuds dont les arcs $e$ tels que $lambda(e) = {"Split"}$ sont sortants, sont similaires deux à deux. En toute hypothèse l'indicateur que nous avons défini est donc un outil solide pour analyser la qualité de l'étiquetage d'une base de données graphe.
 
 === YAGO3
 #label("yago3")
-#alinea La seconde base de données que nous avons utilisé pour tester nos critères de qualité de données est _Yago3_ @mahdisoltani2014yago3. Afin d'avoir un élément de comparaison significatif nous n'avons effectué qu'une minorité de dégradation sur celle-ci. En effet nous avons dégradé la valeur de $1%$ des arcs et avons réduit l'échantillon aux $50 000$ premières lignes (pour lesquelles nous obtenons $63 563$ noeuds pour $50 000$ arcs). De plus nous avons utilisé les prédicats des arcs pour étiqueter ceux-ci.\
+#alinea La seconde base de données que nous avons utilisée pour tester nos critères de qualité de données est _Yago3_ @mahdisoltani2014yago3. Afin d'avoir un élément de comparaison significatif nous n'avons effectué qu'une minorité de dégradations sur celle-ci. En effet nous avons dégradé la valeur de $1%$ des arcs et avons réduit l'échantillon aux $50 000$ premières lignes (pour lesquelles nous obtenons $63 563$ noeuds pour $50 000$ arcs). De plus nous avons utilisé les prédicats des arcs pour étiqueter ceux-ci.\
 \
-#alinea Les résultats des tests conduit ont été particulièrement concluant, ceux-ci ont démontrés que nos indicateurs ne détectent aucun problème de qualité de données. Et pour cause : la qualité des donnée de celle-ci est exemplaire. Les figures *@fig23[]*, *@fig24[]* et *@fig25[]* présentent un infime échantillon (représentatif) des données. L'homogéinité des données est telle que les algorithmes _Merge_ et _Split_ de l'étiquetage par regroupement n'ont détectés aucune erreur.\
+#alinea Les résultats des tests conduits ont été particulièrement concluants, ceux-ci ont démontré que nos indicateurs ne détectent aucun problème de qualité de données. Et pour cause : la qualité des donnée de celle-ci est exemplaire. Les figures *@fig23[]*, *@fig24[]* et *@fig25[]* présentent un infime échantillon (représentatif) des données. L'homogénéité des données est telle que les algorithmes _Merge_ et _Split_ de l'étiquetage par regroupement n'ont détecté aucune erreur.\
 \
 #alinea Le profilage de la @def3.3.3[Distribution des propriétés des arcs --], à révélé l'absence d'une propriété importante pour une infime partie des arcs (\~$0.40%$) comme l'illustre la *@fig26[Figure]*. Enfin la *@fig27[Figure]* illustre l'utilisation de la @def2.3.4[validation par requête --], afin de détecter les données précédemment dégradées.
 
 = Conclusion
-#alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés a un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantique complexe. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
-#alinea Certains défis subsistent donc, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexe pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
+#alinea Au terme de cette étude de nombreux indicateurs de qualité de données se sont révélés intéressants et adaptés à un graphe de propriété. De plus lorsque ceux-ci sont couplés avec un système de profilage cela offre une vision d'ensemble sur les données des bases de données graphe. La structure semi-structurée de celles-ci offre un outil puissant pour exprimer des concepts sémantiques complexes. Parvenir à capturer l'ensemble du sens sémantique des bases de données graphe est un enjeu de taille du fait de la pluralité des usages de celles-ci.\
+#alinea Certains défis subsistent donc, que ce soit l'analyse de la qualité de l'étiquetage (_labeling_), la conformité des données (de nombreuses vérifications complexes pourraient être standardisées avec un _DDL_) ou encore les formes normales d'une base de données graphe.
 
 #pagebreak()
 = Annexe
@@ -723,7 +723,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   ]
   #figh(
     [Figure 19 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
-    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+    [Base de données _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
   )
 ] <fig19>
 
@@ -734,7 +734,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   ]
   #figh(
     [Figure 20 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
-    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+    [Base de données _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
   )
 ] <fig20>
 
@@ -745,7 +745,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   ]
   #figh(
     [Figure 21 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
-    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
+    [Base de données _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$.],
   )
 ] <fig21>
 
@@ -756,7 +756,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
   ]
   #figh(
     [Figure 22 : Exécution de l'algorithme _Split_ sur la base de données _Northwind_],
-    [Base de donnée _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Split_ exécuté avec les arguments $(t_e, t_t) = (0.7, 0.4)$.],
+    [Base de données _Northwind_ (@northwind[cf. ]) dégradée avec la _seed_ 42 et\ _Split_ exécuté avec les arguments $(t_e, t_t) = (0.7, 0.4)$.],
   )
 ] <fig22>
 
