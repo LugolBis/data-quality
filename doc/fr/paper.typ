@@ -91,6 +91,7 @@
 + $lambda: (N union E) -> "SET"^+(L)$ est une fonction partielle qui associe à un noeud ou un arc un ensemble d'étiquettes incluses dans $L$ ($lambda$ est une fonction d'étiquetage des noeuds et des arcs).
 + $sigma: (N union E) times P -> "SET"^+(V)$ est une fonction partielle qui associe aux noeuds et arcs des valeurs $V$ aux propriétés $P$. On notera par la suite, $forall (o, p) in (N union E) times P$ et ses valeurs assignées $sigma(o, p) = {v_1, ..., v_n}$ par $(o, p) = arrow(v)$.
 
+#pagebreak()
 = Qualité de données d'un Graphe de Propriété
 == Complétude
 *Définition 2.1.0*\
