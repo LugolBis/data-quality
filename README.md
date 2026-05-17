@@ -13,18 +13,18 @@ flowchart TD
         OTHER[/Other formats.../]
     end
 
-    subgraph GRAPH["Graph Database"]
-        NEO4J[(Graph DB\nNeo4j)]
+    subgraph GRAPH[ ]
+        NEO4J[("Graph Database\n(Neo4j)")]
     end
 
-    subgraph FRAMEWORK["data-quality Framework"]
-        DQ[Data Quality\nAssesment & Profiling]
-    end
-
-    subgraph USAGES["Downstream Uses"]
+    subgraph USAGES["Consumers"]
         AI[AI / ML]
         CRM[CRM]
         BI[BI]
+    end
+
+    subgraph FRAMEWORK[data-quality]
+        DQ[Data Quality\nAssesment & Profiling]
     end
 
     DB -->|ETL / Ingestion| NEO4J
@@ -33,11 +33,12 @@ flowchart TD
     TSV -->|ETL / Ingestion| NEO4J
     OTHER -->|ETL / Ingestion| NEO4J
 
-    NEO4J <-->|Analyzes & Improves| DQ
+    NEO4J -->|Analyzes & Improves| DQ
+    DQ -->|Analyzes & Improves| NEO4J
 
-    NEO4J -->|Feeds| AI
-    NEO4J -->|Feeds| CRM
-    NEO4J -->|Feeds| BI
+    NEO4J -->|Supplies| AI
+    NEO4J -->|Supplies| CRM
+    NEO4J -->|Supplies| BI
     
     style DB fill:#2a7d56,stroke:#ffffff,color:#ffffff,stroke-width:1px
     style CSV fill:#2a7d56,stroke:#ffffff,color:#ffffff,stroke-width:1px
