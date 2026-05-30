@@ -355,8 +355,16 @@
 ))
 
 #let Merge_A = image("img/fig_merge_a.png")
-#let Merge_B = image("img/fig_merge_b.png", height: 30%)
-#let Merge_C = image("img/fig_merge_c.png", height: 30%)
+#let Merge_B(width: auto, height: 30%) = image(
+  "img/fig_merge_b.png",
+  width: width,
+  height: height,
+)
+#let Merge_C(width: auto, height: 30%) = image(
+  "img/fig_merge_c.png",
+  width: width,
+  height: height,
+)
 
 #let Split_Img = image("img/fig_split.png")
 

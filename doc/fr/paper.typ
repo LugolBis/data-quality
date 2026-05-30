@@ -727,7 +727,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
     #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
-    #Merge_B
+    #Merge_B()
   ]
   #figh(
     [Figure 20 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
@@ -738,7 +738,7 @@ De nouveau cela permet de caractériser les données et de détecter, le cas éc
 #fig-wrap[
   #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
     #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
-    #Merge_C
+    #Merge_C()
   ]
   #figh(
     [Figure 21 : Exécution de l'algorithme _Merge_ sur la base de données _Northwind_],
