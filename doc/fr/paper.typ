@@ -18,21 +18,17 @@
 #set par(justify: true)
 #show figure.where(kind: "custom-fig"): it => it.body
 
-#let code = content => block(
-  [#text(content, font: "JetBrains Mono", size: 10pt)],
-  fill: luma(230),
-  radius: 4pt,
-  inset: 10pt,
-  width: 100%,
-)
+#let code(content, font-size: 10pt) ={
+  block(
+    [#text(content, font: "JetBrains Mono", size: font-size)],
+    fill: luma(230),
+    radius: 4pt,
+    inset: 10pt,
+    width: 100%,
+  )
+}
 
 #let alinea = [#h(1.5em)]
-
-#let presentation = [
-
-
-  #text("", size: 25pt)
-]
 
 #align(center)[
   #image("../assets/img/logoups.svg", height: 16%)
@@ -352,7 +348,7 @@ Cf. *@fig11[Figure]* en annexe.
 
 == Intégrité
 *Définition 2.4.0*\
-#alinea L’intégrité mesure la validité structurelle d'une base de données graphe.
+#alinea L'intégrité mesure la validité structurelle d'une base de données graphe.
 
 === Validité du schéma de propriété
 #label("def2.4.1")
@@ -363,7 +359,7 @@ Cf. *@fig11[Figure]* en annexe.
   Soit $O in {N, E, N union E}$, $L_O subset.eq L$ et $X subset.eq P$ tel que $forall o in O$ vérifie $"NULL" in.not sigma(o, X)$. Cf. *@fig13[Figure]* en annexe.
 + *Type des valeurs de propriétés*  :\
   Soit $t: (V) -> "SET"^+(T)$ une fonction totale qui attribut un ensemble de type $T$ à un ensemble de valeurs $V$, $O in {N, E, N union E}$, $L_O subset.eq L$, $X subset.eq P$ et $Y subset.eq T$ tel que $forall o in O$ vérifie $(t compose sigma)(o, X) subset.eq Y$. Cf. *@fig14[Figure]* en annexe.
-Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requếtes de *Neo4j*).
+Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requêtes de *Neo4j*).
 
 === Validité des Index
 #label("def2.4.2")
