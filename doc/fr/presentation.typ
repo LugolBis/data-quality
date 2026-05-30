@@ -368,5 +368,146 @@
   ] <fig18>
 ]
 
+#slide(title: "Profilage de données", outlined: true)[
+  L'objectif du profilage d'une base de données graphe est d'avoir un tableau de bord, une vision d'ensemble sur la distribution des données. Cette section regroupe donc des indicateurs intéressants pour caractériser les données d'un graphe de propriété.
+]
+
+#slide(title: "Complétude")[
+  == Composants faiblement connectés
+  Détection des composantes connexes du graphe avec l'algorithme *WCC*.
+
+  == Composants fortement connectés
+  Détection des composantes fortement connexes du graphe avec l'algorithme *SCC* (on ne considère ici que les chemins).
+]
+
+#slide(title: "Conformité")[
+  == Détection de types distincts pour des propriétés
+  Cet indicateur détecte les propriétés dont le type de donnée stocké pour celles-ci n'est pas homogène.\
+  Un tableau de bord concis listant les propriétés pour lesquelles le type n'est pas unique est construit à partir de cette détection.
+]
+
+#slide(title: "Intégrité")[
+  === Distribution des propriétés des noeuds
+  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.
+  === Distribution des propriétés des noeuds par étiquette
+  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon chaque étiquette attachée à ceux-ci.
+  === Distribution des propriétés des arcs
+  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.\
+  Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
+]
+
+#slide(title: "Étiquetage")[
+  === Détection d'anomalies par regroupement (clustering)
+On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont ensuite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminés on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à celles des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
+Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitués de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageables pour cet usage de profilage.
+]
+
+#slide(title: "Lisibilité")[
+  === Distribution du degré des noeuds
+  Analyse de la distribution des degrés (entrant et sortant), des noeuds regroupés selon leur ensemble d'étiquettes.
+  === Détection des arcs formant un multigraphe
+  Détection d'arcs partageant le même noeud source et le même noeud destination, formant ainsi un multigraphe. Un tableau de bord concis sur l'ensemble d'étiquettes du noeud source et celui du noeud destination, ainsi que l'ensemble des étiquettes des arcs est construit à partir de cette détection.
+  === Analyse de l'excentricité du graphe
+  Analyse de l'excentricité du graphe : calcul du rayon et du diamètre du graphe.\
+  On peut aisément imaginer utiliser ces informations pour analyser un graphe modélisant un réseau par exemple.
+]
+
+#slide(title: "Valeurs aberrantes (outliers)")[
+  === Détection des valeurs numériques aberrantes
+  Détection de valeurs numériques aberrantes pour les propriétés des noeuds et des arcs.\
+  De nouveau cela permet de caractériser les données et de détecter, le cas échéant, des valeurs invalides.
+  === Analyse de l'influence transitive des noeuds
+  L'influence transitive d'un noeud est déterminée en calculant sa centralité de vecteur propre (_Eigenvector Centrality_); qui est une mesure utilisée en théorie des graphes pour évaluer l'influence d'un noeud. Celle-ci est calculée en tenant compte du nombre de connexions d'un noeud et de l'importance des noeuds auxquels il est connecté.\
+  Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, le cas échéant, ceux dont l’influence ne correspond pas au domaine modélisé.
+  === Analyse de l'influence transitive moyenne
+  Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
+]
+
+#slide(title: "Implémentation avec Neo4j", outlined: true)[
+  *Neo4j* est une base de données graphe proposant une implémentation flexible des graphes de propriété. Les noeuds sont ainsi nommés des "Nodes" et les arcs sont nommés des "Relationships".
+  
+  L'ensemble des concepts de *Neo4j* est identique à la définition établie en introduction, à l'exception près que les "Relationships" ne peuvent avoir qu'une seule étiquette. Notons que l'implémentation du _framework_ de qualité de données établi dans la présente étude a été implémentée cf. @lugolbis2026github.
+]
+
+#slide(title: "Résultats", outlined: true)[
+  == Northwind
+  Les expérimentations sur la base de donnée graphe *Northwind* avec une partie des données dégradées (avec la _seed_ 42) se sont révélées particulièrement concluante concernant la pertinance des critères de qualité de données établis précédemment.
+
+  L'Étiquetage par regroupement c'est révélé être un outil puissant pour détecter les erreurs le cas échéant. Bien que cette approche présente une faiblesse : la forte polarisation des ensembles de noeuds dont les ensembles d'étiquettes sont très petit.
+]
+
+#slide(title: "Résultats")[
+  #align(center)[
+    #grid(
+      columns: (1.3fr, 0.7fr),
+      gutter: 1em,
+      [#Merge_A],
+      [_Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$]
+    )
+  ]
+]
+
+#slide(title: "Résultats")[
+  #align(center)[
+    #grid(
+      columns: (1.3fr, 0.7fr),
+      gutter: 1em,
+      [#Merge_B(height: 90%)],
+      [_Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$]
+    )
+  ]
+]
+
+#slide(title: "Résultats")[
+  #align(center)[
+    #Merge_C(height: 80%)
+    _Merge_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$
+  ]
+]
+
+#slide(title: "Résultats")[
+  == YAGO3
+  La seconde base de données que nous avons utilisée pour tester nos critères de qualité de données est _Yago3_ @mahdisoltani2014yago3. Nous n'avons dégradé qu'un poucent des arcs de celle-ci.
+
+  Les tests conduit démontrent que nos indicateurs de qualité de données ne détectent pas d'erreurs. Les indicateurs de profilage quant à eux détectent les dégradation des arcs.
+]
+
+#slide(title: "Résultats")[
+  #align(left)[
+    #grid(
+      columns: (1.2fr, 1fr),
+      gutter: 1em,
+      [#Yago2],
+      [Échantillon de la base de données.\ Les segments blanc modélisent les arcs et les noeuds forment le cercle.]
+    )
+  ]
+]
+
+#slide(title: "Résultats")[
+  #fig-wrap[
+    #Profiling_Properties
+    #figh(
+      [Profilage des propriétés des arcs de la base de données YAGO],
+      [Illustration de l'interface utilisateur de *data-quality* @lugolbis2026github.],
+    )
+  ] <fig26>
+]
+
+#slide(title: "Résultats")[
+  #grid(
+    columns: (1.4fr, 0.6fr),
+    gutter: 1em,
+    [#Query_Validation],
+    [Validation par requête -- de la base de données YAGO\ Illustration de l'interface utilisateur de *data-quality* @lugolbis2026github.]
+  )
+]
+
+#slide(title: "Conclusion", outlined: true)[
+  = Conclusion
+  - Intérêt des indicateur de qualité de données et des indicateurs de profilage
+
+  - Problèmes ouvert : analyse de l'étiquetage, standard _DDL_ et formes normales (NF).
+]
+
 // Bibliography
 #bibliography-slide(bibliography("../references.bib"))
