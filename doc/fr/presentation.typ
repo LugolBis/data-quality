@@ -1,0 +1,372 @@
+#import "@preview/typslides:1.3.3": *
+#import "@preview/algo:0.3.6": algo, comment, d, i
+#import "../assets/annexe.typ": *
+#import "paper.typ": *
+
+#show: typslides.with(
+  ratio:        "16-9",
+  theme:        "purply",
+  font:         "Fira Sans",
+  font-size:    20pt,
+  link-style:   "color",
+)
+
+#front-slide(
+  title: "Étude de qualité de données d'une base de données graphe",
+  subtitle: [TER M1 Informatique],
+  authors: [
+    #grid(
+      columns: (1fr, 0.9fr),
+      gutter: 1em,
+      [
+        Loïc Desmarès, Tianyi Yang\
+        #link("https://github.com/LugolBis/data-quality")
+      ],
+      [
+        #image("../assets/img/logoups.svg", height: 30%)
+      ],
+    )
+  ],
+  info: [
+    
+  ],
+)
+
+#table-of-contents(title: "Sommaire")
+
+#slide(title: "Introduction", outlined: true)[
+  #align(center)[
+    Présentation des bases de données graphe\
+    #image("/assets/img/paradigm_presentation.png", height: 80%)
+  ]
+]
+
+#slide(title: "Introduction", outlined: true)[
+  Nous nous intéressons ici aux enjeux suivant  des bases de données graphe :
+
+  - Modèle de données -- Paradigme
+
+  - Sémantique -- Qualité de données
+
+  - Cadre de notre étude : les graphes de propriété
+]
+
+#slide(title: "Introduction", outlined: true)[
+  Un graphe de propriété est un tuple $G = (N, E, rho, lambda, sigma)$ tel que :
++ $N$ est un ensemble fini de noeuds (_nodes_), aussi appelé sommets (_vertices_).
++ $E$ est un ensemble fini d'arcs (on parlera d'arête lorsque la direction n'est pas prise en compte).
++ $rho: E -> (N times N)$ est une fonction totale qui associe pour chaque arc dans $E$ une paire $(n_"source", n_"destination")$. Cette paire de noeuds est donc non commutative car $(n_A, n_B) in rho(E)$ n'implique pas nécessairement $(n_B, n_A) in rho(E)$.
++ $lambda: (N union E) -> "SET"^+(L)$ est une fonction partielle qui associe à un noeud ou un arc un ensemble d'étiquettes incluses dans $L$ ($lambda$ est une fonction d'étiquetage des noeuds et des arcs).
++ $sigma: (N union E) times P -> "SET"^+(V)$ est une fonction partielle qui associe aux noeuds et arcs des valeurs $V$ aux propriétés $P$.
+]
+
+#slide(title: "Qualité de données", outlined: true)[
+  #text(size: 25pt)[*Complétude*]\
+  \
+  La Complétude mesure la quantité de données manquantes d'une base de données graphe @cai2016challenges.\
+  \
+  \
+]
+
+#slide(title: "Complétude : Existence de composantes")[
+  L'existence de composantes connexe permet de mesurer la complétude selon :
+
+  - Des composantes connexe (ou fortement connexe) requises
+
+  - Des chemins (ou chaînes) de longueur fixée
+
+  - Des ensembles d'étiquettes
+]
+
+#slide(title: "Complétude : Existence de composantes")[
+  Exemple :
+
+  #fig-wrap[
+    #cmp(
+      Graph-211-1,
+      Graph-211-2,
+    )
+    #figh([], [#Example-211])
+  ] <fig1>
+]
+
+#slide(title: "Complétude : Le degré des noeuds")[
+  L'étude du degré des noeuds permet aussi de mesurer la complétude des données.
+
+  #fig-wrap[
+    #cmp(
+      Graph-212-1,
+      Graph-212-2,
+    )
+    #figh([], [#Example-212])
+  ] <fig2>
+]
+
+#slide(title: "Conformité")[
+  #text(size: 25pt)[*Conformité*]\
+  \
+  La Conformité mesure la validité du format des données.\
+  \
+  \
+]
+
+#slide(title: "Conformité : Format des chaînes de caractères")[
+  Conformité du format des chaînes de caractères :
+  #fig-wrap[
+    #cmp(
+      Graph-221-1,
+      Graph-221-2,
+    )
+    #figh([], [#Example-221])
+  ] <fig3>
+]
+
+#slide(title: "Conformité : Format de dates")[
+  Conformité du format des dates :
+  #fig-wrap[
+    #cmp(
+      Graph-222-1,
+      Graph-222-2,
+    )
+    #figh([], [#Example-222])
+  ] <fig4>
+]
+
+#slide(title: "Conformité : Ensemble fini de valeurs")[
+  On définit un ensembles d'objets (noeuds, arcs) ayant un ensemble fixé d'étiquettes $L_O$, pour lesquels un ensemble de propriétés doivent être comprises dans un ensemble fini de valeurs $I$.\
+  On ajoute la possibilité de filtrer ces objets selon une à plusieurs *Condition* (decrites ci-après).
+]
+
+#slide(title: "Conformité : Ensemble fini de valeurs")[
+  Exemple :
+  #fig-wrap[
+  #cmp(
+    Graph-223-1,
+    Graph-223-2,
+  )
+  #figh([], [#Example-223])
+] <fig5>
+]
+
+#slide(title: "Conformité : Étiquetage ensembliste")[
+  On définit des contraintes d'inclusion stricte, d'inclusion ou d'exclusion entre des ensembles d'étiquettes, qui doivent être vérifiées par tous les objets.\
+  \
+  Exemple :
+  #fig-wrap[
+  #cmp(
+    Graph-224-1,
+    Graph-224-2,
+  )
+  #figh([], [#Example-224])
+] <fig6>
+]
+
+#slide(title: "Conformité : Étiquetage par regroupement (clustering)")[
+  L'intuition est la suivante : des noeuds similaires doivent avoir le même ensemble d'étiquettes. Pour mesurer la qualité de l'étiquetage, on cherche donc à regrouper les noeuds similaires pour détecter les erreurs d'étiquetage. L'approche qui suit est inspirée d'un système d'embeddings motivé par l'article @Giot2015VisualGraph.\
+
+  + On définit la similarité entre deux noeuds selon le sens sémantique des relations de ceux-ci. On tokenize tous les arcs entrant ou sortant de ces noeuds. Ainsi l'arc suivant :\
+    #code([($"Noeud"_1$: {Étudiant,Personne})-[$"Arc"$:{Inscrit}]->($"Noeud"_2$: {Université})], font-size: 17pt)
+    Serait traduit par "OU:Inscrit:Université" (que l'on nomme un _Token_) du point de vue de $"Noeud"_1$ et par "IN:Inscrit:ÉtudiantPersonne" de celui de $"Noeud"_2$.
+  
+  + On utilise une distance d'édition (Levenshtein) pour déterminer la similarité entre deux _Token_.
+
+  + On calcule la similarité entre deux noeuds selon deux dimensions :
+    - Leur ensemble d'étiquettes avec l'indice de *Jaccard*
+    - Leur ensemble de _Token_ avec la similarité de *Monge-Elkan*
+
+  On aplique donc la procédure suivante :
+  + Tokenization et stockage de tous les arcs de tous les noeuds dans une propriété de ceux-ci.
+  + Isolation de l'ensemble des _Token_ générés et calcul de la similarité de *Levenshtein* entre chaque pair de _Token_.
+  + Exécution des algorithmes _Split_ et _Merge_ pour détecter les erreurs d'étiquetage.
+]
+
+#slide(title: "Conformité : Étiquetage par regroupement (clustering)")[
+  On effectue donc un regroupement des noeuds selon leur similarité d'étiquettes et leur similarité de _Token_ pour détecter les deux cas possible d'erreurs d'étiquetage :
+
+  - *Merge* : des noeuds avec des _Token_ similaire ont des ensemble trop différent d'étiquettes.
+
+  - *Split* : des noeuds avec des _Token_ peu similaire ont des ensemble d'étiquettes très similaire.
+
+  Le filtrage des paires de noeuds concernés par ces deux métriques peut être adapté avec deux seuils de similarité (un par dimension).
+]
+
+#slide(title: "Conformité : Étiquetage par regroupement (clustering)")[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: mg-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: mg-s, weight: "bold")[⊕ Suggestion MERGE]\
+    _Token_ similaires ("OU:STUDY_AT:University", "OU:COMES_FROM:City").\
+    On observe deux ensembles d'étiquettes avec une faible similarité, paradoxalement à la forte similarité des _Token_ de ces noeuds.
+    #v(5pt)
+    #Graph-225-1
+  ]
+]
+
+#slide(title: "Conformité : Étiquetage par regroupement (clustering)")[
+  #block(width: 100%, inset: 8pt, fill: white, stroke: (paint: sp-s, thickness: 0.5pt), radius: 3pt)[
+    #text(fill: sp-s, weight: "bold")[⊖ Suggestion SPLIT]\
+    Étiquettes identiques (:Person).\
+    On observe des _Token_ différents pour des noeuds partageant le même ensemble d'étiquettes.
+    #text(style: "italic")[\ ]
+    #text(style: "italic")[\ ]
+    #v(5pt)
+    #Graph-225-2
+  ]
+]
+
+#slide(title: "Cohérence")[
+  #text(size: 25pt)[*Cohérence*]\
+  \
+  La Cohérence mesure la validité des relations de la base de données graphe.\
+  \
+  \
+]
+
+#slide(title: "Cohérence : FD")[
+  On définit les *FD* comme suit : 
+  #fig-wrap[
+    #cmp(
+      Graph-231-1,
+      Graph-231-2,
+    )
+    #figh([], [#Example-231])
+  ] <fig8>
+]
+
+#slide(title: "Cohérence : CFD")[
+  Une *condition* est un tuple $C = (P_C, "VAL", f, "NEXT")$ tel que :
+  + $P_C subset.eq P$ est l'ensemble des propriétés devant respecter la condition.
+  + $"VAL" in {"constante", P}$ est la valeur de comparaison. La "constante" peut être tout type de données (non atomique comprises).
+  + $f: (N union E, P_C, "VAL") -> "Booléen"$, est une fonction permettant de vérifier la condition sur un objet (ex. "$=$", "$<$", "$in$", etc.). On notera par la suite $C(o)$ le fait que l'objet $o$ vérifie $f(o, P_C, "VAL")$ sachant $P_C$ et $"VAL"$ définit dans $C$.
+  + $"NEXT" in {emptyset, ("Condition", "Opérateur booléen")}$ est une deuxième condition (optionnelle) devant être vérifiée (permettant ainsi de la combiner avec la première avec l' "Opérateur booléen").
+]
+
+#slide(title: "Cohérence : CFD")[
+  Exemple :
+  #fig-wrap[
+    #cmp(
+      Graph-232-1,
+      Graph-232-2,
+    )
+    #figh([], [#Example-232])
+  ] <fig9>
+]
+
+#slide(title: "Cohérence : GFD")[
+  Soit $G_p$ un graph pattern à partir duquel on déduit $G'(N', E')$, sous graphe de $G$ correspondant à $G_p$, $O in {N, E, N union E}$, $L_O subset.eq L$ et $X, Y subset.eq P$, on définit par $(O, L_O, G_p, X -> Y)$ une *GFD*.\
+  Tel que $forall o_1, o_2 in O^2$ tel que $o_1, o_2 in G'$ vérifie $sigma(o_1, X) = sigma(o_2, X) arrow.double sigma(o_1, Y) = sigma(o_2, Y)$.
+]
+
+#slide(title: "Cohérence : GFD")[
+  #fig-wrap[
+    #cmp(
+      Graph-233-1,
+      Graph-233-2,
+    )
+    #figh([], [#Example-233])
+  ] <fig10>
+]
+
+#slide(title: "Cohérence : Validation par requête")[
+  Afin d'étendre les *FD*, *CFD* et *GFD* pour capturer l'ensemble du sens sémantique exprimé par le lanquage de requêtage, une approche par validation de requêtes -- sur le modèle de _*dbt*_ -- est envisageable.
+  #fig-wrap[
+    #cmp(
+      Graph-234-1,
+      Graph-234-2,
+    )
+    #figh([], [#Example-234])
+  ] <fig11>
+]
+
+#slide(title: "Intégrité")[
+  #text(size: 25pt)[*Intégrité*]\
+  \
+  L'intégrité mesure la validité structurelle d'une base de données graphe.\
+  \
+  \
+]
+
+#slide(title: "Intégrité : Validité du schéma de propriété")[
+  Dans l'état de l'art aucun standard _DDL_ n'a émergé pour les bases de données graphe. On s'intéresse donc à trois contraintes d'intégrité :
+  
+  + L'unicité des propriétés des objets
+
+  + L'existence des propriétés des objets
+  
+  + Le type de données des propriétés des objets
+
+
+  Notons que ces contraintes peuvent être définies en *Cypher* (le langage de requêtes de *Neo4j*).
+]
+
+#slide(title: "Intégrité : Validité des Index")[
+  L'intuition est la suivante : des valeurs manquantes sur des propriétés indexées peuvent être un signal de dégradation de l'intégrité de la base de données graphe.\
+  \
+  Exemple : 
+  #fig-wrap[
+    #cmp(
+      Graph-242-1,
+      Graph-242-2,
+    )
+    #figh([], [#Example-242])
+  ] <fig15>
+]
+
+#slide(title: "Intégrité : Forme normale d'un Graphe de propriété")[
+  On s'intéresse maintenant à la forme normale du graphe. Et plus précisément à la 3ème forme normale (3NF).\
+  \
+  L'algorithme est défini dans le cadre des *gFD* et *gUC* @Skavantzos2023Normalization que l'on peut facilement traduire par les *FD* (ci-avant). Tandis que les *CFD* et les *GFD* (graph pattern FD), n'ont pas de sens dans un contexte de normalisation car l'algorithme normaliserait en 3NF seulement un fragment de la base de données.
+]
+
+#slide(title: "Intégrité : Forme normale d'un Graphe de propriété")[
+  #grid(
+    columns: (0.7fr, 1.3fr),
+    gutter: 1em,
+    [#text(size: 20pt, fill: err-s, weight: "bold")[✗ Non normalisé :]],
+    [#Graph-243-2]
+  )
+]
+
+#slide(title: "Intégrité : Forme normale d'un Graphe de propriété")[
+  #grid(
+    columns: (0.7fr, 1.3fr),
+    gutter: 1em,
+    [#text(size: 20pt, fill: ok-s, weight: "bold")[✓ Normalisé (3NF) :]],
+    [#Graph-243-1]
+  )
+]
+
+#slide(title: "Unicité")[
+  #text(size: 25pt)[*Unicité*]\
+  \
+  L'unicité mesure la redondance d'une base de données graphe.\
+  \
+  \
+]
+
+#slide(title: "Unicité : Doublons d'arcs")[
+  $forall e_1, e_2 in E^2$, $e_1$ et $e_2$ sont des doublons si et seulement si : $rho(e_1) = rho(e_2)$, $lambda(e_1) = lambda(e_2)$ et $sigma(e_1, P) = sigma(e_2, P)$.\
+  \
+  Exemple :
+  #fig-wrap[
+    #cmp(
+      Graph-251-1,
+      Graph-251-2,
+    )
+    #figh([], [], display_desc: false)
+  ] <fig17>
+]
+
+#slide(title: "Unicité : Doublons de noeuds")[
+  Deux noeuds $n_1, n_2$ sont des doublons si ils partagent le même ensemble d'étiquettes et les même valeurs de propriétés.\
+  \
+  Exemple :
+  #fig-wrap[
+    #cmp(
+      Graph-252-1,
+      Graph-252-2,
+    )
+    #figh([], [], display_desc: false)
+  ] <fig18>
+]
+
+// Bibliography
+#bibliography-slide(bibliography("../references.bib"))
