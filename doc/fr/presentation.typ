@@ -1,4 +1,5 @@
 #import "@preview/typslides:1.3.3": *
+#import "@preview/diagraph:0.3.0": raw-render
 #import "@preview/algo:0.3.6": algo, comment, d, i
 #import "../assets/annexe.typ": *
 #import "paper.typ": *
@@ -372,8 +373,6 @@
   L'objectif du profilage d'une base de données graphe est d'avoir un tableau de bord, une vision d'ensemble sur la distribution des données. Cette section regroupe donc des indicateurs intéressants pour caractériser les données d'un graphe de propriété.
 ]
 
-#import "@preview/diagraph:0.3.0": raw-render
-
 #slide(title: "Complétude")[
   #grid(
     columns: (1.2fr, 1fr),
@@ -435,8 +434,6 @@
     ]
   )
 ]
-
-#import "@preview/diagraph:0.3.0": raw-render
 
 #slide(title: "Conformité")[
   == Détection de types distincts pour des propriétés
@@ -559,8 +556,6 @@
   ]
 ]
 
-#import "@preview/diagraph:0.3.0": raw-render
-
 #slide(title: "Étiquetage")[
   === Détection d'anomalies par regroupement (clustering)
   
@@ -633,8 +628,6 @@
   Analyse de l'excentricité du graphe : calcul du rayon et du diamètre du graphe.\
   On peut aisément imaginer utiliser ces informations pour analyser un graphe modélisant un réseau par exemple.
 ]
-
-#import "@preview/diagraph:0.3.0": raw-render
 
 #slide(title: "Valeurs aberrantes (outliers)")[
   === Détection des valeurs numériques aberrantes
