@@ -466,6 +466,17 @@ Notons que cette méthode est assez fragile, notamment à cause des _embeddings_
 ]
 
 #slide(title: "Résultats")[
+  #align(left)[
+    #grid(
+      columns: (1.5fr, 1fr),
+      gutter: 1em,
+      [#Split_Img],
+      [_Split_ exécuté avec les arguments $(t_e, t_t) = (0.4, 0.6)$]
+    )
+  ]
+]
+
+#slide(title: "Résultats")[
   == YAGO3
   La seconde base de données que nous avons utilisée pour tester nos critères de qualité de données est _Yago3_ @mahdisoltani2014yago3. Nous n'avons dégradé qu'un poucent des arcs de celle-ci.
 
