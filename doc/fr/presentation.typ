@@ -372,34 +372,256 @@
   L'objectif du profilage d'une base de données graphe est d'avoir un tableau de bord, une vision d'ensemble sur la distribution des données. Cette section regroupe donc des indicateurs intéressants pour caractériser les données d'un graphe de propriété.
 ]
 
-#slide(title: "Complétude")[
-  == Composants faiblement connectés
-  Détection des composantes connexes du graphe avec l'algorithme *WCC*.
+#import "@preview/diagraph:0.3.0": raw-render
 
-  == Composants fortement connectés
-  Détection des composantes fortement connexes du graphe avec l'algorithme *SCC* (on ne considère ici que les chemins).
+#slide(title: "Complétude")[
+  #grid(
+    columns: (1.2fr, 1fr),
+    row-gutter: 3em,
+    column-gutter: 2em,
+    
+    [
+      == Composants faiblement connectés
+      Détection des composantes connexes du graphe avec l'algorithme *WCC*.
+    ],
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph WCC {
+        rankdir=TB;
+        nodesep=0.3;
+        ranksep=0.4;
+        
+        node [shape=circle, style=filled, fillcolor="#D9EAD3", fontname="Fira Sans", margin=0.05, fontsize=14];
+        edge [dir=none, color="#666666", penwidth=1.5];
+
+        Paris -> Normandie;
+        Paris -> Lyon;
+        Paris -> Strasbourg;
+
+        Marseille [fillcolor="#F4CCCC"];
+
+        Lyon -> Marseille [style=invis];
+      }
+      ```
+      )
+    ],
+
+    [
+      == Composants fortement connectés
+      Détection des composantes fortement connexes du graphe avec l'algorithme *SCC* (on ne considère ici que les chemins).
+    ],
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph SCC {
+        rankdir=LR;
+        nodesep=0.5;
+        ranksep=0.6;
+        
+        node [shape=circle, style=filled, fillcolor="#CFE2F3", fontname="Fira Sans", margin=0.05, fontsize=14];
+        edge [color="#333333", penwidth=1.5, fontsize=10, fontname="Fira Sans"];
+
+        Client [label="Client"];
+        Marchand [label="Marchand"];
+        Livreur [label="Livreur"];
+
+        Client -> Marchand [label=" Paiement "];
+        Marchand -> Livreur [label=" Expédition "];
+        Livreur -> Client [label=" Livraison "];
+      }
+      ```
+      )
+    ]
+  )
 ]
+
+#import "@preview/diagraph:0.3.0": raw-render
 
 #slide(title: "Conformité")[
   == Détection de types distincts pour des propriétés
   Cet indicateur détecte les propriétés dont le type de donnée stocké pour celles-ci n'est pas homogène.\
   Un tableau de bord concis listant les propriétés pour lesquelles le type n'est pas unique est construit à partir de cette détection.
+
+  #v(2em)
+
+  #align(center)[
+    #raw-render(
+    ```dot
+    digraph ConformiteType {
+      rankdir=LR;
+      nodesep=0.8;
+      
+      node [shape=circle, fontname="Fira Sans", fontsize=14, style=filled, margin=0.05];
+      
+      P1 [label=":Product\nprice: 29.99\n(Float)", fillcolor="#D9EAD3"];
+      P2 [label=":Product\nprice: \"15.50\"\n(String)", fillcolor="#F4CCCC"];
+      P3 [label=":Product\nprice: \"Gratuit\"\n(String)", fillcolor="#F4CCCC"];
+      
+      P1 -> P2 -> P3 [style=invis];
+    }
+    ```
+    )
+  ]
+]
+
+
+#slide(title: "Intégrité")[
+  #grid(
+    columns: (1fr, 1.4fr),
+    gutter: 2em,
+    [
+      === Distribution des propriétés des noeuds
+      Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.
+    ],
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph Dim1 {
+        rankdir=TB;
+        nodesep=0.4;
+        ranksep=0.3;
+        node [shape=circle, fontname="Fira Sans", fontsize=10, style=filled, margin=0.02];
+        
+        subgraph cluster_ok {
+          label="✓ Homogène\n(Même ensemble d'étiquettes)"; fontname="Fira Sans"; fontsize=12; fontcolor="#2E7D32"; color="#2E7D32"; penwidth=2;
+          ok1 [label="[:Student, :Intern]\nname\nage\nsalary", fillcolor="#D9EAD3"];
+          ok2 [label="[:Student, :Intern]\nname\nage\nsalary", fillcolor="#D9EAD3"];
+          ok1 -> ok2 [style=invis];
+        }
+        
+        subgraph cluster_ko {
+          label="✗ Hétérogène\n(Propriétés manquantes)"; fontname="Fira Sans"; fontsize=12; fontcolor="#C62828"; color="#C62828"; penwidth=2;
+          ko1 [label="[:Student, :Intern]\nname\nage\nsalary", fillcolor="#D9EAD3"];
+          ko2 [label="[:Student, :Intern]\nname\n(age manquant)\n(salaire manquant)", fillcolor="#F4CCCC"];
+          ko1 -> ko2 [style=invis];
+        }
+      }
+      ```
+      )
+    ]
+  )
 ]
 
 #slide(title: "Intégrité")[
-  === Distribution des propriétés des noeuds
-  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.
-  === Distribution des propriétés des noeuds par étiquette
-  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon chaque étiquette attachée à ceux-ci.
+  #grid(
+    columns: (1fr, 1.4fr),
+    gutter: 2em,
+    [
+      === Distribution des propriétés des noeuds par étiquette
+      Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon chaque étiquette attachée à ceux-ci.
+    ],
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph Dim2 {
+        rankdir=TB;
+        nodesep=0.4;
+        ranksep=0.3;
+        node [shape=circle, fontname="Fira Sans", fontsize=10, style=filled, margin=0.02];
+        
+        subgraph cluster_ok {
+          label="✓ Homogène\n(Socle commun pour :Student)"; fontname="Fira Sans"; fontsize=12; fontcolor="#2E7D32"; color="#2E7D32"; penwidth=2;
+          ok3 [label="[:Student, :Intern]\nname\nage\nsalary", fillcolor="#D9EAD3"];
+          ok4 [label="[:Student]\nname\nage", fillcolor="#D9EAD3"];
+          ok3 -> ok4 [style=invis];
+        }
+        
+        subgraph cluster_ko {
+          label="✗ Hétérogène\n(Pas de socle commun)"; fontname="Fira Sans"; fontsize=12; fontcolor="#C62828"; color="#C62828"; penwidth=2;
+          ko3 [label="[:Student, :Intern]\nname\n(age manquant)\nsalary", fillcolor="#F4CCCC"];
+          ko4 [label="[:Student]\nname\nage", fillcolor="#D9EAD3"];
+          ko3 -> ko4 [style=invis];
+        }
+      }
+      ```
+      )
+    ]
+  )
+
   === Distribution des propriétés des arcs
-  Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.\
-  Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
+    Analyse de la distribution des propriétés définies pour des noeuds, regroupés selon leur ensemble d'étiquettes.\
+    Notons que cette définition restreinte est équivalente à celle de l'analyse par étiquette sous *Neo4j* car les arcs (_Relationships_) ne disposent que d'une seule étiquette.
+    #align(center)[
+      #raw-render(
+      ```dot
+      digraph Dim3 {
+        rankdir=LR;
+        ranksep=1.0;
+        node [shape=circle, label="", width=0.15, style=filled, fillcolor="#CCCCCC"];
+        edge [fontname="Fira Sans", fontsize=11, color="#333333", arrowsize=0.8];
+        
+        u1 -> v1 [label=" :PURCHASES \n {date, amount} "];
+        u2 -> v2 [label=" :PURCHASES \n {date} "];
+      }
+      ```
+      )
+  ]
 ]
+
+#import "@preview/diagraph:0.3.0": raw-render
 
 #slide(title: "Étiquetage")[
   === Détection d'anomalies par regroupement (clustering)
-On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont ensuite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminés on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à celles des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).\
-Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitués de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageables pour cet usage de profilage.
+  
+  #grid(
+    columns: (1.4fr, 1fr),
+    gutter: 2em,
+    [
+      On génère à l'aide l'algorithme *FastRP* un _embedding_ à partir des propriétés numériques (les _features_) et de la topologie du graphe pour chaque noeud. Ces _embeddings_ sont ensuite utilisés pour déterminer des groupes (_clusters_) de noeuds avec l'algorithme *KNN*. Une fois ces groupes déterminés on filtre les résultats qui ont une similarité supérieure ou égale à un seuil donné. Enfin on compare les étiquettes (_labels_) des noeuds à celles des autres noeuds pour détecter, le cas échéant, des erreurs d'étiquetage (_labeling_).
+    ],
+    
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph Anomaly {
+        rankdir=TB;
+        nodesep=0.3; 
+        node [shape=circle, fontname="Fira Sans", fontsize=11, style=filled, margin=0.05];
+        
+        subgraph cluster_duck {
+          label="Succès : Détection d'anomalie"; fontname="Fira Sans"; fontcolor="#2E7D32"; color="#2E7D32"; penwidth=2;
+          n1 [label=":Company", fillcolor="#D9EAD3"];
+          n2 [label=":Company", fillcolor="#D9EAD3"];
+          n3 [label=":Person\n(Étiquette erronée)", fillcolor="#F4CCCC", fontcolor="#C62828"];
+          n4 [label=":Company", fillcolor="#D9EAD3"];
+          
+          {rank=same; n1; n2;}
+          {rank=same; n3; n4;}
+          n1 -> n3 [style=invis];
+        }
+      }
+      ```
+      )
+    ]
+  )
+]
+
+#slide(title: "Étiquetage")[
+  === Limites du clustering et alternatives
+  Notons que cette méthode est assez fragile, notamment à cause des _embeddings_ qui peuvent être en grande partie constitués de valeurs par défaut (_padding_), entrainant un biais conséquent sur les calculs de similarité. D'autres approches comme la détection de communauté avec l'algorithme de *Louvain* seraient envisageables pour cet usage de profilage.
+
+  #v(2em)
+
+  #align(center)[
+    #raw-render(
+    ```dot
+    digraph PaddingBias {
+      rankdir=LR;
+      nodesep=0.8;
+      node [shape=circle, fontname="Fira Sans", fontsize=12, style=filled, margin=0.0];
+      
+      subgraph cluster_bias {
+        label="Limite : Biais dû au Padding"; fontname="Fira Sans"; fontcolor="#C62828"; color="#C62828"; penwidth=2;
+        n5 [label=":Product\nValeurs vides\n[0, 0, 0]", fillcolor="#EEEEEE"];
+        n6 [label=":User\nValeurs vides\n[0, 0, 0]", fillcolor="#EEEEEE"];
+        
+        n5 -> n6 [label="  Fausse  \nsimilarité", style=dashed, color="#C62828", fontcolor="#C62828", fontsize=12, penwidth=1.5];
+      }
+    }
+    ```
+    )
+  ]
 ]
 
 #slide(title: "Lisibilité")[
@@ -412,15 +634,91 @@ Notons que cette méthode est assez fragile, notamment à cause des _embeddings_
   On peut aisément imaginer utiliser ces informations pour analyser un graphe modélisant un réseau par exemple.
 ]
 
+#import "@preview/diagraph:0.3.0": raw-render
+
 #slide(title: "Valeurs aberrantes (outliers)")[
   === Détection des valeurs numériques aberrantes
   Détection de valeurs numériques aberrantes pour les propriétés des noeuds et des arcs.\
   De nouveau cela permet de caractériser les données et de détecter, le cas échéant, des valeurs invalides.
-  === Analyse de l'influence transitive des noeuds
-  L'influence transitive d'un noeud est déterminée en calculant sa centralité de vecteur propre (_Eigenvector Centrality_); qui est une mesure utilisée en théorie des graphes pour évaluer l'influence d'un noeud. Celle-ci est calculée en tenant compte du nombre de connexions d'un noeud et de l'importance des noeuds auxquels il est connecté.\
-  Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, le cas échéant, ceux dont l’influence ne correspond pas au domaine modélisé.
+
+  #v(3em) 
+
+  #align(center)[
+    #raw-render(
+    ```dot
+    digraph NumOutlier {
+      rankdir=LR; 
+      nodesep=0.6;
+      node [shape=circle, fontname="Fira Sans", fontsize=14, style=filled];
+      
+      n1 [label=":User\nage: 25", fillcolor="#D9EAD3"];
+      n2 [label=":User\nage: 32", fillcolor="#D9EAD3"];
+      n3 [label=":User\nage: 999", fillcolor="#F4CCCC", fontcolor="#C62828", color="#C62828", penwidth=2];
+      
+      n1 -> n2 -> n3 [style=invis];
+    }
+    ```
+    )
+  ]
+]
+
+#slide(title: "Valeurs aberrantes (outliers)")[
+  #grid(
+    columns: (1.2fr, 1fr),
+    gutter: 2em,
+    [
+      === Analyse de l'influence transitive des noeuds
+      L'influence transitive d'un noeud est déterminée en calculant sa centralité de vecteur propre (_Eigenvector Centrality_); qui est une mesure utilisée en théorie des graphes pour évaluer l'influence d'un noeud. Celle-ci est calculée en tenant compte du nombre de connexions d'un noeud et de l'importance des noeuds auxquels il est connecté.\
+      Cette analyse permet ainsi de mesurer l’influence des nœuds et de détecter, le cas échéant, ceux dont l’influence ne correspond pas au domaine modélisé.
+    ],
+    align(center + horizon)[
+      #raw-render(
+      ```dot
+      digraph Eigen {
+        rankdir=BT; 
+        nodesep=0.6; 
+        ranksep=0.5;
+        node [shape=circle, fontname="Fira Sans", style=filled, margin=0.05];
+        
+        CEO [label="CEO\nScore: 0.9", fillcolor="#D9EAD3", width=0.9, fontsize=13];
+        CTO [label="CTO\nScore: 0.8", fillcolor="#D9EAD3", width=0.7, fontsize=11];
+        
+        Stag [label="Stagiaire\nScore: 0.85\n(Anomalie)", fillcolor="#F4CCCC", fontcolor="#C62828", width=0.9, fontsize=11, color="#C62828", penwidth=2];
+        Dev [label="Dev\nScore: 0.2", fillcolor="#D9EAD3", width=0.5, fontsize=10];
+
+        Stag -> CEO [color="#666666", penwidth=1.5];
+        Stag -> CTO [color="#666666", penwidth=1.5];
+        Dev -> CTO [color="#666666", penwidth=1.5];
+      }
+      ```
+      )
+    ]
+  )
+]
+
+#slide(title: "Valeurs aberrantes (outliers)")[
   === Analyse de l'influence transitive moyenne
   Analyse de l'influence transitive moyenne à travers les noeuds du graphe.
+
+  #v(4em)
+
+  #align(center)[
+    #raw-render(
+    ```dot
+    digraph AvgEigen {
+      rankdir=TB; 
+      nodesep=0.5;
+      node [shape=Mrecord, fontname="Fira Sans", fontsize=15, style=filled, fillcolor="#CFE2F3", color="#4A86E8", penwidth=2];
+      edge [style=invis];
+      
+      L1 [label="{ Ligne de base (Baseline) | Étiquette :Company | Score moyen : 0.88 }"];
+      L2 [label="{ Ligne de base (Baseline) | Étiquette :Person | Score moyen : 0.42 }"];
+      
+      L1 -> L2;
+    }
+    ```
+    )
+  ]
 ]
 
 #slide(title: "Implémentation avec Neo4j", outlined: true)[
