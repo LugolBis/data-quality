@@ -102,3 +102,13 @@ Then :
 1. Connect to a Neo4j database (or upload a Cypher dump).
 1. Define constraints based on your domain rules.
 1. Run the assessment and easily export them as CSV.
+
+## For Developers :
+Set up the local git hooks (specifically for pre-commit) with :
+```bash
+git config --local core.hooksPath .githooks && chmod +x .githooks/pre-commit
+```
+And add the permissions for the shell script who compile the documentation :
+```bash
+chmod +x doc/deploy.sh
+```
