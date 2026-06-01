@@ -10,7 +10,7 @@ from quality.validity import (
     check_date_format,
     check_string_format,
     labeling_set,
-    numerical_interval,
+    values_set,
 )
 from utils.utils import some
 
@@ -52,13 +52,12 @@ def main(session: Neo4jSession) -> None:
         None,
     )
 
-    ni_errs = numerical_interval(
+    ni_errs = values_set(
         session,
         Entity.NODE,
         "Person",
-        {"salary"},
-        1000,
-        1_000_000,
+        {"age"},
+        {"18"},
         condition,
     )
 

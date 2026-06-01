@@ -110,7 +110,7 @@ class LblgSetErr:
 
 
 @dataclass(slots=True, frozen=True, eq=False)
-class NumericalIntervalErr:
+class SetValuesErr:
     entity: Entity
     label: str
     property_: str

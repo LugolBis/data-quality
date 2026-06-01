@@ -8,7 +8,7 @@ from quality.types import (
     Condition,
     DateErr,
     LblgSetErr,
-    NumericalIntervalErr,
+    SetValuesErr,
     TextFormat,
 )
 from utils.utils import logger, some
@@ -166,15 +166,14 @@ def labeling_set(
     return None
 
 
-def numerical_interval(  # noqa: PLR0913
+def values_set(  # noqa: PLR0913
     session: Neo4jSession,
     entity: Entity,
     label: str,
     properties: set[str],
-    min_value: float,
-    max_value: float,
+    expected_values: set[str],
     condition: Condition | None = None,
-) -> list[NumericalIntervalErr] | None:
+) -> list[SetValuesErr] | None:
     if condition:
         where_clause: str = (
             f"AND {str(condition).replace(_ENTITY_CONDITION_ALIAS, 'e')}"
@@ -186,22 +185,24 @@ def numerical_interval(  # noqa: PLR0913
         f"{build_match(entity, label)} "
         f"UNWIND {list(properties)} AS prop "
         "WITH e, prop "
-        f"WHERE (e[prop] < {min_value} OR e[prop] > {max_value}) "
+        f"WHERE not e[prop] in {list(expected_values)} "
         f"{where_clause} "
         "RETURN prop, COUNT(*) AS invalid"
     )
 
+    print(query)
+
     result: Result = session.run_query(query)  # ty:ignore[invalid-argument-type]
     records = result.to_eager_result().records
 
-    analysis: list[NumericalIntervalErr] = []
+    analysis: list[SetValuesErr] = []
     for record in records:
         invalid: int = record.get("invalid")
 
         if invalid > 0:
             property_: str = record.get("prop")
             analysis.append(
-                NumericalIntervalErr(entity, label, property_, condition, invalid),
+                SetValuesErr(entity, label, property_, condition, invalid),
             )
 
     if analysis:
