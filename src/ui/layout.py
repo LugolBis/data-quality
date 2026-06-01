@@ -95,8 +95,8 @@ def main() -> None:
     displayed_pages: list[Any] | dict[str, Any]
     if not st.session_state.get("is_connected", False):
         displayed_pages = {
-            "Database Management": [
-                st.Page(**_config_page("", "Log in", log_in.render))
+            "Database management": [
+                st.Page(**_config_page("", "Log in", log_in.render)),
             ],
             "Documentation": _get_doc_section(),
         }

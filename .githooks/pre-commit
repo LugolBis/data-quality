@@ -7,7 +7,11 @@ echo "Execute pre-commit hook..."
 # Automaticaly compile the documentation files
 ./doc/deploy.sh
 
-git add doc/en/paper.pdf
-git add doc/fr/paper.pdf
+# Add the pdf only if they have changed
+for pdf in doc/en/paper.pdf doc/fr/paper.pdf; do
+    if ! git diff --quiet HEAD -- "$pdf"; then
+        git add "$pdf"
+    fi
+done
 
 echo "Hook finished !"

@@ -94,6 +94,13 @@ DB_NAME="your_database"
 ```
 
 ## Usage
+### Online :
+[https://dataquality4graph.streamlit.app/](https://dataquality4graph.streamlit.app/)
+
+> [!Important]
+> You need a publicly accessible Neo4j instance to connect to.
+
+### Local :
 Launch the interactive profiler (Streamlit UI) :
 ```bash
 streamlit run src/main.py
