@@ -2,7 +2,7 @@ from typing import Any
 
 import streamlit as st
 
-from ui.pages import load_data, log_in
+from ui.pages import doc, load_data, log_in
 from ui.pages.profiling import (
     completeness as pf_completeness,
 )
@@ -78,14 +78,28 @@ def _config_section(title: str, mod: Any) -> None:  # noqa: ANN401
     st.session_state[title] = list(mod._LAZY_FUNCS.keys())  # noqa: SLF001
 
 
+def _get_doc_section() -> list[Any]:
+    return [
+        st.Page(**_config_page("Documentation", "EN", doc.render_en)),
+        st.Page(**_config_page("Documentation", "FR", doc.render_fr)),
+    ]
+
+
 def main() -> None:
-    pages: dict[str, Any] = {}
+    pages: dict[str, Any] = {
+        "Documentation": _get_doc_section(),
+    }
     for code, (section, mods) in enumerate(_SECTIONS.items()):
         pages[section] = _get_pages(section, mods, code)
 
     displayed_pages: list[Any] | dict[str, Any]
     if not st.session_state.get("is_connected", False):
-        displayed_pages = [st.Page(**_config_page("", "Log in", log_in.render))]
+        displayed_pages = {
+            "Database Management": [
+                st.Page(**_config_page("", "Log in", log_in.render))
+            ],
+            "Documentation": _get_doc_section(),
+        }
     else:
         displayed_pages = pages
 
