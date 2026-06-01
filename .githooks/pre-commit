@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Execute pre-commit hook..."
+
+# Automaticaly compile the documentation files
+./doc/deploy.sh
+
+echo "Hook finished !"
