@@ -212,7 +212,7 @@
   myn((2, 0), (":Adress", "postal_code: 75001", "city: \"Marseille\""), "n2", err-f, err-s),
 ))
 
-#let Example-232 = [$(O, L_O, C, X -> Y) = (N, {"Adress"}, ({"country"}, "\"FR\"", =, emptyset), {"postal_code"} -> {"city"})$]
+#let Example-232 = [$(O, L_O, C, X -> Y) = (N, {"Adress"}, ({"country"}, "\"FR\"", =, emptyset), {"postal_code"} -> {"region"})$]
 
 #let Graph-232-1 = graf((
   myn((0, 0), (":Adress", "country: \"FR\"", "postal_code: 75001", "region: \"IDF\""), "n1", ok-f, ok-s),
@@ -279,7 +279,7 @@
 ))
 
 #let Graph-241-6 = graf((
-  myn((0, 0), (":Person", "name: \"Bob\"", "age: 17"), "n1", err-f, err-s),
+  myn((0, 0), (":Person", "name: \"Bob\"", "age: \"17\""), "n1", err-f, err-s),
 ))
 
 #let Example-242 = [$(O, L_O, "Index", X) = (N, {"User"}, {"email"}, {"email"})$]
