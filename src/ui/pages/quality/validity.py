@@ -12,7 +12,7 @@ from quality.validity import (
     check_date_format,
     check_string_format,
     labeling_set,
-    numerical_interval,
+    values_set,
 )
 from scoring.validity import invalid_ratio
 from ui.components.dynamic import _analyze_call, _editor_analyze, _score_call
@@ -70,7 +70,7 @@ def render() -> None:
     st.divider()
     _date_render()
     st.divider()
-    _interval_render()
+    _set_render()
     st.divider()
     _lblg_set_render()
     st.divider()
@@ -156,7 +156,7 @@ def _lblg_set_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     return _editor_analyze(dict_rows, _row_func)
 
 
-def _interval_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
+def _set_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
     df_edited = app_st.get(_CONDITION_EDITOR_KEY)
     if df_edited is None or (isinstance(df_edited, pd.DataFrame) and df_edited.empty):
         return None
@@ -166,25 +166,23 @@ def _interval_analyze(dict_rows: dict[str, Any]) -> list[dict] | None:
         entity = Entity(row["Entity"])
         labels: list[str] = row["Label(s) / Type"]
         properties: list[str] = row["Properties"]
-        min_value: float = row["Min value"]
-        max_value: float = row["Max value"]
-        cond_name: str | None = row["Condition name"]
+        expected_values: list[str] = row["Expected values"]
+        cond_name: str | None = row.get("Concition name")
 
         condition: Condition | None = None
-        if cond_name:
+        if cond_name and cond_name != "":
             condition_gen = _generate_condition(df_cond, cond_name, [])
             if isinstance(condition_gen, str):
                 raise ValueError(condition_gen)
             condition = condition_gen
 
         return (
-            numerical_interval(
+            values_set(
                 session,
                 entity,
                 get_label(labels),
                 set(properties),
-                min_value,
-                max_value,
+                set(expected_values),
                 condition,
             )
             or None  # ty:ignore[invalid-return-type]
@@ -338,7 +336,7 @@ def _lblg_set_render() -> None:
     )
 
 
-def _interval_render() -> None:
+def _set_render() -> None:
     lazy_render: Callable[[], Any] = _lazy_func(
         st.data_editor,
         data=_CONDITIONAL_DF_TEMPLATE,
@@ -354,8 +352,7 @@ def _interval_render() -> None:
             "Entity",
             "Label(s) / Type",
             "Properties",
-            "Min value",
-            "Max value",
+            "Expected values",
             "Condition name",
         ],
     )
@@ -367,14 +364,9 @@ def _interval_render() -> None:
             "Entity": _COL_ENTITY,
             "Label(s) / Type": _COL_LABELS_TYPE,
             "Properties": _COL_PROPERTIES,
-            "Min value": st.column_config.NumberColumn(
-                "Min value",
-                help="Min accepted value (included in the interval).",
-                required=True,
-            ),
-            "Max value": st.column_config.NumberColumn(
-                "Max value",
-                help="Max accepted value (included in the interval).",
+            "Expected values": st.column_config.ListColumn(
+                "Expected values",
+                help="Select the set of values expected for these properties.",
                 required=True,
             ),
             "Condition name": st.column_config.TextColumn(
@@ -387,14 +379,14 @@ def _interval_render() -> None:
     }
 
     _dataframe_analysis(
-        section_name="Analysis properties interval",
+        section_name="Analysis properties set",
         description=(
             "It checks for a given label _L_ of the chosen entity if all of it's"
-            " occurencies have their numerical properties in the choosen interval."
-            " You can filter the matches with the (optional) condition."
+            " occurencies have the selected properties values included in the"
+            " expected set. You can filter the matches with the (optional) condition."
         ),
-        key="VNIC",
-        analysis_func=_interval_analyze,
+        key="VAPS",
+        analysis_func=_set_analyze,
         df_template=df_template,
         editor_config=editor_config,
         lazy_renders=[lazy_render],
