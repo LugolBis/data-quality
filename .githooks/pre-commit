@@ -7,4 +7,7 @@ echo "Execute pre-commit hook..."
 # Automaticaly compile the documentation files
 ./doc/deploy.sh
 
+git add doc/en/paper.pdf
+git add doc/fr/paper.pdf
+
 echo "Hook finished !"
