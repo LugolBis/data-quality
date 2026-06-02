@@ -548,10 +548,15 @@ This likewise enables data characterization and the detection, where applicable,
 = Appendix
 #alinea This appendix collects graph figures illustrating the definitions established in the preceding sections.
 
+#let cmp-ok-en = "Respects the constraint"
+#let cmp-err-en = "Violates the constraint"
+
 #fig-wrap[
   #cmp(
     Graph-211-1,
     Graph-211-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 1: Example for _@def2.1.1[Definition]_], [#Example-211])
 ] <fig1>
@@ -560,6 +565,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-212-1,
     Graph-212-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 2: Example for _@def2.1.2[Definition]_], [#Example-212])
 ] <fig2>
@@ -568,6 +575,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-221-1,
     Graph-221-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 3: Example for _@def2.2.1[Definition]_], [#Example-221])
 ] <fig3>
@@ -576,6 +585,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-222-1,
     Graph-222-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 4: Example for _@def2.2.2[Definition]_], [#Example-222])
 ] <fig4>
@@ -584,6 +595,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-223-1,
     Graph-223-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 5: Example for _@def2.2.3[Definition]_], [#Example-223])
 ] <fig5>
@@ -592,6 +605,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-224-1,
     Graph-224-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 6: Example for _@def2.2.4[Definition]_], [#Example-224])
 ] <fig6>
@@ -622,6 +637,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-231-1,
     Graph-231-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 8: Example for _@def2.3.1[Definition]_], [#Example-231])
 ] <fig8>
@@ -630,6 +647,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-232-1,
     Graph-232-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 9: Example for _@def2.3.2[Definition]_], [#Example-232])
 ] <fig9>
@@ -638,6 +657,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-233-1,
     Graph-233-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 10: Example for _@def2.3.3[Definition]_], [#Example-233])
 ] <fig10>
@@ -647,6 +668,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-234-1,
     Graph-234-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 11: Example for _@def2.3.4[Definition]_], [#Example-234])
 ] <fig11>
@@ -655,6 +678,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-241-1,
     Graph-241-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 12: Example for _@def2.4.1[Definition 1 of]_], [#Example-241a])
 ] <fig12>
@@ -663,6 +688,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-241-3,
     Graph-241-4,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 13: Example for _@def2.4.1[Definition 2 of]_], [#Example-241b])
 ] <fig13>
@@ -672,6 +699,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-241-5,
     Graph-241-6,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 14: Example for _@def2.4.1[Definition 3 of]_], [#Example-241c])
 ] <fig14>
@@ -680,6 +709,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-242-1,
     Graph-242-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 15: Example for _@def2.4.2[Definition]_], [#Example-242])
 ] <fig15>
@@ -703,6 +734,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-251-1,
     Graph-251-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 17: Example for _@def2.5.1[Definition]_], [], display_desc: false)
 ] <fig17>
@@ -711,6 +744,8 @@ This likewise enables data characterization and the detection, where applicable,
   #cmp(
     Graph-252-1,
     Graph-252-2,
+    ok-txt: cmp-ok-en,
+    err-txt: cmp-err-en
   )
   #figh([Figure 18: Example for _@def2.5.2[Definition]_], [], display_desc: false)
 ] <fig18>
